@@ -8,7 +8,7 @@ The discovery experience borrows the interaction principlesâ€”not the brandingâ€
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
 - AI-ranked creator discovery feed
-- Seven real public YouTube creator samples with public thumbnail imagery
+- Seven real public YouTube creator samples using locally stored official channel avatars
 - Long-form creator profiles with content signals and performance stories
 - Explainable AI match memo and evidence
 - Gesture controls: swipe left to pass, swipe right to shortlist, plus save and undo actions
