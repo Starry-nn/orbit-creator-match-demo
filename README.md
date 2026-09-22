@@ -1,6 +1,8 @@
-# Orbit — AI Creator Matchmaking
+# Orbit — Creator Partnership Workspace
 
-A dependency-free, mobile-first clickable prototype for an AI-powered YouTube creator matchmaking platform.
+A dependency-free, mobile-first clickable prototype for an agency-facing creator partnership workspace.
+
+The name **Orbit** reflects the product's job: keeping clients, creators, briefs, approvals, outreach, and deliverables in one campaign system. The circular mark reinforces that idea without making AI the brand itself.
 
 The discovery experience borrows the interaction principles—not the branding—from story-led profile products such as Hinge: one creator is presented as a scrollable narrative made of media, prompts, performance evidence, and AI reasoning. Teams can shortlist a creator from a specific profile section and preserve that context as a decision note.
 
@@ -13,7 +15,8 @@ The discovery experience borrows the interaction principles—not the branding�
 - Explainable AI match memo and evidence
 - Gesture controls: swipe left to pass, swipe right to shortlist, plus save and undo actions
 - Contextual shortlist notes on individual profile sections
-- Creator pool, comparison, outreach, AI brief, and campaign workspace
+- Client shortlist review, finalist comparison, outreach, creator briefs, and a campaign control room
+- Operational campaign views for owners, deadlines, client approvals, conflicts, budgets, creator stages, deliverables, and files
 
 ## Run
 
