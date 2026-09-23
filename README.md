@@ -10,9 +10,12 @@ The discovery experience borrows the interaction principles—not the branding�
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
 - AI-ranked creator discovery feed
+- Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars
 - Long-form creator profiles with content signals and performance stories
 - Explainable AI match memo and evidence
+- Gemini-assisted brief extraction, personalized creator briefs, and first-pass draft risk review
+- Before/after workflow timing to show campaign acceleration
 - Gesture controls: swipe left to pass, swipe right to shortlist, plus save and undo actions
 - Contextual shortlist notes on individual profile sections
 - Client shortlist review, finalist comparison, outreach, creator briefs, and a campaign control room
@@ -30,6 +33,6 @@ Then open `http://localhost:4173/creator-match-demo/` when serving from the pare
 
 The prototype is designed at 393 × 852 CSS pixels and scales down to smaller iPhone viewports.
 
-Creator subscriber counts, performance figures, match scores, and campaign recommendations are illustrative demo data. Creator names and imagery link the concept to recognizable public YouTube channels; no affiliation or endorsement is implied.
+Creator subscriber counts, performance figures, match scores, Gemini outputs, risk flags, and campaign recommendations are illustrative prototype data. Creator names, Google product marks, and YouTube imagery identify the public products and channels used in the proposed workflow; no affiliation or endorsement is implied.
 
 No build step or third-party package is required.
