@@ -8,7 +8,8 @@ const creators = [
   {name:'Blogilates', handle:'@blogilates', niche:'Pilates & lifestyle', subs:'11M', views:'572K', eng:'4.9%', score:82, image:'assets/avatars/blogilates.jpg', videoImage:'https://i.ytimg.com/vi/86PciGuG7Sk/hqdefault.jpg', tags:['Pilates','Founder-led'], prompt:'Channel signal', signal:'Energetic classes, product-building stories, and a recognizable host-led format drive loyalty.', videoTitle:'25-minute complete leg workout', risk:'Founder-owned product ecosystem · Check conflicts', why:'Cassey’s founder-led audience responds to energy and participation. Brand fit is promising, though product-category conflicts should be reviewed before outreach.'}
 ];
 
-const state = {screen:'home', creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
+const initialScreen = new URLSearchParams(window.location.search).get('mode') === 'workspace' ? 'home' : 'welcome';
+const state = {screen:initialScreen, onboardingStep:1, creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 
@@ -24,13 +25,29 @@ const fitSignals = creator => ({
 });
 
 const screens = {
+  welcome: () => `<section class="welcome-shell">
+    <header class="welcome-brand"><div class="brand"><span class="brandmark"></span>Orbit</div><span class="welcome-tag">For creator teams</span></header>
+    <div class="welcome-copy"><span class="eyebrow">Your first campaign</span><h1>Find the signal.<br>Move while it matters.</h1><p>One brief in. A ready-to-review creator shortlist out.</p></div>
+    <div class="orbit-demo" aria-label="Brief becomes a creator shortlist"><div class="orbit-line one"></div><div class="orbit-line two"></div><div class="brief-node"><span>BRIEF</span><strong>Peakline</strong></div><img class="orbit-face face-one" src="${creators[0].image}" alt="Yoga With Adriene"><img class="orbit-face face-two" src="${creators[1].image}" alt="Jeff Nippard"><img class="orbit-face face-three" src="${creators[2].image}" alt="Natacha Océane"><span class="fit-chip">96 fit</span></div>
+    <div class="welcome-actions"><button class="primary blue" id="startOnboarding">Start first campaign</button><button class="welcome-skip" id="skipOnboarding">Returning? Open sample workspace</button></div>
+    <div class="brand-badges welcome-sources">${geminiBadge('Gemini reasoning')}${youtubeBadge('YouTube signals')}</div>
+  </section>`,
+
+  onboarding: () => `<section class="onboarding-shell">
+    <header class="onboarding-top"><button class="onboarding-back" id="onboardingBack" aria-label="Previous step">←</button><div class="mini-brand"><span class="brandmark"></span>Orbit</div><span>${state.onboardingStep}/3</span></header>
+    <div class="onboarding-progress"><i class="${state.onboardingStep>=1?'on':''}"></i><i class="${state.onboardingStep>=2?'on':''}"></i><i class="${state.onboardingStep>=3?'on':''}"></i></div>
+    ${state.onboardingStep===1?`<div class="onboarding-copy"><span class="eyebrow">Start here</span><h1>Bring the brief.</h1><p>Orbit turns campaign requirements into match criteria.</p></div><section class="brief-file"><span class="file-mark">PDF</span><div><strong>Peakline_launch_brief.pdf</strong><small>Goal · audience · budget · guardrails</small></div><span class="file-check">✓</span></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext"><img class="button-icon invert" src="assets/brands/gemini.svg" alt=""> Analyze sample brief</button><small>Sample data · no upload needed</small></div>`:state.onboardingStep===2?`<div class="onboarding-copy"><span class="eyebrow">Brief understood</span><h1>Here’s the signal.</h1><p>Review the criteria before Orbit ranks creators.</p></div><section class="signal-sheet"><div class="brand-badges">${geminiBadge('Extracted with Gemini')}</div><article><span>Goal</span><strong>Credible product education</strong></article><article><span>Audience</span><strong>Active women · 25–40</strong></article><article><span>Creative</span><strong>Evidence-led · optimistic</strong></article><article><span>Avoid</span><strong>Medical or guaranteed claims</strong></article></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext">Rank creators →</button></div>`:`<div class="onboarding-copy"><span class="eyebrow">First recommendation</span><h1>Your top match.</h1></div><section class="first-match"><img src="${creators[0].image}" alt="Yoga With Adriene"><div class="first-match-score"><strong>96</strong><small>FIT</small></div><div><h2>Yoga With Adriene</h2><p>Trust-led wellness · 13.7M</p><div class="chips"><span class="chip selected">Audience</span><span class="chip selected">Brand safe</span></div></div></section><section class="match-proof"><div><span>12</span><small>videos checked</small></div><div><span>4.8%</span><small>engagement</small></div><div><span>Low</span><small>risk</small></div></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext">Build first shortlist</button></div>`}
+  </section>`,
+
+  transition: () => `<section class="transition-shell"><div class="transition-mark"><span class="brandmark"></span><i></i></div><span class="eyebrow">First shortlist ready</span><h1>Now let the campaign move.</h1><div class="transition-stats"><div><strong>7</strong><span>ranked</span></div><div><strong>3</strong><span>shortlisted</span></div><div><strong>1</strong><span>brief ready</span></div></div><p>Jump ahead to a live campaign after six weeks in Orbit.</p><button class="primary" id="fastForward">Fast-forward 6 weeks →</button></section>`,
+
   home: () => `${appHeader()}
-    <section class="hero"><span class="spark">✦</span><span class="eyebrow">Creator partnership OS</span><h1>Move from brief to booked.</h1><p>Build a defensible shortlist, manage outreach, and keep every creator activation on track.</p><div class="hero-actions"><button class="primary" data-go="create">New campaign →</button><button class="hero-sample" id="sampleCampaign">Open sample</button></div><div class="brand-badges hero-sources">${geminiBadge('Gemini reasoning')}${youtubeBadge('YouTube signals')}</div></section>
-    <div class="section-head"><h3>Active campaign</h3><button data-go="workspace">View campaign</button></div>
+    <div class="mature-heading"><div><span class="eyebrow">Tuesday · Sep 23</span><h1>Morning, Alex.</h1></div><button data-go="create" aria-label="Create campaign">＋</button></div>
+    <section class="focus-card" data-go="pool"><div class="row"><span class="focus-label">NEEDS YOU</span><span class="status warning">Due today</span></div><h2>Approve 4 creator picks</h2><p>Peakline · Summer Training</p><button>Review shortlist →</button></section>
+    <div class="home-glance"><article><strong>4</strong><span>replies</span></article><article><strong>2</strong><span>drafts</span></article><article><strong>14h</strong><span>saved</span></article></div>
+    <div class="section-head compact-head"><h3>Active campaign</h3><button data-go="workspace">Open</button></div>
     <article class="campaign-card" data-go="workspace"><div class="row"><div><span class="eyebrow">Peakline Hydration · US</span><h3>Summer Training Launch</h3></div><span class="status">● In outreach</span></div><div class="progress"><span style="width:58%"></span></div><div class="row"><small>8 of 12 creator slots</small><small>$31.5K of $45K committed</small></div></article>
-    <article class="acceleration-mini" data-go="workspace"><div><span>AI-assisted planning</span><strong>14h</strong><small>estimated manual work avoided</small></div><span class="time-arrow">→</span><div><span>Time to shortlist</span><strong>12m</strong><small>from approved brief</small></div></article>
-    <div class="section-head"><h3>Needs attention</h3></div><div class="metric-row"><div class="metric"><strong>3</strong><span>client approvals</span></div><div class="metric"><strong>4</strong><span>creator replies</span></div><div class="metric"><strong>2</strong><span>drafts due</span></div></div>
-    <div class="section-head"><h3>Recent campaigns</h3><button>View all</button></div><article class="campaign-card"><div class="row"><div><span class="eyebrow">Aster Labs</span><h3>Morning Reset</h3><p>Completed · 6 creators</p></div><span class="status neutral">Report ready</span></div></article>`,
+    <div class="section-head compact-head"><h3>Up next</h3></div><section class="home-queue"><button data-go="review"><span class="queue-dot coral"></span><div><strong>Review Adriene’s draft</strong><small>2 claims flagged</small></div><b>›</b></button><button data-go="messages"><span class="queue-dot mint"></span><div><strong>Reply to Jeff</strong><small>Rate received</small></div><b>›</b></button></section>`,
 
   create: () => `${pageTitle('Create campaign')}<div class="stepper">${[1,2,3,4].map(i=>`<span class="${i<=state.formStep?'on':''}"></span>`).join('')}</div>${state.formStep===1?`
     <div class="wizard-head"><span class="eyebrow">1 of 4 · Goal</span><button id="sampleBrief">Use sample brief</button></div><h1>What should this campaign achieve?</h1><p class="wizard-help">Pick one. You can fine-tune everything later.</p>
@@ -99,6 +116,9 @@ const screens = {
 function render() {
   app.innerHTML = screens[state.screen]();
   app.scrollTop = 0;
+  const introMode = ['welcome','onboarding','transition'].includes(state.screen);
+  nav.classList.toggle('hidden', introMode);
+  app.classList.toggle('intro-mode', introMode);
   document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.nav===state.screen || (state.screen==='profile'&&b.dataset.nav==='match') || (state.screen==='compare'&&b.dataset.nav==='pool') || (state.screen==='chat'&&b.dataset.nav==='messages') || (['brief','review'].includes(state.screen)&&b.dataset.nav==='workspace')));
   bind();
 }
@@ -107,6 +127,11 @@ function go(screen) { state.screen=screen; render(); }
 function toast(message) { const t=document.querySelector('#toast'); t.textContent=message; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1700); }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+  const startOnboarding=app.querySelector('#startOnboarding'); if(startOnboarding) startOnboarding.onclick=()=>{state.onboardingStep=1;go('onboarding')};
+  const skipOnboarding=app.querySelector('#skipOnboarding'); if(skipOnboarding) skipOnboarding.onclick=()=>go('transition');
+  const onboardingBack=app.querySelector('#onboardingBack'); if(onboardingBack) onboardingBack.onclick=()=>{if(state.onboardingStep>1){state.onboardingStep--;render()}else go('welcome')};
+  const onboardingNext=app.querySelector('#onboardingNext'); if(onboardingNext) onboardingNext.onclick=()=>{if(state.onboardingStep<3){state.onboardingStep++;render()}else go('transition')};
+  const fastForward=app.querySelector('#fastForward'); if(fastForward) fastForward.onclick=()=>{app.querySelector('.transition-shell')?.classList.add('leaving');setTimeout(()=>go('home'),420)};
   app.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('selected')));
   app.querySelectorAll('.choice-stack').forEach(group=>group.querySelectorAll('.choice-card').forEach(card=>card.addEventListener('click',()=>{group.querySelectorAll('.choice-card').forEach(c=>{c.classList.remove('selected');c.querySelector('span').textContent='○'});card.classList.add('selected');card.querySelector('span').textContent='◉'})));
   const reasonButton=app.querySelector('#reasonButton'); if(reasonButton) reasonButton.onclick=()=>{app.querySelector('#reasonDetail').classList.toggle('open');reasonButton.classList.toggle('open')};

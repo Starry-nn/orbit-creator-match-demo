@@ -9,6 +9,7 @@ The discovery experience borrows the interaction principles—not the branding�
 ## Included flows
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
+- First-run onboarding that moves from sample brief to first creator match, then fast-forwards into a seeded six-week campaign workspace
 - AI-ranked creator discovery feed
 - Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars
@@ -30,6 +31,8 @@ python3 -m http.server 4173
 ```
 
 Then open `http://localhost:4173/creator-match-demo/` when serving from the parent folder.
+
+The default route starts with the new-user experience. Add `?mode=workspace` to open the returning-user dashboard directly.
 
 The prototype is designed at 393 × 852 CSS pixels and scales down to smaller iPhone viewports.
 
