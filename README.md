@@ -6,10 +6,14 @@ The name **Orbit** reflects the product's job: keeping clients, creators, briefs
 
 The discovery experience borrows the interaction principles—not the branding—from story-led profile products such as Hinge: one creator is presented as a scrollable narrative made of media, prompts, performance evidence, and AI reasoning. Teams can shortlist a creator from a specific profile section and preserve that context as a decision note.
 
+## Demo
+
+[Watch the 37-second guided product tour](demo/orbit-guided-tour.mp4)
+
 ## Included flows
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
-- First-run onboarding that moves from sample brief to first creator match, then fast-forwards into a seeded six-week campaign workspace
+- Game-style first-run tour that guides users through the real campaign, matching, shortlist, comparison, outreach, creator brief, and workspace interfaces
 - AI-ranked creator discovery feed
 - Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars

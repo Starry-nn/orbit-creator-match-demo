@@ -9,7 +9,7 @@ const creators = [
 ];
 
 const initialScreen = new URLSearchParams(window.location.search).get('mode') === 'workspace' ? 'home' : 'welcome';
-const state = {screen:initialScreen, onboardingStep:1, creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
+const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 
@@ -23,6 +23,20 @@ const fitSignals = creator => ({
   momentum: Math.max(76, creator.score - 7),
   safety: Math.max(80, creator.score - 1)
 });
+
+const tourSteps = [
+  {screen:'home', target:'[data-tour="create"]', kicker:'Campaign setup', title:'Start with the brief.', copy:'Create the campaign Orbit will use to rank creators.'},
+  {screen:'create', target:'#sampleBrief', kicker:'Campaign setup', title:'Load a real brief.', copy:'Use the sample so you can feel the full workflow in under two minutes.'},
+  {screen:'create', target:'#nextStep', kicker:'Gemini analysis', title:'Turn inputs into criteria.', copy:'Gemini extracts the audience, creative direction and guardrails.'},
+  {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Open the evidence behind the score before making a decision.'},
+  {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
+  {screen:'pool', target:'[data-tour="compare"]', kicker:'Shortlist review', title:'Compare finalists.', copy:'See role, cost and risk side by side.'},
+  {screen:'compare', target:'[data-tour="outreach"]', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
+  {screen:'messages', target:'[data-open-chat="0"]', kicker:'Outreach', title:'Open the reply.', copy:'Track status and keep the creator conversation in one place.'},
+  {screen:'chat', target:'#send', kicker:'AI creator brief', title:'Send the next step.', copy:'Confirm interest, then let Orbit tailor the campaign brief.'},
+  {screen:'brief', target:'#approve', kicker:'Creator brief', title:'Approve the tailored brief.', copy:'Creator signals become specific guidance, claims and deliverables.'},
+  {screen:'workspace', target:null, kicker:'Tour complete', title:'The campaign is moving.', copy:'You have gone from client brief to an activation-ready workspace.'}
+];
 
 const screens = {
   welcome: () => `<section class="welcome-shell">
@@ -42,7 +56,7 @@ const screens = {
   transition: () => `<section class="transition-shell"><div class="transition-mark"><span class="brandmark"></span><i></i></div><span class="eyebrow">First shortlist ready</span><h1>Now let the campaign move.</h1><div class="transition-stats"><div><strong>7</strong><span>ranked</span></div><div><strong>3</strong><span>shortlisted</span></div><div><strong>1</strong><span>brief ready</span></div></div><p>Jump ahead to a live campaign after six weeks in Orbit.</p><button class="primary" id="fastForward">Fast-forward 6 weeks →</button></section>`,
 
   home: () => `${appHeader()}
-    <div class="mature-heading"><div><span class="eyebrow">Tuesday · Sep 23</span><h1>Morning, Alex.</h1></div><button data-go="create" aria-label="Create campaign">＋</button></div>
+    <div class="mature-heading"><div><span class="eyebrow">Tuesday · Sep 23</span><h1>Morning, Alex.</h1></div><button data-go="create" data-tour="create" aria-label="Create campaign">＋</button></div>
     <section class="focus-card" data-go="pool"><div class="row"><span class="focus-label">NEEDS YOU</span><span class="status warning">Due today</span></div><h2>Approve 4 creator picks</h2><p>Peakline · Summer Training</p><button>Review shortlist →</button></section>
     <div class="home-glance"><article><strong>4</strong><span>replies</span></article><article><strong>2</strong><span>drafts</span></article><article><strong>14h</strong><span>saved</span></article></div>
     <div class="section-head compact-head"><h3>Active campaign</h3><button data-go="workspace">Open</button></div>
@@ -68,7 +82,7 @@ const screens = {
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Shortlist profile introduction">＋</button></section>
-      <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" data-pick="Full creator profile" aria-label="Shortlist"><span>＋</span>Shortlist</button><button class="action save" data-action="save" aria-label="Save">☆</button></div>
+      <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Shortlist"><span>＋</span>Shortlist</button><button class="action save" data-action="save" aria-label="Save">☆</button></div>
       <section class="profile-facts"><div><strong>${c.subs}</strong><small>SUBSCRIBERS</small></div><div><strong>${c.views}</strong><small>AVG. VIEWS</small></div><div><strong>${c.eng}</strong><small>ENGAGEMENT</small></div><div class="fit-pill"><strong>${c.score}</strong><small>FIT SCORE</small></div></section>
       <section class="profile-prompt"><span class="prompt-label">Content fit</span><div class="signal-copy">${c.signal}</div><button class="content-pick dark" data-pick="Creator voice and community" aria-label="Shortlist creator prompt">＋</button></section>
       <section class="video-story" style="background-image:url('${c.videoImage}')"><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> PUBLIC YOUTUBE VIDEO</span><h2>${c.videoTitle}</h2><span class="watch">▶ Review source</span></div><button class="content-pick" data-pick="Recent content performance" aria-label="Shortlist recent video">＋</button></section>
@@ -86,10 +100,10 @@ const screens = {
 
   pool: () => `${appHeader()}<span class="eyebrow">Shortlist review</span><h1>Build the client shortlist.</h1><div class="filter-row"><button class="chip selected">7 sample profiles</button><button class="chip">Client-ready 4</button><button class="chip">Saved 3</button><button class="chip">Fit 90+</button></div>
     ${creators.map((c,i)=>`<article class="creator-list-item" data-go="profile"><input class="check" type="checkbox" ${i<2?'checked':''} onclick="event.stopPropagation()"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></div><span class="score">Fit ${c.score}</span></article>`).join('')}
-    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong>2 selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare">Compare →</button></div>`,
+    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong>2 selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare" data-tour="compare">Compare →</button></div>`,
 
   compare: () => `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review</span><h1>Choose the right role for each creator.</h1><div class="compare-grid"><div></div><div><strong>Adriene</strong><br><span class="score">Fit 96</span></div><div><strong>Jeff</strong><br><span class="score">Fit 93</span></div><div class="label">Audience</div><div>Broad wellness</div><div>High-intent fitness</div><div class="label">Est. fee</div><div>$12–15K</div><div>$18–22K</div><div class="label">Content role</div><div>Trust & habit</div><div>Proof & detail</div><div class="label">Conflict risk</div><div>Review</div><div>Low</div><div class="label">Client status</div><div>Ready</div><div>Ready</div></div>
-    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with Adriene for trust and daily habit.</strong><br>Use Jeff as the evidence-led supporting partner if budget allows. Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages">Prepare outreach</button>`,
+    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with Adriene for trust and daily habit.</strong><br>Use Jeff as the evidence-led supporting partner if budget allows. Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`,
 
   messages: () => `${appHeader()}<span class="eyebrow">Outreach desk</span><h1>Keep outreach moving.</h1><div class="brand-badges page-badges">${geminiBadge('Personalized drafts')}</div><div class="filter-row"><button class="chip selected">All conversations</button><button class="chip">Needs reply 4</button><button class="chip">Follow-up 3</button></div>${creators.map((c,i)=>`<article class="thread" data-open-chat="${i}"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${i===0?'I’d love to hear more about the launch!':'Campaign fit, timing, and next steps…'}</p></div><div><time>${i===0?'9:18':'Tue'}</time><br><span class="status">${i===0?'Responded':i===1?'Delivered':'Follow-up'}</span></div></article>`).join('')}<button class="secondary" style="width:100%;margin-top:16px" id="draft"><img class="button-icon" src="assets/brands/gemini.svg" alt=""> Draft follow-up</button>`,
 
@@ -121,14 +135,59 @@ function render() {
   app.classList.toggle('intro-mode', introMode);
   document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.nav===state.screen || (state.screen==='profile'&&b.dataset.nav==='match') || (state.screen==='compare'&&b.dataset.nav==='pool') || (state.screen==='chat'&&b.dataset.nav==='messages') || (['brief','review'].includes(state.screen)&&b.dataset.nav==='workspace')));
   bind();
+  renderTour();
 }
 
 function go(screen) { state.screen=screen; render(); }
 function toast(message) { const t=document.querySelector('#toast'); t.textContent=message; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1700); }
+function clearTourUI() {
+  document.querySelector('#tourLayer')?.remove();
+  document.querySelector('.tour-target')?.classList.remove('tour-target');
+  document.querySelector('.phone')?.classList.remove('tour-running');
+}
+function renderTour() {
+  clearTourUI();
+  if(!state.tourActive) return;
+  const step=tourSteps[state.tourStep];
+  if(!step || step.screen!==state.screen) return;
+  const target=step.target?app.querySelector(step.target):null;
+  const layer=document.createElement('section');
+  layer.id='tourLayer';
+  layer.className=`tour-layer ${target?'':'tour-finish'}`;
+  layer.innerHTML=`<div class="tour-shade"></div><article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}<button class="tour-exit" id="exitTour" aria-label="Exit tour">×</button></article>`;
+  document.querySelector('.phone').appendChild(layer);
+  document.querySelector('.phone').classList.add('tour-running');
+  if(target) {
+    target.classList.add('tour-target');
+    requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
+    setTimeout(()=>{if(target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
+    target.addEventListener('click',event=>{
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      runTourAction();
+    },{capture:true,once:true});
+  }
+  document.querySelector('#exitTour').onclick=()=>{state.tourActive=false;clearTourUI();toast('Tour closed')};
+  const finish=document.querySelector('#finishTour');
+  if(finish) finish.onclick=()=>{state.tourActive=false;state.tourStep=0;go('transition')};
+}
+function runTourAction() {
+  const step=state.tourStep;
+  if(step===0) { state.tourStep=1;state.formStep=1;go('create'); }
+  else if(step===1) { state.tourStep=2;state.formStep=4;render();toast('Sample brief loaded'); }
+  else if(step===2) { state.tourStep=3;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
+  else if(step===3) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=4;render()},650); }
+  else if(step===4) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=5;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
+  else if(step===5) { state.tourStep=6;go('compare'); }
+  else if(step===6) { state.tourStep=7;go('messages'); }
+  else if(step===7) { state.tourStep=8;go('chat'); }
+  else if(step===8) { state.tourStep=9;toast('Message sent');setTimeout(()=>go('brief'),350); }
+  else if(step===9) { state.tourStep=10;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+}
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
-  const startOnboarding=app.querySelector('#startOnboarding'); if(startOnboarding) startOnboarding.onclick=()=>{state.onboardingStep=1;go('onboarding')};
-  const skipOnboarding=app.querySelector('#skipOnboarding'); if(skipOnboarding) skipOnboarding.onclick=()=>go('transition');
+  const startOnboarding=app.querySelector('#startOnboarding'); if(startOnboarding) startOnboarding.onclick=()=>{state.tourActive=true;state.tourStep=0;state.creator=0;state.formStep=1;state.reviewComplete=false;go('home')};
+  const skipOnboarding=app.querySelector('#skipOnboarding'); if(skipOnboarding) skipOnboarding.onclick=()=>{state.tourActive=false;go('home')};
   const onboardingBack=app.querySelector('#onboardingBack'); if(onboardingBack) onboardingBack.onclick=()=>{if(state.onboardingStep>1){state.onboardingStep--;render()}else go('welcome')};
   const onboardingNext=app.querySelector('#onboardingNext'); if(onboardingNext) onboardingNext.onclick=()=>{if(state.onboardingStep<3){state.onboardingStep++;render()}else go('transition')};
   const fastForward=app.querySelector('#fastForward'); if(fastForward) fastForward.onclick=()=>{app.querySelector('.transition-shell')?.classList.add('leaving');setTimeout(()=>go('home'),420)};
