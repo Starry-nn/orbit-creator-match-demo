@@ -13,6 +13,8 @@ const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourSte
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
+const deviceButtons = document.querySelectorAll('[data-device]');
+const viewButtons = document.querySelectorAll('[data-demo-view]');
 
 const appHeader = () => `<header class="topline"><div class="brand"><span class="brandmark"></span>Orbit</div><div class="avatar">AC</div></header>`;
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
@@ -151,6 +153,7 @@ function render() {
   nav.classList.toggle('hidden', introMode);
   app.classList.toggle('intro-mode', introMode);
   document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.nav===state.screen || (state.screen==='profile'&&b.dataset.nav==='match') || (state.screen==='compare'&&b.dataset.nav==='pool') || (state.screen==='chat'&&b.dataset.nav==='messages') || (['brief','review'].includes(state.screen)&&b.dataset.nav==='workspace')));
+  viewButtons.forEach(b=>b.classList.toggle('active',b.dataset.demoView===state.screen));
   bind();
   renderTour();
 }
@@ -326,4 +329,19 @@ document.querySelector('#closeSheet').addEventListener('click',closeDecision);
 document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision);
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{state.pool++;document.querySelector('#poolBadge').textContent=state.pool;closeDecision();toast('Shortlisted with your note')});
+deviceButtons.forEach(button=>button.addEventListener('click',()=>{
+  const compact=button.dataset.device==='pixel';
+  document.documentElement.style.setProperty('--device-width',compact?'360px':'393px');
+  document.documentElement.style.setProperty('--device-height',compact?'800px':'852px');
+  deviceButtons.forEach(b=>b.classList.toggle('active',b===button));
+}));
+viewButtons.forEach(button=>button.addEventListener('click',()=>{
+  state.tourActive=false;state.tourStep=0;go(button.dataset.demoView);
+}));
+const setFocusMode=enabled=>{
+  document.body.classList.toggle('focus-mode',enabled);
+  document.querySelector('#focusMode').setAttribute('aria-pressed',String(enabled));
+};
+document.querySelector('#focusMode').addEventListener('click',()=>setFocusMode(true));
+document.querySelector('#focusExit').addEventListener('click',()=>setFocusMode(false));
 render();
