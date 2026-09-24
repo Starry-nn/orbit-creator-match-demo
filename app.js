@@ -44,6 +44,7 @@ const tourSteps = [
   {screen:'create', target:'#tourBudget', kicker:'Creator budget', title:'Set the investment range.', copy:'Orbit uses budget to balance reach, fit and creator mix.'},
   {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget and brand guardrails.'},
   {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Open the evidence behind the score before making a decision.'},
+  {screen:'match', target:'#swipeGuide', action:'swipe-demo', kicker:'Gesture controls', title:'Swipe to make the call.', copy:'Drag the profile left to pass or right to shortlist. Use touch, a mouse, or a trackpad.'},
   {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
@@ -97,6 +98,7 @@ const screens = {
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Shortlist profile introduction">＋</button></section>
+      <div class="swipe-guide" id="swipeGuide"><span>← Pass</span><strong>Swipe the profile</strong><span>Shortlist →</span></div>
       <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Shortlist"><span>＋</span>Shortlist</button><button class="action save" data-action="save" aria-label="Save">☆</button></div>
       <section class="profile-snapshot" aria-label="Creator stats">
         <div class="profile-fit"><div><span class="snapshot-label">Campaign fit</span><strong>${c.score}<small>/100</small></strong></div><span class="fit-verdict">Top match</span></div>
@@ -178,7 +180,7 @@ function renderTour() {
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
   if(step.coach==='top') layer.classList.add('coach-top');
-  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap only the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}</article>`;
+  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?`<small>${step.action==='swipe-demo'?'Swipe the profile to continue':'Tap only the highlighted action'}</small>`:'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
   if(target) {
@@ -201,11 +203,11 @@ function renderTour() {
     requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
     tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
     setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
-    target.addEventListener('click',event=>{
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      runTourAction();
-    },{capture:true,once:true});
+    if(step.action!=='swipe-demo') target.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        runTourAction();
+      },{capture:true,once:true});
   }
   const finish=document.querySelector('#finishTour');
   if(finish) finish.onclick=()=>{state.tourActive=false;state.tourStep=0;go('transition')};
@@ -218,12 +220,12 @@ function runTourAction() {
   else if(step===3) { state.tourStep=4;state.formStep=4;render();toast('Budget range set'); }
   else if(step===4) { state.tourStep=5;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
   else if(step===5) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=6;render()},650); }
-  else if(step===6) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=7;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
-  else if(step===7) { state.tourStep=8;go('compare'); }
-  else if(step===8) { state.tourStep=9;go('messages'); }
-  else if(step===9) { state.tourStep=10;go('chat'); }
-  else if(step===10) { state.tourStep=11;toast('Message sent');setTimeout(()=>go('brief'),350); }
-  else if(step===11) { state.tourStep=12;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===7) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=8;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
+  else if(step===8) { state.tourStep=9;go('compare'); }
+  else if(step===9) { state.tourStep=10;go('messages'); }
+  else if(step===10) { state.tourStep=11;go('chat'); }
+  else if(step===11) { state.tourStep=12;toast('Message sent');setTimeout(()=>go('brief'),350); }
+  else if(step===12) { state.tourStep=13;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
@@ -299,6 +301,9 @@ function bindSwipe(card) {
     if(!tracking && !horizontal) return;
     const decision=Math.abs(dx)>82?(dx<0?'pass':'shortlist'):null;
     reset();
+    if(decision && state.tourActive && tourSteps[state.tourStep]?.action==='swipe-demo') {
+      state.tourStep=7;toast(decision==='pass'?'Swipe left passes':'Swipe right shortlists');render();return;
+    }
     if(decision) act(decision);
   };
   card.addEventListener('pointerup',finish);

@@ -306,6 +306,14 @@ textarea { min-height: 85px; resize: none; }
 .active-dot { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(69,199,155,.2); }
 .profile-title .active-dot { flex: 0 0 10px; margin-right: 0; }
 .profile-identity .content-pick { bottom: 20px; }
+.swipe-guide { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 13px 2px 2px; padding: 9px 12px; border: 1px solid #d9def0; border-radius: 14px; background: linear-gradient(90deg,#fff0ed,#f7f7f5 42%,#eef1ff); color: var(--muted); font-size: 8px; font-weight: 800; }
+.swipe-guide strong { color: var(--ink); font-size: 9px; }
+.swipe-guide span:first-child { color: #c84f3e; }
+.swipe-guide span:last-child { color: var(--blue); }
+.tour-running .swipe-guide.tour-target span:first-child { animation: swipeLeft 1.5s ease-in-out infinite; }
+.tour-running .swipe-guide.tour-target span:last-child { animation: swipeRight 1.5s ease-in-out infinite; }
+@keyframes swipeLeft { 50% { transform: translateX(-4px); } }
+@keyframes swipeRight { 50% { transform: translateX(4px); } }
 .content-pick { position: absolute; z-index: 3; right: 17px; bottom: 17px; width: 47px; height: 47px; border-radius: 50%; border: 3px solid white; background: var(--blue); color: white; font-size: 25px; line-height: 1; box-shadow: 0 8px 20px rgba(26,31,48,.22); cursor: pointer; }
 .content-pick.dark { background: var(--ink); }
 .content-pick.blue { background: var(--blue); bottom: 16px; }
