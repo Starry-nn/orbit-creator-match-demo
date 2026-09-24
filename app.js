@@ -347,9 +347,13 @@ document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision)
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{state.pool++;document.querySelector('#poolBadge').textContent=state.pool;closeDecision();toast('Shortlisted with your note')});
 deviceButtons.forEach(button=>button.addEventListener('click',()=>{
-  const compact=button.dataset.device==='pixel';
-  document.documentElement.style.setProperty('--device-width',compact?'360px':'393px');
-  document.documentElement.style.setProperty('--device-height',compact?'800px':'852px');
+  const device=button.dataset.device;
+  const compact=device==='pixel';
+  const laptop=device==='laptop';
+  document.documentElement.style.setProperty('--device-width',laptop?'1280px':compact?'360px':'393px');
+  document.documentElement.style.setProperty('--device-height',laptop?'760px':compact?'800px':'852px');
+  phone.classList.toggle('browser-mode',laptop);
+  phone.setAttribute('aria-label',laptop?'Orbit creator partnership workspace in a browser':'Orbit creator partnership workspace on Google Pixel');
   deviceButtons.forEach(b=>b.classList.toggle('active',b===button));
 }));
 viewButtons.forEach(button=>button.addEventListener('click',()=>{

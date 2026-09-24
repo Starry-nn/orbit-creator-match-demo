@@ -551,6 +551,49 @@ textarea { min-height: 85px; resize: none; }
 .decision-sheet p { font-size: 11px; line-height: 1.45; }
 .decision-sheet textarea { margin-top: 13px; }
 .sheet-actions { display: grid; grid-template-columns: 1fr 1.7fr; gap: 8px; margin-top: 12px; }
+
+/* Wide browser preview: the product reflows into a desktop workspace. */
+.phone.browser-mode { width: min(calc(100vw - 48px), var(--device-width)); height: min(calc(100vh - 122px), var(--device-height)); min-height: 620px; border-radius: 18px; box-shadow: 0 0 0 1px rgba(82,91,112,.2), 0 28px 80px rgba(27,36,64,.22); }
+.browser-mode::before { content: ""; position: absolute; z-index: 35; top: 13px; left: 18px; width: 10px; height: 10px; border-radius: 50%; background: #ff6b62; box-shadow: 18px 0 #f7c948, 36px 0 #45c79b; }
+.browser-mode .statusbar { height: 38px; padding: 10px 20px 0 78px; justify-content: flex-start; border-bottom: 1px solid var(--line); background: #fff; color: transparent; font-size: 0; }
+.browser-mode .statusbar::after { content: "orbit.google/demo"; width: min(480px, 48vw); padding: 5px 14px; border-radius: 7px; background: #f1f3f7; color: #7b8290; font-size: 9px; line-height: 1; text-align: center; }
+.browser-mode .pixel-camera, .browser-mode .pixel-gesture { display: none; }
+.browser-mode .app { height: calc(100% - 38px); padding: 28px 38px 40px 126px; }
+.browser-mode .app:not(.intro-mode) > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.browser-mode .tabbar { top: 38px; right: auto; bottom: 0; width: 92px; height: auto; grid-template-columns: 1fr; grid-template-rows: repeat(5, 70px); align-content: center; padding: 22px 10px; border-top: 0; border-right: 1px solid var(--line); background: rgba(255,255,255,.96); }
+.browser-mode .tabbar button { border-radius: 14px; }
+.browser-mode .tabbar button.active { background: var(--blue-soft); }
+.browser-mode .tabbar i { top: 9px; right: 14px; }
+.browser-mode .topline { margin-top: 0; }
+.browser-mode .home-glance { grid-template-columns: repeat(3, minmax(150px,1fr)); }
+.browser-mode .focus-card { min-height: 185px; padding: 26px; }
+.browser-mode .home-queue { display: grid; grid-template-columns: 1fr 1fr; }
+.browser-mode .home-queue button:first-child { border-right: 1px solid var(--line); border-bottom: 0; }
+.browser-mode .workspace-kpis { grid-template-columns: repeat(4,1fr); }
+.browser-mode .creator-list-item { grid-template-columns: 18px 64px 1fr auto; }
+.browser-mode .creator-list-item img { width: 64px; height: 64px; }
+.browser-mode .profile-stream { display: grid; grid-template-columns: minmax(360px,.85fr) minmax(420px,1.15fr); gap: 18px 24px; align-items: start; }
+.browser-mode .profile-stream > .profile-hero { grid-column: 1; grid-row: 1; aspect-ratio: 4 / 3; border-radius: 25px 25px 0 0; }
+.browser-mode .profile-stream > .profile-identity { grid-column: 1; grid-row: 2; margin-top: -18px; }
+.browser-mode .profile-stream > .swipe-guide { grid-column: 1; grid-row: 3; }
+.browser-mode .profile-stream > .profile-actions { grid-column: 1; grid-row: 4; }
+.browser-mode .profile-stream > .profile-snapshot { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+.browser-mode .profile-stream > .profile-prompt { grid-column: 2; grid-row: 3 / span 2; min-height: 150px; }
+.browser-mode .profile-stream > .video-story,
+.browser-mode .profile-stream > .match-memo,
+.browser-mode .profile-stream > .safety-card,
+.browser-mode .profile-stream > .end-note { grid-column: 1 / -1; }
+.browser-mode .profile-stream > .video-story { height: 430px; }
+.browser-mode .welcome-shell { display: grid; grid-template-columns: minmax(330px,.9fr) minmax(400px,1.1fr); grid-template-rows: auto 1fr auto; gap: 14px 60px; max-width: 1040px; margin: 0 auto; }
+.browser-mode .welcome-brand { grid-column: 1 / -1; }
+.browser-mode .welcome-copy { align-self: center; margin-top: 0; }
+.browser-mode .welcome-copy h1 { max-width: 520px; font-size: 56px; }
+.browser-mode .orbit-demo { grid-column: 2; grid-row: 2 / span 2; min-height: 500px; margin: 0; }
+.browser-mode .welcome-actions { align-self: end; }
+.browser-mode .welcome-sources { justify-content: flex-start; }
+.browser-mode .onboarding-shell, .browser-mode .transition-shell { max-width: 720px; margin: 0 auto; }
+.browser-mode .decision-sheet { left: 50%; right: auto; bottom: 22px; width: min(520px, calc(100% - 140px)); transform: translateX(-50%); border-radius: 28px; }
+.browser-mode .toast { bottom: 28px; }
 @media (max-width: 599px) {
   body { overflow: hidden; }
   .demo-controls, .focus-exit { display: none !important; }

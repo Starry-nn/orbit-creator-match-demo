@@ -38,7 +38,7 @@ Then open `http://localhost:4173/creator-match-demo/` when serving from the pare
 
 The default route starts with the new-user experience. Add `?mode=workspace` to open the returning-user dashboard directly.
 
-The prototype is designed at 393 × 852 CSS pixels and scales down to smaller iPhone viewports.
+The presentation controls include Pixel 8 Pro (393px), Pixel 8 (360px), and a responsive 1280px browser workspace. The browser option reflows navigation and content for a laptop presentation while preserving the two mobile layouts.
 
 Creator subscriber counts, performance figures, match scores, Gemini outputs, risk flags, and campaign recommendations are illustrative prototype data. Creator names, Google product marks, and YouTube imagery identify the public products and channels used in the proposed workflow; no affiliation or endorsement is implied.
 
