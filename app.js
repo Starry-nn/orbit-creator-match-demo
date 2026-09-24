@@ -46,7 +46,7 @@ const tourSteps = [
   {screen:'match', target:'.profile-snapshot', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal.', copy:'Start with campaign fit, audience scale, average views, engagement, and the creator’s strongest content signals.'},
   {screen:'match', target:'#swipeGuide', action:'swipe-demo', kicker:'Gesture controls', title:'Swipe to make the call.', copy:'Drag the profile left to pass or right to shortlist. Use touch, a mouse, or a trackpad.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Here’s why Gemini sees a strong fit.', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
-  {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
+  {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Shortlist saved', title:'Open your shortlist.', copy:'Your creator decision is saved with its supporting context. Open Shortlist to review and compare candidates.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
   {screen:'messages', target:'[data-open-chat="0"]', kicker:'Outreach', title:'Open the reply.', copy:'Track status and keep the creator conversation in one place.'},
@@ -176,7 +176,7 @@ function renderTour() {
   if(!state.tourActive) return;
   const step=tourSteps[state.tourStep];
   if(!step || step.screen!==state.screen) return;
-  const target=step.target?app.querySelector(step.target):null;
+  const target=step.target?(app.querySelector(step.target) || phone.querySelector(step.target)):null;
   const layer=document.createElement('section');
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
