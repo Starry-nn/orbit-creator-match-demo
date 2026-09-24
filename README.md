@@ -13,7 +13,7 @@ The discovery experience borrows the interaction principlesâ€”not the brandingâ€
 ## Included flows
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
-- Game-style first-run tour that guides users through the real campaign, matching, shortlist, comparison, outreach, creator brief, and workspace interfaces
+- Locked 13-step first-run tour that requires users to set the campaign goal, target audience and budget before guiding them through matching, shortlist, comparison, outreach, creator brief, and workspace interfaces
 - AI-ranked creator discovery feed
 - Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars

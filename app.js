@@ -12,6 +12,7 @@ const initialScreen = new URLSearchParams(window.location.search).get('mode') ==
 const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
+const phone = document.querySelector('.phone');
 
 const appHeader = () => `<header class="topline"><div class="brand"><span class="brandmark"></span>Orbit</div><div class="avatar">AC</div></header>`;
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
@@ -26,15 +27,17 @@ const fitSignals = creator => ({
 
 const tourSteps = [
   {screen:'home', target:'[data-tour="create"]', kicker:'Campaign setup', title:'Start with the brief.', copy:'Create the campaign Orbit will use to rank creators.'},
-  {screen:'create', target:'#sampleBrief', kicker:'Campaign setup', title:'Load a real brief.', copy:'Use the sample so you can feel the full workflow in under two minutes.'},
-  {screen:'create', target:'#nextStep', kicker:'Gemini analysis', title:'Turn inputs into criteria.', copy:'Gemini extracts the audience, creative direction and guardrails.'},
+  {screen:'create', target:'#tourGoal', kicker:'Campaign goal', title:'Choose the outcome.', copy:'Start with the job the creator partnership needs to do.'},
+  {screen:'create', target:'#tourAudience', kicker:'Target audience', title:'Choose the audience.', copy:'Set the people this campaign must reach and influence.'},
+  {screen:'create', target:'#tourBudget', kicker:'Creator budget', title:'Set the investment range.', copy:'Orbit uses budget to balance reach, fit and creator mix.'},
+  {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget and brand guardrails.'},
   {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Open the evidence behind the score before making a decision.'},
   {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
-  {screen:'pool', target:'[data-tour="compare"]', kicker:'Shortlist review', title:'Compare finalists.', copy:'See role, cost and risk side by side.'},
-  {screen:'compare', target:'[data-tour="outreach"]', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
+  {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'See role, cost and risk side by side.'},
+  {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
   {screen:'messages', target:'[data-open-chat="0"]', kicker:'Outreach', title:'Open the reply.', copy:'Track status and keep the creator conversation in one place.'},
-  {screen:'chat', target:'#send', kicker:'AI creator brief', title:'Send the next step.', copy:'Confirm interest, then let Orbit tailor the campaign brief.'},
-  {screen:'brief', target:'#approve', kicker:'Creator brief', title:'Approve the tailored brief.', copy:'Creator signals become specific guidance, claims and deliverables.'},
+  {screen:'chat', target:'#send', coach:'top', kicker:'AI creator brief', title:'Send the next step.', copy:'Confirm interest, then let Orbit tailor the campaign brief.'},
+  {screen:'brief', target:'#approve', coach:'top', kicker:'Creator brief', title:'Approve the tailored brief.', copy:'Creator signals become specific guidance, claims and deliverables.'},
   {screen:'workspace', target:null, kicker:'Tour complete', title:'The campaign is moving.', copy:'You have gone from client brief to an activation-ready workspace.'}
 ];
 
@@ -65,11 +68,11 @@ const screens = {
 
   create: () => `${pageTitle('Create campaign')}<div class="stepper">${[1,2,3,4].map(i=>`<span class="${i<=state.formStep?'on':''}"></span>`).join('')}</div>${state.formStep===1?`
     <div class="wizard-head"><span class="eyebrow">1 of 4 · Goal</span><button id="sampleBrief">Use sample brief</button></div><h1>What should this campaign achieve?</h1><p class="wizard-help">Pick one. You can fine-tune everything later.</p>
-    <div class="choice-stack"><button class="choice-card selected"><span>◉</span><div><strong>Launch a product</strong><small>Build awareness and explain what makes it different.</small></div></button><button class="choice-card"><span>○</span><div><strong>Grow awareness</strong><small>Reach more of the right audience.</small></div></button><button class="choice-card"><span>○</span><div><strong>Drive action</strong><small>Generate trials, sign-ups, or sales.</small></div></button></div>`:state.formStep===2?`
+    <div class="choice-stack"><button class="choice-card selected" id="tourGoal"><span>◉</span><div><strong>Launch a product</strong><small>Build awareness and explain what makes it different.</small></div></button><button class="choice-card"><span>○</span><div><strong>Grow awareness</strong><small>Reach more of the right audience.</small></div></button><button class="choice-card"><span>○</span><div><strong>Drive action</strong><small>Generate trials, sign-ups, or sales.</small></div></button></div>`:state.formStep===2?`
     <span class="eyebrow">2 of 4 · Audience</span><h1>Who are you trying to reach?</h1><p class="wizard-help">Choose a starting point. Orbit will infer the rest.</p>
-    <div class="chips large"><button class="chip selected">Active women 25–40</button><button class="chip">Everyday athletes</button><button class="chip">Wellness beginners</button><button class="chip">Endurance runners</button></div><label>Optional detail</label><input value="US audience interested in fitness, outdoors, and clean-label products" />`:state.formStep===3?`
+    <div class="chips large"><button class="chip selected" id="tourAudience">Active women 25–40</button><button class="chip">Everyday athletes</button><button class="chip">Wellness beginners</button><button class="chip">Endurance runners</button></div><label>Optional detail</label><input value="US audience interested in fitness, outdoors, and clean-label products" />`:state.formStep===3?`
     <span class="eyebrow">3 of 4 · Budget</span><h1>What can you invest in creators?</h1><p class="wizard-help">A range is enough for the first match.</p>
-    <div class="choice-stack"><button class="choice-card"><span>○</span><div><strong>Under $15K</strong><small>Focused test with micro creators.</small></div></button><button class="choice-card selected"><span>◉</span><div><strong>$25K–$50K</strong><small>Balanced reach and creator variety.</small></div></button><button class="choice-card"><span>○</span><div><strong>$50K+</strong><small>Multiple creators and larger channels.</small></div></button></div>`:`
+    <div class="choice-stack"><button class="choice-card"><span>○</span><div><strong>Under $15K</strong><small>Focused test with micro creators.</small></div></button><button class="choice-card selected" id="tourBudget"><span>◉</span><div><strong>$25K–$50K</strong><small>Balanced reach and creator variety.</small></div></button><button class="choice-card"><span>○</span><div><strong>$50K+</strong><small>Multiple creators and larger channels.</small></div></button></div>`:`
     <span class="eyebrow">4 of 4 · Brief intelligence</span><h1>Review what Orbit will match.</h1><p class="wizard-help">Gemini extracted the criteria below from the campaign inputs and attached brief.</p>
     <div class="chips large"><button class="chip selected">Evidence-led</button><button class="chip selected">Optimistic</button><button class="chip selected">Story-first</button><button class="chip">Comedy</button><button class="chip">Cinematic</button></div>
     <div class="campaign-summary"><span class="ai-star">✦</span><div><strong>Peakline · Summer Training Launch</strong><p>Product launch · Active women 25–40 · $25K–$50K</p></div></div>
@@ -154,35 +157,37 @@ function renderTour() {
   const layer=document.createElement('section');
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
-  layer.innerHTML=`<div class="tour-shade"></div><article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}<button class="tour-exit" id="exitTour" aria-label="Exit tour">×</button></article>`;
+  if(step.coach==='top') layer.classList.add('coach-top');
+  layer.innerHTML=`<div class="tour-shade" aria-hidden="true"></div><article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap only the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
   if(target) {
     target.classList.add('tour-target');
     requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
-    setTimeout(()=>{if(target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
+    if(!step.coach) setTimeout(()=>{if(target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
     target.addEventListener('click',event=>{
       event.preventDefault();
       event.stopImmediatePropagation();
       runTourAction();
     },{capture:true,once:true});
   }
-  document.querySelector('#exitTour').onclick=()=>{state.tourActive=false;clearTourUI();toast('Tour closed')};
   const finish=document.querySelector('#finishTour');
   if(finish) finish.onclick=()=>{state.tourActive=false;state.tourStep=0;go('transition')};
 }
 function runTourAction() {
   const step=state.tourStep;
   if(step===0) { state.tourStep=1;state.formStep=1;go('create'); }
-  else if(step===1) { state.tourStep=2;state.formStep=4;render();toast('Sample brief loaded'); }
-  else if(step===2) { state.tourStep=3;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
-  else if(step===3) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=4;render()},650); }
-  else if(step===4) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=5;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
-  else if(step===5) { state.tourStep=6;go('compare'); }
-  else if(step===6) { state.tourStep=7;go('messages'); }
-  else if(step===7) { state.tourStep=8;go('chat'); }
-  else if(step===8) { state.tourStep=9;toast('Message sent');setTimeout(()=>go('brief'),350); }
-  else if(step===9) { state.tourStep=10;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===1) { state.tourStep=2;state.formStep=2;render();toast('Campaign goal set'); }
+  else if(step===2) { state.tourStep=3;state.formStep=3;render();toast('Target audience set'); }
+  else if(step===3) { state.tourStep=4;state.formStep=4;render();toast('Budget range set'); }
+  else if(step===4) { state.tourStep=5;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
+  else if(step===5) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=6;render()},650); }
+  else if(step===6) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=7;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
+  else if(step===7) { state.tourStep=8;go('compare'); }
+  else if(step===8) { state.tourStep=9;go('messages'); }
+  else if(step===9) { state.tourStep=10;go('chat'); }
+  else if(step===10) { state.tourStep=11;toast('Message sent');setTimeout(()=>go('brief'),350); }
+  else if(step===11) { state.tourStep=12;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
@@ -260,6 +265,14 @@ function act(action) {
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
+phone.addEventListener('click',event=>{
+  if(!state.tourActive || event.target.closest('.tour-target, #finishTour')) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const coach=document.querySelector('.tour-coach');
+  coach?.classList.remove('tour-nudge');
+  requestAnimationFrame(()=>coach?.classList.add('tour-nudge'));
+},true);
 document.querySelector('#closeSheet').addEventListener('click',closeDecision);
 document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision);
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
