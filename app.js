@@ -43,8 +43,9 @@ const tourSteps = [
   {screen:'create', target:'#tourAudience', kicker:'Target audience', title:'Choose the audience.', copy:'Set the people this campaign must reach and influence.'},
   {screen:'create', target:'#tourBudget', kicker:'Creator budget', title:'Set the investment range.', copy:'Orbit uses budget to balance reach, fit and creator mix.'},
   {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget and brand guardrails.'},
-  {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Open the evidence behind the score before making a decision.'},
+  {screen:'match', target:'.profile-snapshot', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal.', copy:'Start with campaign fit, audience scale, average views, engagement, and the creator’s strongest content signals.'},
   {screen:'match', target:'#swipeGuide', action:'swipe-demo', kicker:'Gesture controls', title:'Swipe to make the call.', copy:'Drag the profile left to pass or right to shortlist. Use touch, a mouse, or a trackpad.'},
+  {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Now open the evidence behind the score before making the final shortlist decision.'},
   {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
@@ -180,7 +181,7 @@ function renderTour() {
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
   if(step.coach==='top') layer.classList.add('coach-top');
-  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?`<small>${step.action==='swipe-demo'?'Swipe the profile to continue':'Tap only the highlighted action'}</small>`:'<button id="finishTour">See the live workspace →</button>'}</article>`;
+  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?(step.action==='continue'?'<button id="tourContinue">Continue →</button>':`<small>${step.action==='swipe-demo'?'Swipe the profile to continue':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
   if(target) {
@@ -203,7 +204,7 @@ function renderTour() {
     requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
     tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
     setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
-    if(step.action!=='swipe-demo') target.addEventListener('click',event=>{
+    if(!['swipe-demo','continue'].includes(step.action)) target.addEventListener('click',event=>{
         event.preventDefault();
         event.stopImmediatePropagation();
         runTourAction();
@@ -211,6 +212,8 @@ function renderTour() {
   }
   const finish=document.querySelector('#finishTour');
   if(finish) finish.onclick=()=>{state.tourActive=false;state.tourStep=0;go('transition')};
+  const tourContinue=document.querySelector('#tourContinue');
+  if(tourContinue) tourContinue.onclick=runTourAction;
 }
 function runTourAction() {
   const step=state.tourStep;
@@ -219,13 +222,14 @@ function runTourAction() {
   else if(step===2) { state.tourStep=3;state.formStep=3;render();toast('Target audience set'); }
   else if(step===3) { state.tourStep=4;state.formStep=4;render();toast('Budget range set'); }
   else if(step===4) { state.tourStep=5;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
-  else if(step===5) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=6;render()},650); }
-  else if(step===7) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=8;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
-  else if(step===8) { state.tourStep=9;go('compare'); }
-  else if(step===9) { state.tourStep=10;go('messages'); }
-  else if(step===10) { state.tourStep=11;go('chat'); }
-  else if(step===11) { state.tourStep=12;toast('Message sent');setTimeout(()=>go('brief'),350); }
-  else if(step===12) { state.tourStep=13;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===5) { state.tourStep=6;render(); }
+  else if(step===7) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=8;render()},650); }
+  else if(step===8) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=9;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
+  else if(step===9) { state.tourStep=10;go('compare'); }
+  else if(step===10) { state.tourStep=11;go('messages'); }
+  else if(step===11) { state.tourStep=12;go('chat'); }
+  else if(step===12) { state.tourStep=13;toast('Message sent');setTimeout(()=>go('brief'),350); }
+  else if(step===13) { state.tourStep=14;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
@@ -331,7 +335,7 @@ function act(action) {
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
 phone.addEventListener('click',event=>{
-  if(!state.tourActive || event.target.closest('.tour-target, #finishTour')) return;
+  if(!state.tourActive || event.target.closest('.tour-target, #finishTour, #tourContinue')) return;
   event.preventDefault();
   event.stopImmediatePropagation();
   const coach=document.querySelector('.tour-coach');
