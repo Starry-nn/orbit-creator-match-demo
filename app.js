@@ -9,7 +9,7 @@ const creators = [
 ];
 
 const initialScreen = new URLSearchParams(window.location.search).get('mode') === 'workspace' ? 'home' : 'welcome';
-const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, selectedCompare:2, reviewComplete:false};
+const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, compareSelection:[0,1], reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
@@ -24,6 +24,15 @@ const fitSignals = creator => ({
   momentum: Math.max(76, creator.score - 7),
   safety: Math.max(80, creator.score - 1)
 });
+const compareDetails = [
+  {audience:'Broad wellness',fee:'$12–15K',role:'Trust & habit',risk:'Review'},
+  {audience:'High-intent fitness',fee:'$18–22K',role:'Proof & detail',risk:'Low'},
+  {audience:'Performance wellness',fee:'$9–12K',role:'Experiment story',risk:'Low'},
+  {audience:'Home strength',fee:'$14–18K',role:'Program integration',risk:'Review'},
+  {audience:'Plant-based wellness',fee:'$10–14K',role:'Lifestyle story',risk:'Low'},
+  {audience:'Global fitness',fee:'$20–25K',role:'Scaled routine',risk:'Review'},
+  {audience:'Pilates lifestyle',fee:'$12–16K',role:'Community energy',risk:'Conflict'}
+];
 
 const tourSteps = [
   {screen:'home', target:'[data-tour="create"]', kicker:'Campaign setup', title:'Start with the brief.', copy:'Create the campaign Orbit will use to rank creators.'},
@@ -33,7 +42,7 @@ const tourSteps = [
   {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget and brand guardrails.'},
   {screen:'match', target:'#reasonButton', kicker:'Creator discovery', title:'Ask why this match works.', copy:'Open the evidence behind the score before making a decision.'},
   {screen:'match', target:'#tourShortlist', kicker:'Human decision', title:'Shortlist the fit.', copy:'You make the call; Orbit keeps the evidence attached.'},
-  {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'See role, cost and risk side by side.'},
+  {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach.', copy:'Move the approved pairing into a personalized conversation.'},
   {screen:'messages', target:'[data-open-chat="0"]', kicker:'Outreach', title:'Open the reply.', copy:'Track status and keep the creator conversation in one place.'},
   {screen:'chat', target:'#send', coach:'top', kicker:'AI creator brief', title:'Send the next step.', copy:'Confirm interest, then let Orbit tailor the campaign brief.'},
@@ -86,7 +95,12 @@ const screens = {
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Shortlist profile introduction">＋</button></section>
       <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Shortlist"><span>＋</span>Shortlist</button><button class="action save" data-action="save" aria-label="Save">☆</button></div>
-      <section class="profile-facts"><div><strong>${c.subs}</strong><small>SUBSCRIBERS</small></div><div><strong>${c.views}</strong><small>AVG. VIEWS</small></div><div><strong>${c.eng}</strong><small>ENGAGEMENT</small></div><div class="fit-pill"><strong>${c.score}</strong><small>FIT SCORE</small></div></section>
+      <section class="profile-snapshot" aria-label="Creator stats">
+        <div class="profile-fit"><div><span class="snapshot-label">Campaign fit</span><strong>${c.score}<small>/100</small></strong></div><span class="fit-verdict">Top match</span></div>
+        <div class="snapshot-stats"><div><strong>${c.subs}</strong><small>Subscribers</small></div><div><strong>${c.views}</strong><small>Avg. views</small></div><div><strong>${c.eng}</strong><small>Engagement</small></div></div>
+        <div class="snapshot-detail"><span aria-hidden="true">◎</span><div><small>Creator category</small><strong>${c.niche}</strong></div></div>
+        <div class="snapshot-detail"><span aria-hidden="true">✦</span><div><small>Strongest signals</small><strong>${c.tags.join(' · ')}</strong></div></div>
+      </section>
       <section class="profile-prompt"><span class="prompt-label">Content fit</span><div class="signal-copy">${c.signal}</div><button class="content-pick dark" data-pick="Creator voice and community" aria-label="Shortlist creator prompt">＋</button></section>
       <section class="video-story" style="background-image:url('${c.videoImage}')"><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> PUBLIC YOUTUBE VIDEO</span><h2>${c.videoTitle}</h2><span class="watch">▶ Review source</span></div><button class="content-pick" data-pick="Recent content performance" aria-label="Shortlist recent video">＋</button></section>
       <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Gemini fit analysis')}${youtubeBadge('12 uploads checked')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Explainable fit</span><h2>Why this creator fits the brief.</h2></div></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, and 12 recent YouTube uploads. Updated Sep 18. Public sponsorship signals require human verification.</p></div><button class="content-pick blue" data-pick="AI match evidence" aria-label="Shortlist AI match reason">＋</button></section>
@@ -101,12 +115,12 @@ const screens = {
     <div class="section-head"><h3>Content fit</h3></div><div class="brief-section"><h3>${c.tags[0]} · ${c.tags[1]}</h3><p>${c.why}</p><div class="chips"><span class="chip selected">Recovery</span><span class="chip selected">Hydration</span><span class="chip">Training</span></div></div>
     <button class="primary blue" style="width:100%" data-action="shortlist">Add to shortlist</button>`},
 
-  pool: () => `${appHeader()}<span class="eyebrow">Shortlist review</span><h1>Build the client shortlist.</h1><div class="filter-row"><button class="chip selected">7 sample profiles</button><button class="chip">Client-ready 4</button><button class="chip">Saved 3</button><button class="chip">Fit 90+</button></div>
-    ${creators.map((c,i)=>`<article class="creator-list-item" data-go="profile"><input class="check" type="checkbox" ${i<2?'checked':''} onclick="event.stopPropagation()"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></div><span class="score">Fit ${c.score}</span></article>`).join('')}
-    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong>2 selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare" data-tour="compare">Compare →</button></div>`,
+  pool: () => `${appHeader()}<span class="eyebrow">Shortlist review</span><h1>Build the client shortlist.</h1><div class="swipe-tip"><span>↔</span><div><strong>Swipe to build your comparison</strong><small>Mouse or trackpad: right to select · left to remove</small></div></div><div class="filter-row"><button class="chip selected">7 sample profiles</button><button class="chip">Client-ready 4</button><button class="chip">Saved 3</button><button class="chip">Fit 90+</button></div>
+    ${creators.map((c,i)=>`<article class="creator-list-item ${state.compareSelection.includes(i)?'is-selected':''}" data-index="${i}" data-go="profile"><span class="list-swipe-state remove">REMOVE</span><span class="list-swipe-state select">SELECT</span><input class="check" type="checkbox" ${state.compareSelection.includes(i)?'checked':''} aria-label="Compare ${c.name}"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></div><span class="score">Fit ${c.score}</span></article>`).join('')}
+    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong id="compareCount">${state.compareSelection.length} selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare" data-tour="compare">Compare →</button></div>`,
 
-  compare: () => `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review</span><h1>Choose the right role for each creator.</h1><div class="compare-grid"><div></div><div><strong>Adriene</strong><br><span class="score">Fit 96</span></div><div><strong>Jeff</strong><br><span class="score">Fit 93</span></div><div class="label">Audience</div><div>Broad wellness</div><div>High-intent fitness</div><div class="label">Est. fee</div><div>$12–15K</div><div>$18–22K</div><div class="label">Content role</div><div>Trust & habit</div><div>Proof & detail</div><div class="label">Conflict risk</div><div>Review</div><div>Low</div><div class="label">Client status</div><div>Ready</div><div>Ready</div></div>
-    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with Adriene for trust and daily habit.</strong><br>Use Jeff as the evidence-led supporting partner if budget allows. Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`,
+  compare: () => { const picks=(state.compareSelection.length===2?state.compareSelection:[0,1]).map(i=>({creator:creators[i],details:compareDetails[i]})); return `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review</span><h1>Choose the right role for each creator.</h1><div class="compare-grid"><div></div>${picks.map(p=>`<div><strong>${p.creator.name.split(' ')[0]}</strong><br><span class="score">Fit ${p.creator.score}</span></div>`).join('')}<div class="label">Audience</div>${picks.map(p=>`<div>${p.details.audience}</div>`).join('')}<div class="label">Est. fee</div>${picks.map(p=>`<div>${p.details.fee}</div>`).join('')}<div class="label">Content role</div>${picks.map(p=>`<div>${p.details.role}</div>`).join('')}<div class="label">Conflict risk</div>${picks.map(p=>`<div>${p.details.risk}</div>`).join('')}<div class="label">Client status</div><div>Ready</div><div>Ready</div></div>
+    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with ${picks[0].creator.name} for ${picks[0].details.role.toLowerCase()}.</strong><br>Use ${picks[1].creator.name} as the complementary partner if budget allows. Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`},
 
   messages: () => `${appHeader()}<span class="eyebrow">Outreach desk</span><h1>Keep outreach moving.</h1><div class="brand-badges page-badges">${geminiBadge('Personalized drafts')}</div><div class="filter-row"><button class="chip selected">All conversations</button><button class="chip">Needs reply 4</button><button class="chip">Follow-up 3</button></div>${creators.map((c,i)=>`<article class="thread" data-open-chat="${i}"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${i===0?'I’d love to hear more about the launch!':'Campaign fit, timing, and next steps…'}</p></div><div><time>${i===0?'9:18':'Tue'}</time><br><span class="status">${i===0?'Responded':i===1?'Delivered':'Follow-up'}</span></div></article>`).join('')}<button class="secondary" style="width:100%;margin-top:16px" id="draft"><img class="button-icon" src="assets/brands/gemini.svg" alt=""> Draft follow-up</button>`,
 
@@ -158,13 +172,27 @@ function renderTour() {
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
   if(step.coach==='top') layer.classList.add('coach-top');
-  layer.innerHTML=`<div class="tour-shade" aria-hidden="true"></div><article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap only the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}</article>`;
+  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><span class="brandmark"></span><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?'<small>Tap only the highlighted action</small>':'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
   if(target) {
     target.classList.add('tour-target');
+    const positionSpotlight=()=>{
+      if(!target.isConnected || !layer.isConnected) return;
+      const phoneRect=phone.getBoundingClientRect(), rect=target.getBoundingClientRect(), gap=7;
+      const left=Math.max(0,rect.left-phoneRect.left-gap), top=Math.max(0,rect.top-phoneRect.top-gap);
+      const right=Math.min(phoneRect.width,rect.right-phoneRect.left+gap), bottom=Math.min(phoneRect.height,rect.bottom-phoneRect.top+gap);
+      const shades=layer.querySelectorAll('.tour-shades i');
+      shades[0].style.cssText=`left:0;top:0;width:100%;height:${top}px`;
+      shades[1].style.cssText=`left:0;top:${top}px;width:${left}px;height:${Math.max(0,bottom-top)}px`;
+      shades[2].style.cssText=`left:${right}px;top:${top}px;right:0;height:${Math.max(0,bottom-top)}px`;
+      shades[3].style.cssText=`left:0;top:${bottom}px;right:0;bottom:0`;
+      const highlight=layer.querySelector('.tour-highlight');
+      highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px`;
+    };
     requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
-    if(!step.coach) setTimeout(()=>{if(target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
+    requestAnimationFrame(positionSpotlight);
+    setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
     target.addEventListener('click',event=>{
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -214,6 +242,27 @@ function bind() {
   const applyRewrite=app.querySelector('#applyRewrite'); if(applyRewrite) applyRewrite.onclick=()=>{const draft=app.querySelector('#draftContent');draft.value='After a warm practice, Peakline fits naturally into my post-practice hydration routine. It has zero added sugar and is a simple hydration option for warm-weather movement.';toast('Safe rewrite applied')};
   const sendReview=app.querySelector('#sendReview'); if(sendReview) sendReview.onclick=()=>{toast('Sent for human approval');setTimeout(()=>go('workspace'),600)};
   const swipeCard=app.querySelector('#creatorCard'); if(swipeCard) bindSwipe(swipeCard);
+  app.querySelectorAll('.creator-list-item').forEach(bindShortlistSwipe);
+}
+
+function updateCompareSelection(item, selected) {
+  const index=Number(item.dataset.index), checkbox=item.querySelector('.check');
+  state.compareSelection=selected?[...new Set([...state.compareSelection,index])].slice(-2):state.compareSelection.filter(i=>i!==index);
+  app.querySelectorAll('.creator-list-item').forEach(row=>{const active=state.compareSelection.includes(Number(row.dataset.index));row.classList.toggle('is-selected',active);row.querySelector('.check').checked=active});
+  checkbox.checked=selected;item.classList.toggle('is-selected',selected);
+  const count=app.querySelector('#compareCount');if(count) count.textContent=`${state.compareSelection.length} selected`;
+  toast(selected?'Selected for comparison':'Removed from comparison');
+}
+function bindShortlistSwipe(item) {
+  const checkbox=item.querySelector('.check');
+  checkbox.addEventListener('click',event=>{event.stopPropagation();updateCompareSelection(item,checkbox.checked)});
+  let startX=0,startY=0,dx=0,tracking=false,horizontal=false,suppressClick=false;
+  const reset=()=>{item.classList.remove('swiping');item.style.transform='';tracking=false;horizontal=false;dx=0};
+  item.addEventListener('pointerdown',event=>{if(event.target.closest('input,button')) return;startX=event.clientX;startY=event.clientY;tracking=true});
+  item.addEventListener('pointermove',event=>{if(!tracking)return;const mx=event.clientX-startX,my=event.clientY-startY;if(!horizontal&&Math.abs(my)>Math.abs(mx)+8){tracking=false;return}if(!horizontal&&Math.abs(mx)>10){horizontal=true;item.classList.add('swiping');item.setPointerCapture?.(event.pointerId)}if(!horizontal)return;event.preventDefault();dx=Math.max(-100,Math.min(100,mx));item.style.transform=`translateX(${dx}px)`});
+  item.addEventListener('pointerup',event=>{if(horizontal){event.preventDefault();event.stopPropagation();suppressClick=true;const selected=dx>55?true:dx<-55?false:null;reset();if(selected!==null)updateCompareSelection(item,selected)}else reset()},{capture:true});
+  item.addEventListener('click',event=>{if(!suppressClick)return;suppressClick=false;event.preventDefault();event.stopImmediatePropagation()},{capture:true});
+  item.addEventListener('pointercancel',reset);
 }
 function bindSwipe(card) {
   let startX=0, startY=0, dx=0, tracking=false, horizontal=false;
