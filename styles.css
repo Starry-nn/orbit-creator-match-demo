@@ -195,7 +195,7 @@ h3 { font-size: 15px; margin-bottom: 6px; }
 .tour-shade { position: absolute; inset: 0; background: rgba(15,18,28,.52); pointer-events: none; animation: tourFade .25s ease; }
 .tour-shades { position: absolute; inset: 0; animation: tourFade .25s ease; }
 .tour-shades i { position: absolute; background: rgba(15,18,28,.52); }
-.tour-highlight { position: absolute; z-index: 102; border: 4px solid var(--yellow); border-radius: 17px; box-shadow: 0 0 0 7px rgba(244,215,103,.22), 0 13px 34px rgba(12,18,40,.28); animation: targetPulse 1.5s ease-in-out infinite; }
+.tour-highlight { position: absolute; z-index: 102; border: 4px solid var(--yellow); border-radius: 17px; box-shadow: 0 0 0 7px rgba(244,215,103,.22), 0 13px 34px rgba(12,18,40,.28); opacity: 0; transition: opacity .12s ease; animation: targetPulse 1.5s ease-in-out infinite; }
 .tour-coach { position: absolute; z-index: 103; left: 16px; right: 16px; bottom: 98px; min-height: 142px; display: grid; grid-template-columns: 48px 1fr; gap: 10px 13px; align-items: start; padding: 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 22px; background: #171a22; color: white; box-shadow: 0 22px 70px rgba(8,12,25,.38); pointer-events: auto; animation: coachUp .3s cubic-bezier(.2,.8,.2,1); }
 .tour-layer.coach-top .tour-coach { top: 62px; bottom: auto; }
 .tour-orbit { position: relative; width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid #444b63; border-radius: 50%; }

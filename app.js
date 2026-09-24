@@ -15,6 +15,7 @@ const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
 const deviceButtons = document.querySelectorAll('[data-device]');
 const viewButtons = document.querySelectorAll('[data-demo-view]');
+let tourSpotlightFrame=null;
 
 const appHeader = () => `<header class="topline"><div class="brand"><span class="brandmark"></span>Orbit</div><div class="avatar">AC</div></header>`;
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
@@ -161,6 +162,8 @@ function render() {
 function go(screen) { state.screen=screen; render(); }
 function toast(message) { const t=document.querySelector('#toast'); t.textContent=message; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1700); }
 function clearTourUI() {
+  if(tourSpotlightFrame) cancelAnimationFrame(tourSpotlightFrame);
+  tourSpotlightFrame=null;
   document.querySelector('#tourLayer')?.remove();
   document.querySelector('.tour-target')?.classList.remove('tour-target');
   document.querySelector('.phone')?.classList.remove('tour-running');
@@ -191,10 +194,12 @@ function renderTour() {
       shades[2].style.cssText=`left:${right}px;top:${top}px;right:0;height:${Math.max(0,bottom-top)}px`;
       shades[3].style.cssText=`left:0;top:${bottom}px;right:0;bottom:0`;
       const highlight=layer.querySelector('.tour-highlight');
-      highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px`;
+      const visible=right>left && bottom>top && rect.bottom>phoneRect.top && rect.top<phoneRect.bottom;
+      highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px;opacity:${visible?1:0}`;
     };
+    const trackSpotlight=()=>{positionSpotlight();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackSpotlight)};
     requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
-    requestAnimationFrame(positionSpotlight);
+    tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
     setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
     target.addEventListener('click',event=>{
       event.preventDefault();
@@ -221,7 +226,10 @@ function runTourAction() {
   else if(step===11) { state.tourStep=12;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
-  app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+  app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
+    if(el.dataset.go==='create' && !state.tourActive) state.formStep=1;
+    go(el.dataset.go);
+  }));
   const startOnboarding=app.querySelector('#startOnboarding'); if(startOnboarding) startOnboarding.onclick=()=>{state.tourActive=true;state.tourStep=0;state.creator=0;state.formStep=1;state.reviewComplete=false;go('home')};
   const skipOnboarding=app.querySelector('#skipOnboarding'); if(skipOnboarding) skipOnboarding.onclick=()=>{state.tourActive=false;go('home')};
   const onboardingBack=app.querySelector('#onboardingBack'); if(onboardingBack) onboardingBack.onclick=()=>{if(state.onboardingStep>1){state.onboardingStep--;render()}else go('welcome')};
