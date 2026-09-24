@@ -5,31 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f5f7fb" />
   <title>Orbit — Creator Partnership Workspace</title>
-  <link rel="stylesheet" href="styles.css?v=20260923-4" />
+  <link rel="stylesheet" href="styles.css?v=20260924-1" />
 </head>
 <body>
-  <main class="phone" aria-label="Orbit creator partnership workspace">
-    <div class="statusbar" aria-hidden="true"><span>9:41</span><span class="island"></span><span>5G&nbsp; ◒</span></div>
-    <div id="app" class="app"></div>
-    <nav class="tabbar" aria-label="Primary navigation">
-      <button data-nav="home" class="active"><span>⌂</span><small>Home</small></button>
-      <button data-nav="match"><span>✦</span><small>Discover</small></button>
-      <button data-nav="pool"><span>▣</span><small>Shortlist</small><i id="poolBadge">3</i></button>
-      <button data-nav="messages"><span>◌</span><small>Inbox</small><i>2</i></button>
-      <button data-nav="workspace"><span>⌁</span><small>Campaign</small></button>
-    </nav>
-    <div id="toast" class="toast" role="status"></div>
-    <div id="sheetBackdrop" class="sheet-backdrop" aria-hidden="true"></div>
-    <section id="decisionSheet" class="decision-sheet" aria-modal="true" role="dialog" aria-labelledby="sheetTitle">
-      <div class="sheet-grabber"></div>
-      <span class="eyebrow">Shortlist with context</span>
-      <h2 id="sheetTitle">What stood out?</h2>
-      <p id="sheetContext" class="muted"></p>
-      <div class="chips"><button class="chip selected">Audience fit</button><button class="chip">Creative fit</button><button class="chip">Performance</button></div>
-      <textarea id="decisionNote" placeholder="Add a note for your team…"></textarea>
-      <div class="sheet-actions"><button class="secondary" id="closeSheet">Cancel</button><button class="primary blue" id="confirmDecision">Add to shortlist</button></div>
+  <header class="demo-controls" aria-label="Demo controls">
+    <div class="demo-title"><span class="google-pitch-dot"></span><div><strong>Orbit for Google</strong><small>Interactive product pitch</small></div></div>
+    <div class="control-group" aria-label="Pixel device size"><span>DEVICE</span><div class="segmented"><button class="active" data-device="pixel-pro">Pixel 8 Pro <small>393</small></button><button data-device="pixel">Pixel 8 <small>360</small></button></div></div>
+    <div class="control-group" aria-label="Demo starting view"><span>VIEW</span><div class="segmented"><button data-demo-view="welcome">First run</button><button data-demo-view="home">Workspace</button><button data-demo-view="match">Discover</button></div></div>
+    <button class="focus-button" id="focusMode" aria-pressed="false"><span>⛶</span> Focus mode</button>
+  </header>
+  <main class="demo-stage">
+    <section class="phone" aria-label="Orbit creator partnership workspace on Google Pixel">
+      <div class="statusbar" aria-hidden="true"><span>9:41</span><span class="pixel-camera"></span><span>▴⌁&nbsp; 82%</span></div>
+      <div id="app" class="app"></div>
+      <nav class="tabbar" aria-label="Primary navigation">
+        <button data-nav="home" class="active"><span>⌂</span><small>Home</small></button>
+        <button data-nav="match"><span>✦</span><small>Discover</small></button>
+        <button data-nav="pool"><span>▣</span><small>Shortlist</small><i id="poolBadge">3</i></button>
+        <button data-nav="messages"><span>◌</span><small>Inbox</small><i>2</i></button>
+        <button data-nav="workspace"><span>⌁</span><small>Campaign</small></button>
+      </nav>
+      <div class="pixel-gesture" aria-hidden="true"></div>
+      <div id="toast" class="toast" role="status"></div>
+      <div id="sheetBackdrop" class="sheet-backdrop" aria-hidden="true"></div>
+      <section id="decisionSheet" class="decision-sheet" aria-modal="true" role="dialog" aria-labelledby="sheetTitle">
+        <div class="sheet-grabber"></div>
+        <span class="eyebrow">Shortlist with context</span>
+        <h2 id="sheetTitle">What stood out?</h2>
+        <p id="sheetContext" class="muted"></p>
+        <div class="chips"><button class="chip selected">Audience fit</button><button class="chip">Creative fit</button><button class="chip">Performance</button></div>
+        <textarea id="decisionNote" placeholder="Add a note for your team…"></textarea>
+        <div class="sheet-actions"><button class="secondary" id="closeSheet">Cancel</button><button class="primary blue" id="confirmDecision">Add to shortlist</button></div>
+      </section>
     </section>
   </main>
-  <script src="app.js?v=20260923-4"></script>
+  <button class="focus-exit" id="focusExit">Show demo controls</button>
+  <script src="app.js?v=20260924-1"></script>
 </body>
 </html>
