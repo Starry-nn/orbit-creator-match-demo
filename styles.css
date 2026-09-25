@@ -778,7 +778,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="match"] .discover-top { max-width: 1180px; margin: 0 auto 10px; padding: 0; }
 .browser-mode .app[data-screen="match"] .scan-speed { max-width: 1180px; margin: 0 auto 14px; padding: 11px 14px; }
 .browser-mode .app[data-screen="match"] .scan-speed strong { font-size: 11px; }
-.browser-mode .desktop-match-shell { position: relative; display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,1fr); gap: 18px; width: 100%; max-width: 1040px; margin: 0 auto; padding: 0; box-sizing: border-box; align-items: start; }
+.browser-mode .desktop-match-shell { position: relative; display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,1fr); gap: 18px; width: 100%; max-width: 1040px; margin: 0 auto; padding: 0; box-sizing: border-box; align-items: stretch; }
 .browser-mode .creator-queue, .browser-mode .decision-rail { display: block; }
 .browser-mode .creator-queue { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
 .queue-heading { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px 10px; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .8px; }
@@ -814,7 +814,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="match"] .safety-card,
 .browser-mode .app[data-screen="match"] .end-note { display: none; }
 .browser-mode .app[data-screen="match"] .profile-snapshot { display: none; }
-.browser-mode .app[data-screen="match"] .video-story { display: none; }
+.browser-mode .app[data-screen="match"] .video-story { display: block; height: 178px; margin: 0; border-radius: 0 0 18px 18px; }
 .browser-mode .app[data-screen="match"] .video-story::after { inset: 5% 0 0; }
 .browser-mode .app[data-screen="match"] .video-overlay { bottom: 15px; }
 .browser-mode .app[data-screen="match"] .video-overlay h2 { max-width: 330px; margin: 5px 0 8px; font-size: 17px; }
@@ -841,6 +841,12 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .desktop-ai-panel > article { margin-top: 7px; padding: 9px; border-radius: 10px; background: #f5f6fa; }
 .desktop-ai-panel > article span { color: var(--blue); font-size: 7px; font-weight: 900; text-transform: uppercase; letter-spacing: .45px; }
 .desktop-ai-panel > article p { margin: 4px 0 0; color: #505766; font-size: 8px; line-height: 1.38; }
+.desktop-signal-grid { display: grid; gap: 7px; margin-top: 8px; }
+.desktop-signal-grid > div { padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.desktop-signal-grid small, .desktop-signal-grid strong { display: block; }
+.desktop-signal-grid small { color: var(--muted); font-size: 7px; font-weight: 900; text-transform: uppercase; letter-spacing: .45px; }
+.desktop-signal-grid strong { margin-top: 4px; font-size: 9px; line-height: 1.35; }
+.desktop-signal-grid p { margin: 4px 0 0; color: var(--muted); font-size: 7px; line-height: 1.4; }
 .mini-proof { display: grid; grid-template-columns: 96px 1fr; gap: 9px; align-items: center; margin-top: 8px; padding: 7px; border: 1px solid var(--line); border-radius: 10px; }
 .mini-proof img { width: 96px; height: 58px; border-radius: 7px; object-fit: cover; }
 .mini-proof span > * { display: block; }
