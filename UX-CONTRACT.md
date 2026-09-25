@@ -3,7 +3,7 @@
 ## Product context
 
 - Audience: Agency creator partnership teams and Google pitch reviewers.
-- Primary jobs: Create a campaign, assess creator fit, shortlist, compare, contact, brief, and review.
+- Primary jobs: Create a campaign, assess creator fit, advance creators to client review, compare, contact, brief, and review.
 - Target market(s): Global English-language prototype.
 - Active locales: English.
 - Language/content register and native-review policy: Direct product English; no production localization commitment in this prototype.
@@ -64,7 +64,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 |---|---|---|---|---|---|---|---|
 | Create campaign | Five-step Create/Continue | stable button | Discover | analyzed/ranked toast | remain on form | next screen | `app.js` |
 | Search creator | Enter in search | none/local | matching creator | updated dossier | no-results toast | remains in search | `app.js` |
-| Shortlist | swipe/button/right arrow on desktop | exit animation | next creator | toast + count | Undo | next dossier | `app.js` |
+| Advance creator | swipe/button/right arrow on desktop | exit animation | next creator | toast + selected count | Undo | next dossier | `app.js` |
 | Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
@@ -78,7 +78,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
 - Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
-- Desktop input parity: Pass, Save, and Shortlist buttons are primary; left/right arrows and swipe remain optional alternatives.
+- Desktop input parity: Pass, Save for later, and Advance buttons are primary; left/right arrows and swipe remain optional alternatives.
 
 ## Overlays and feedback
 
@@ -99,4 +99,4 @@ Local prototype controls own their feedback. Textareas use `resize: none`. No br
 - Required static commands: `git diff --check`; premium strict audit.
 - Browser/device matrix: Browser 1280, Pixel 8 Pro 393, Pixel 8 360.
 - Accessibility checks: semantic buttons/inputs, accessible names, visible focus, non-drag alternatives, reduced motion.
-- Canonical sibling flow used for comparison: Discover decision actions and Shortlist selection.
+- Canonical sibling flow used for comparison: Discover decision actions and Selected creator comparison.

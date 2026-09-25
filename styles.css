@@ -59,6 +59,7 @@ p, h1, h2, h3, blockquote, button, strong, small, span { overflow-wrap: anywhere
 .app { height: calc(100% - 42px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 0 18px 94px; scrollbar-width: none; scroll-behavior: smooth; }
 .app::-webkit-scrollbar { width: 7px; }
 .tabbar { position: absolute; z-index: 20; bottom: 0; left: 0; right: 0; height: 82px; padding: 9px 13px 20px; display: grid; grid-template-columns: repeat(5, 1fr); background: rgba(255,255,255,.94); border-top: 1px solid rgba(220,225,235,.88); backdrop-filter: blur(20px); }
+.rail-brand { display: none; }
 .tabbar.hidden { display: none; }
 .tabbar button { position: relative; border: 0; background: transparent; display: grid; place-items: center; align-content: center; gap: 3px; color: #9096a5; cursor: pointer; }
 .tabbar button > span { font: 600 22px/1 var(--font-display); }
@@ -628,7 +629,12 @@ textarea { min-height: 85px; resize: none; }
 .browser-mode .app { position: relative; height: calc(100% - 72px); padding: 28px 38px 96px 258px; background: var(--web-canvas); }
 .browser-mode .app:not(.intro-mode) > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
 .browser-mode .tabbar { top: 72px; right: auto; bottom: 0; width: 220px; height: auto; grid-template-columns: 1fr; grid-template-rows: repeat(5, 52px); align-content: start; gap: 5px; padding: 88px 14px 110px; border-top: 0; border-right: 0; background: var(--web-rail); }
-.browser-mode .tabbar::before { content: "Orbit\A Creator intelligence"; position: absolute; top: 24px; left: 22px; right: 18px; color: white; font: 800 15px/1.15 var(--font-display); letter-spacing: -.3px; white-space: pre-line; }
+.browser-mode .tabbar::before { display: none; }
+.browser-mode .rail-brand { position: absolute; top: 22px; left: 20px; right: 16px; display: flex; align-items: center; gap: 10px; color: white; }
+.browser-mode .rail-brand .brandmark { width: 30px; height: 30px; flex: 0 0 30px; border-width: 7px; }
+.browser-mode .rail-brand strong, .browser-mode .rail-brand small { display: block; }
+.browser-mode .rail-brand strong { font: 800 15px/1 var(--font-display); }
+.browser-mode .rail-brand small { margin-top: 4px; color: #aeb5c3; font-size: 8px; }
 .browser-mode .tabbar::after { content: "AC   Alex Chen\A      Agency workspace"; white-space: pre; position: absolute; left: 0; right: 0; bottom: 0; min-height: 78px; padding: 20px 20px; border-top: 1px solid rgba(255,255,255,.08); color: #fff; font: 700 10px/1.5 var(--font-body); }
 .browser-mode .tabbar button { grid-template-columns: 28px 1fr; grid-template-rows: 1fr; justify-items: start; align-content: center; padding: 0 14px; border-radius: 12px; color: #aeb5c3; }
 .browser-mode .tabbar button > span { font-size: 19px; }
@@ -738,7 +744,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="match"] .discover-top { max-width: 1180px; margin: 0 auto 10px; padding: 0; }
 .browser-mode .app[data-screen="match"] .scan-speed { max-width: 1180px; margin: 0 auto 14px; padding: 11px 14px; }
 .browser-mode .app[data-screen="match"] .scan-speed strong { font-size: 11px; }
-.browser-mode .desktop-match-shell { display: grid; grid-template-columns: minmax(175px,.55fr) minmax(360px,1.25fr) minmax(255px,.82fr); gap: 14px; max-width: 1180px; margin: 0 auto; align-items: start; }
+.browser-mode .desktop-match-shell { display: grid; grid-template-columns: minmax(480px,1.35fr) minmax(300px,.65fr); gap: 16px; max-width: 1180px; margin: 0 auto; align-items: start; }
 .browser-mode .creator-queue, .browser-mode .decision-rail { display: block; }
 .browser-mode .creator-queue { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: white; }
 .queue-heading { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px 10px; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .8px; }
@@ -753,7 +759,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .queue-creator > b { color: var(--blue); font-size: 10px; text-align: right; }
 .creator-queue > p { margin: 0; padding: 10px 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 7px; line-height: 1.4; }
 .browser-mode .app[data-screen="match"] .profile-stream { width: auto; min-width: 0; margin: 0; padding: 0; border-radius: 18px; box-shadow: 0 13px 38px rgba(31,38,57,.09); }
-.browser-mode .app[data-screen="match"] .profile-hero { height: 230px; background-position: center 34%; }
+.browser-mode .app[data-screen="match"] .profile-hero { height: 280px; background-position: center 34%; }
 .browser-mode .app[data-screen="match"] .profile-identity { min-height: 76px; padding-top: 13px; padding-bottom: 12px; }
 .browser-mode .app[data-screen="match"] .profile-name h1 { font-size: 25px; }
 .browser-mode .app[data-screen="match"] .swipe-guide { display: flex; margin: 9px 14px 0; }
@@ -847,6 +853,10 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .tour-copy h2 { font-size: 17px; }
 .browser-mode .tour-coach > small { font-size: 7px; }
 .browser-mode .tour-finish .tour-coach { left: 50%; top: 50%; width: 420px; transform: translate(-50%,-50%); }
+.tour-running .brief-drawer,
+.tour-running .decision-sheet { display: none !important; }
+.tour-running .brief-backdrop,
+.tour-running .sheet-backdrop { opacity: 0 !important; pointer-events: none !important; }
 @media (max-width: 599px) {
   body { overflow: hidden; }
   .demo-controls, .focus-exit { display: none !important; }
