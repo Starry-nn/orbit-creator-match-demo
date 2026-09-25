@@ -65,7 +65,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Create campaign | Five-step Create/Continue | stable button | Discover | analyzed/ranked toast | remain on form | next screen | `app.js` |
 | Search creator | Enter in search | none/local | matching creator | updated dossier | no-results toast | remains in search | `app.js` |
 | Select creator | swipe/button/right arrow on desktop | both desktop Discover modules exit together | next creator | toast + selected count | Undo | next dossier | `app.js` |
-| Save for later | quiet text action below the decision row | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
+| Save for later | clock icon, symmetric with Undo | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
 | Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
@@ -79,7 +79,9 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
 - Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
-- Desktop input parity: Pass and Select form the primary decision row. Save for later is a secondary text action immediately below it. Left/right arrows and swipe remain optional alternatives and are taught in the Browser tutorial.
+- Desktop input parity: Pass and Select form the primary decision row. Save for later is a same-size icon counterpart to Undo. Left/right arrows and swipe remain optional alternatives and are taught in the Browser tutorial.
+- Creator records come from public YouTube data; the workflow does not depend on creators joining Orbit.
+- Outreach uses email, not in-product creator messaging. Gemini can draft a personalized email for each selected creator from campaign inputs and public signals, but nothing sends until the user reviews and explicitly approves it.
 
 ## Overlays and feedback
 

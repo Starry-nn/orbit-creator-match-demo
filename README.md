@@ -13,17 +13,17 @@ The discovery experience borrows the interaction principlesâ€”not the brandingâ€
 ## Included flows
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
-- Locked first-run tour that requires users to set the campaign goal, target audience and budget before guiding them through matching, selection, comparison, outreach, creator brief, and workspace interfaces
+- Locked first-run tour that requires users to set the campaign goal, target audience and budget before guiding them through matching, selection, AI-drafted email outreach, creator brief, and workspace interfaces
 - AI-ranked creator discovery feed
 - Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars
 - Long-form creator profiles with content signals and performance stories
 - Explainable AI match memo and evidence
-- Gemini-assisted brief extraction, personalized creator briefs, and first-pass draft risk review
+- Gemini-assisted brief extraction, personalized outreach emails, creator briefs, and first-pass draft risk review
 - Before/after workflow timing to show campaign acceleration
 - Gesture controls: swipe left to pass, swipe right to select, plus save-for-later and undo actions
 - Contextual selection notes on individual profile sections
-- Client selection review, finalist comparison, outreach, creator briefs, and a campaign control room
+- Client selection review, finalist comparison, human-approved email outreach, creator briefs, and a campaign control room
 - Operational campaign views for owners, deadlines, client approvals, conflicts, budgets, creator stages, deliverables, and files
 
 ## Run
