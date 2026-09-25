@@ -9,7 +9,7 @@ const creators = [
 ];
 
 const initialScreen = new URLSearchParams(window.location.search).get('mode') === 'workspace' ? 'home' : 'welcome';
-const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, compareSelection:[0,1], reviewComplete:false};
+const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, compareSelection:[0,1], reviewComplete:false, searchQuery:''};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
@@ -18,6 +18,7 @@ const viewButtons = document.querySelectorAll('[data-demo-view]');
 let tourSpotlightFrame=null;
 
 const appHeader = () => `<header class="topline"><div class="brand"><span class="brandmark"></span>Orbit</div><div class="avatar">AC</div></header>`;
+const escapeAttr = value => String(value).replace(/[&"'<>]/g,character=>({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[character]));
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
 const geminiBadge = (label='Gemini analysis') => `<span class="source-badge gemini"><img src="assets/brands/gemini.svg" alt="">${label}</span>`;
 const youtubeBadge = (label='YouTube public data') => `<span class="source-badge youtube"><img src="assets/brands/youtube.svg" alt="">${label}</span>`;
@@ -94,7 +95,8 @@ const screens = {
     <div class="upload compact"><div><strong>＋ Replace client brief</strong><br><span>PDF, DOCX, or shared document</span></div></div>`}
     <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===4?'Find creators ✦':'Continue'}</button></div>`,
 
-  match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of 7 samples</span></div>
+  match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<header class="web-discover-bar"><label class="web-search"><span aria-hidden="true">⌕</span><input id="creatorSearch" value="${escapeAttr(state.searchQuery)}" placeholder="Search creators or topics" aria-label="Search creators or topics"><button id="clearCreatorSearch" aria-label="Clear search" ${state.searchQuery?'':'hidden'}>×</button></label><div class="web-platforms" aria-label="Creator platform"><button class="selected">All</button><button>YouTube</button><button>Instagram</button><button>TikTok</button></div><button class="web-filter">☷ <span>Filters</span></button><span class="web-remaining">✦ 4 remaining</span></header><div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of 7 samples</span></div>
+    <button class="web-decision-rail web-pass" data-action="pass"><span>×</span><strong>Pass</strong><small>← arrow</small></button><button class="web-decision-rail web-shortlist" data-pick="Full creator profile"><span>☆</span><strong>Shortlist</strong><small>→ arrow</small></button>
     <article class="profile-stream" id="creatorCard">
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
@@ -112,7 +114,7 @@ const screens = {
       <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Gemini fit analysis')}${youtubeBadge('12 uploads checked')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Explainable fit</span><h2>Why this creator fits the brief.</h2></div></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, and 12 recent YouTube uploads. Updated Sep 18. Public sponsorship signals require human verification.</p></div><button class="content-pick blue" data-pick="AI match evidence" aria-label="Shortlist AI match reason">＋</button></section>
       <section class="safety-card"><div><span class="eyebrow">Collaboration read</span><h3>${c.risk}</h3></div><span class="safety-mark">✓</span></section>
       <p class="end-note">Review complete for ${c.name}.<br><span>Pass, save, or add to the client shortlist.</span></p>
-    </article>`},
+    </article><div class="web-action-dock"><button data-action="pass">× <span>Pass</span></button><button data-action="undo" aria-label="Undo">↶</button><button data-action="save">▱ <span>Save</span></button><button class="primary-dock" data-pick="Full creator profile">☆ <span>Shortlist</span></button><small>← Pass · → Shortlist · ↑ Save · ⌘Z Undo</small></div>`},
 
   profile: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `${pageTitle(c.name,'match')}<div class="brand-badges profile-sources">${geminiBadge('Gemini analysis')}${youtubeBadge('Public channel data')}</div><div class="creator-photo" style="height:225px;border-radius:22px;background-image:url('${c.image}')"><div class="match-orbit"><strong>${c.score}</strong><small>FIT</small></div></div>
     <div class="section-head"><h3>Channel snapshot</h3><span class="status">Brand safe</span></div><div class="metric-row"><div class="metric"><strong>${c.subs}</strong><span>subscribers</span></div><div class="metric"><strong>${c.eng}</strong><span>engagement</span></div><div class="metric"><strong>+18%</strong><span>90d growth</span></div></div>
@@ -243,6 +245,14 @@ function bind() {
   const onboardingNext=app.querySelector('#onboardingNext'); if(onboardingNext) onboardingNext.onclick=()=>{if(state.onboardingStep<3){state.onboardingStep++;render()}else go('transition')};
   const fastForward=app.querySelector('#fastForward'); if(fastForward) fastForward.onclick=()=>{app.querySelector('.transition-shell')?.classList.add('leaving');setTimeout(()=>go('home'),420)};
   app.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('selected')));
+  app.querySelectorAll('.web-platforms button').forEach(button=>button.addEventListener('click',()=>{app.querySelectorAll('.web-platforms button').forEach(item=>item.classList.remove('selected'));button.classList.add('selected')}));
+  const creatorSearch=app.querySelector('#creatorSearch'), clearCreatorSearch=app.querySelector('#clearCreatorSearch');
+  if(creatorSearch) {
+    creatorSearch.addEventListener('input',()=>{state.searchQuery=creatorSearch.value;clearCreatorSearch.hidden=!state.searchQuery});
+    creatorSearch.addEventListener('keydown',event=>{if(event.key!=='Enter'||event.isComposing)return;const query=creatorSearch.value.trim().toLowerCase();if(!query)return;const match=creators.findIndex(creator=>`${creator.name} ${creator.handle} ${creator.niche} ${creator.tags.join(' ')}`.toLowerCase().includes(query));if(match<0){toast('No sample creators match that search');return}state.creator=match;render()});
+    clearCreatorSearch.onclick=()=>{state.searchQuery='';creatorSearch.value='';clearCreatorSearch.hidden=true;creatorSearch.focus()};
+  }
+  const webFilter=app.querySelector('.web-filter'); if(webFilter) webFilter.onclick=()=>toast('Sample creator filters are ready');
   app.querySelectorAll('.choice-stack').forEach(group=>group.querySelectorAll('.choice-card').forEach(card=>card.addEventListener('click',()=>{group.querySelectorAll('.choice-card').forEach(c=>{c.classList.remove('selected');c.querySelector('span').textContent='○'});card.classList.add('selected');card.querySelector('span').textContent='◉'})));
   const reasonButton=app.querySelector('#reasonButton'); if(reasonButton) reasonButton.onclick=()=>{app.querySelector('#reasonDetail').classList.toggle('open');reasonButton.classList.toggle('open')};
   const next=app.querySelector('#nextStep'); if(next) next.onclick=()=>{ if(state.formStep<4){state.formStep++;render()} else {toast('7 sample profiles ranked');setTimeout(()=>go('match'),400)} };
@@ -335,6 +345,12 @@ function act(action) {
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
+document.addEventListener('keydown',event=>{
+  if(!phone.classList.contains('browser-mode')||state.screen!=='match'||event.target.closest('input,textarea,select,[contenteditable]')) return;
+  const action=event.key==='ArrowLeft'?'pass':event.key==='ArrowRight'?'shortlist':event.key==='ArrowUp'?'save':(event.key.toLowerCase()==='z'&&(event.metaKey||event.ctrlKey))?'undo':null;
+  if(!action) return;
+  event.preventDefault();act(action);
+});
 phone.addEventListener('click',event=>{
   if(!state.tourActive || event.target.closest('.tour-target, #finishTour, #tourContinue')) return;
   event.preventDefault();
