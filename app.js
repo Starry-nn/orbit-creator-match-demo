@@ -152,7 +152,10 @@ const screens = {
 };
 
 function render() {
+  phone.querySelector(':scope > .web-action-dock')?.remove();
   app.innerHTML = screens[state.screen]();
+  const webDock=app.querySelector('.web-action-dock');
+  if(webDock) phone.append(webDock);
   app.dataset.screen = state.screen;
   app.scrollTop = 0;
   const introMode = ['welcome','onboarding','transition'].includes(state.screen);
@@ -251,7 +254,7 @@ function bind() {
   const sampleCampaign=app.querySelector('#sampleCampaign'); if(sampleCampaign) sampleCampaign.onclick=()=>{state.formStep=4;go('create')};
   const sampleBrief=app.querySelector('#sampleBrief'); if(sampleBrief) sampleBrief.onclick=()=>{state.formStep=4;render();toast('Sample brief loaded')};
   const editCriteria=app.querySelector('#editCriteria'); if(editCriteria) editCriteria.onclick=()=>toast('Criteria are ready to edit');
-  app.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
+  phone.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
   app.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>openDecision(b.dataset.pick)));
   app.querySelectorAll('[data-open-chat]').forEach(el=>el.addEventListener('click',()=>go('chat')));
   const draft=app.querySelector('#draft'); if(draft) draft.onclick=()=>toast('Personalized draft created');
