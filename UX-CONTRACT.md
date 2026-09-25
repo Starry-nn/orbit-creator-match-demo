@@ -83,6 +83,8 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Creator records come from public YouTube data; the workflow does not depend on creators joining Orbit.
 - Outreach uses email, not in-product creator messaging. Gemini can draft a personalized email for each selected creator from campaign inputs and public signals, but nothing sends until the user reviews and explicitly approves it.
 - Discover teaches the full decision model in context: swipe left or Pass, swipe right or Select, Undo the last decision, or Save for later to move a creator to the end of the queue. The next guided step requires the user to generate an AI brief from the highlighted control. Gmail identifies the Email navigation destination without adding channel branding inside the outreach workflow.
+- The swipe tutorial animates the complete creator decision surface on mobile and desktop. The generated AI brief remains open until the user explicitly closes it to continue.
+- Selected creator rows own their comparison checkbox independently from their photo/name disclosure. Photo or name expands creator evidence in place; comparison supports any user-selected set of two or more creators.
 
 ## Overlays and feedback
 

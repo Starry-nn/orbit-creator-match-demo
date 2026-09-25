@@ -108,6 +108,8 @@ Use the existing compact line/symbol language, the shared blue Orbit mark, and c
 
 Motion communicates selection, swipe direction, sheets, and navigation. Typical feedback is 180–320ms. Respect `prefers-reduced-motion`.
 
+The Discover tutorial uses one deliberate left/right profile motion to teach the gesture before users rely on the equivalent buttons. Generated briefs remain open until the user closes them. Selected creator details expand in place so teams keep their comparison context.
+
 ### Content and data visualization
 
 Copy is direct and operational: Pass, Save for later, Select, Compare, Prepare outreach. Creator discovery uses public YouTube data and does not imply creator onboarding. Outreach is email-based: Gemini may draft from campaign inputs and public signals, but a user must review and approve every message before sending. Match scores always expose supporting factors and evidence. Prototype figures and contact details remain clearly illustrative in project documentation.

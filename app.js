@@ -22,8 +22,8 @@ creators.forEach((creator,index)=>Object.assign(creator,youtubeEvidence[index]))
 const urlParams = new URLSearchParams(window.location.search);
 const requestedScreen = urlParams.get('screen');
 const initialScreen = ['welcome','home','create','match','pool','messages','chat','workspace'].includes(requestedScreen)?requestedScreen:(urlParams.get('mode') === 'workspace' ? 'home' : 'welcome');
-const requestedTour = urlParams.has('tour')?Math.min(16,Math.max(0,Number(urlParams.get('tour'))||0)):null;
-const state = {screen:initialScreen, onboardingStep:1, tourActive:requestedTour!==null, tourStep:requestedTour||0, creator:0, selectedEmail:0, sentEmails:[], creatorOrder:creators.map((_,index)=>index), lastAction:null, lastCreatorState:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[0,1], reviewComplete:false};
+const requestedTour = urlParams.has('tour')?Math.min(17,Math.max(0,Number(urlParams.get('tour'))||0)):null;
+const state = {screen:initialScreen, onboardingStep:1, tourActive:requestedTour!==null, tourStep:requestedTour||0, creator:0, selectedEmail:0, sentEmails:[], creatorOrder:creators.map((_,index)=>index), lastAction:null, lastCreatorState:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[], expandedCreator:null, reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
@@ -63,11 +63,12 @@ const tourSteps = [
   {screen:'create', target:'#tourFormat', kicker:'YouTube plan', title:'Choose the video format', copy:'Long-form integrations and Shorts need different creator strengths and activation plans.'},
   {screen:'create', target:'.form-actions', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria', copy:'Gemini combines the goal, audience, budget, format and brand guardrails.'},
   {screen:'match', target:'.profile-identity', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal', copy:'Start with the creator, channel category, campaign role, and strongest public signals.'},
-  {screen:'match', target:'.profile-actions', action:'continue', kicker:'Four review controls', title:'Make the call your way', copy:'Swipe left or tap Pass to skip. Swipe right or tap Select to add the creator to Selected. Undo reverses your last decision. Save for later moves the profile to the end of the queue.'},
+  {screen:'match', target:'.profile-actions', action:'swipe-preview', kicker:'Swipe to decide', title:'Move the profile, not just the buttons', copy:'Swipe the creator left to Pass or right to Select. The buttons do the same job. Undo reverses your last decision, and Save for later moves the profile to the end of the queue.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
   {screen:'match', target:'[data-open-brief]', kicker:'One-click activation', title:'Generate a creator-ready AI brief', copy:'Turn the campaign requirements and this creator’s video evidence into editable scenes, messaging, deliverables, and claim guardrails.'},
+  {screen:'match', target:'#closeBriefDrawer', action:'brief-preview', kicker:'AI brief ready', title:'Review it at your own pace', copy:'The draft stays open so you can inspect the recommended scene, opening line, and claims guardrail. Close it when you are ready to continue.'},
   {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Creator selected', title:'Open selected creators', copy:'Your decision is saved with its supporting context. Open Selected to review and compare candidates.'},
-  {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Selected creators', title:'Compare finalists', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
+  {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Selected creators', title:'Compare your finalists', copy:'Choose any two or more creators, open their details in place, then compare fit, cost, role, and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Email outreach', title:'Draft personalized emails', copy:'Gemini turns the campaign inputs and public YouTube signals into editable outreach drafts.'},
   {screen:'messages', target:'[data-open-email="0"]', kicker:'AI email drafts', title:'Review before anything sends', copy:'Orbit drafts email for every selected creator. Open one to review the recipient, subject, and message.'},
   {screen:'chat', target:'#sendEmail', coach:'top', kicker:'Human approval', title:'Confirm and send', copy:'Edit the draft if needed, then approve this email. Orbit never sends outreach without your confirmation.'},
@@ -151,12 +152,12 @@ const screens = {
     <div class="section-head"><h3>Content fit</h3></div><div class="brief-section"><h3>${c.tags[0]} · ${c.tags[1]}</h3><p>${c.why}</p><div class="chips"><span class="chip selected">Recovery</span><span class="chip selected">Hydration</span><span class="chip">Training</span></div></div>
     <button class="primary blue" style="width:100%" data-action="shortlist">Select for client review</button>`},
 
-  pool: () => `${appHeader()}<span class="eyebrow">Selected creators</span><h1>Build the client slate</h1><div class="swipe-tip"><span>↔</span><div><strong>Select creators to compare</strong><small>Use the checkboxes, or swipe right to select and left to remove</small></div></div><div class="filter-row"><button class="chip selected">7 selected</button><button class="chip">Client-ready 4</button><button class="chip">Saved for later 3</button><button class="chip">Fit 90+</button></div>
-    ${creators.map((c,i)=>`<article class="creator-list-item ${state.compareSelection.includes(i)?'is-selected':''}" data-index="${i}" data-go="profile"><span class="list-swipe-state remove">REMOVE</span><span class="list-swipe-state select">SELECT</span><input class="check" type="checkbox" ${state.compareSelection.includes(i)?'checked':''} aria-label="Compare ${c.name}"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></div><span class="score">Fit ${c.score}</span></article>`).join('')}
-    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong id="compareCount">${state.compareSelection.length} selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare" data-tour="compare">Compare →</button></div>`,
+  pool: () => `${appHeader()}<span class="eyebrow">Selected creators</span><h1>Build the client slate</h1><div class="swipe-tip"><span>✓</span><div><strong>Choose two or more creators</strong><small>Use the selection boxes for comparison. Tap a creator’s photo or name to expand their evidence here.</small></div></div><div class="filter-row"><button class="chip selected">7 selected</button><button class="chip">Client-ready 4</button><button class="chip">Saved for later 3</button><button class="chip">Fit 90+</button></div>
+    ${creators.map((c,i)=>{const detail=compareDetails[i], expanded=state.expandedCreator===i;return `<article class="creator-list-item ${state.compareSelection.includes(i)?'is-selected':''} ${expanded?'is-expanded':''}" data-index="${i}"><span class="list-swipe-state remove">REMOVE</span><span class="list-swipe-state select">SELECT</span><input class="check" type="checkbox" ${state.compareSelection.includes(i)?'checked':''} aria-label="Compare ${c.name}"><button class="creator-avatar" data-expand-creator="${i}" aria-expanded="${expanded}" aria-label="${expanded?'Collapse':'View'} ${c.name} details"><img src="${c.image}" alt="${c.name}"></button><button class="creator-copy" data-expand-creator="${i}" aria-expanded="${expanded}"><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></button><span class="score">Fit ${c.score}</span>${expanded?`<section class="pool-creator-detail"><div><small>Audience</small><strong>${detail.audience}</strong></div><div><small>Estimated fee</small><strong>${detail.fee}</strong></div><div><small>Best role</small><strong>${detail.role}</strong></div><div><small>Risk</small><strong>${detail.risk}</strong></div><p>${c.why}</p><div class="chips"><span class="chip selected">${c.tags[0]}</span><span class="chip">${c.format}</span></div></section>`:''}</article>`}).join('')}
+    <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong id="compareCount">${state.compareSelection.length} selected</strong><br><small>${state.compareSelection.length>=2?'Ready to compare':'Choose at least 2 creators'}</small></span><button ${state.compareSelection.length>=2?'':'disabled'} data-tour="compare">Compare ${state.compareSelection.length||''} →</button></div>`,
 
-  compare: () => { const picks=(state.compareSelection.length===2?state.compareSelection:[0,1]).map(i=>({creator:creators[i],details:compareDetails[i]})); return `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review</span><h1>Choose the right role for each creator</h1><div class="compare-grid"><div></div>${picks.map(p=>`<div><strong>${p.creator.name.split(' ')[0]}</strong><br><span class="score">Fit ${p.creator.score}</span></div>`).join('')}<div class="label">Audience</div>${picks.map(p=>`<div>${p.details.audience}</div>`).join('')}<div class="label">Est. fee</div>${picks.map(p=>`<div>${p.details.fee}</div>`).join('')}<div class="label">Content role</div>${picks.map(p=>`<div>${p.details.role}</div>`).join('')}<div class="label">Conflict risk</div>${picks.map(p=>`<div>${p.details.risk}</div>`).join('')}<div class="label">Client status</div><div>Ready</div><div>Ready</div></div>
-    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with ${picks[0].creator.name} for ${picks[0].details.role.toLowerCase()}.</strong><br>Use ${picks[1].creator.name} as the complementary partner if budget allows. Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`},
+  compare: () => { const picks=state.compareSelection.map(i=>({creator:creators[i],details:compareDetails[i]})); return `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review · ${picks.length} creators</span><h1>Choose the right role for each creator</h1><div class="compare-scroll"><div class="compare-grid" style="--compare-count:${picks.length}"><div class="compare-corner">Criteria</div>${picks.map(p=>`<div class="compare-creator-head"><img src="${p.creator.image}" alt=""><strong>${p.creator.name}</strong><span class="score">Fit ${p.creator.score}</span></div>`).join('')}<div class="label">Audience</div>${picks.map(p=>`<div>${p.details.audience}</div>`).join('')}<div class="label">Est. fee</div>${picks.map(p=>`<div>${p.details.fee}</div>`).join('')}<div class="label">Content role</div>${picks.map(p=>`<div>${p.details.role}</div>`).join('')}<div class="label">Conflict risk</div>${picks.map(p=>`<div>${p.details.risk}</div>`).join('')}<div class="label">Best format</div>${picks.map(p=>`<div>${p.creator.format}</div>`).join('')}<div class="label">Client status</div>${picks.map(()=>'<div>Ready</div>').join('')}</div></div>
+    <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with ${picks[0].creator.name} for ${picks[0].details.role.toLowerCase()}.</strong><br>${picks.length>1?`${picks.slice(1).map(p=>p.creator.name).join(', ')} can cover complementary roles across the creator mix.`:''} Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`},
 
   messages: () => `${appHeader()}<span class="eyebrow">Email outreach</span><h1>Review every draft before sending</h1><section class="email-batch"><div class="email-batch-icon">✦</div><div><strong>Gemini prepared ${creators.length} personalized emails</strong><p>Built from the campaign brief and public YouTube signals. ${state.sentEmails.length?'Only your approved emails were sent.':'Nothing has been sent.'}</p></div><button id="draft">Refresh drafts</button></section><div class="brand-badges page-badges">${geminiBadge('AI-assisted drafting')}${youtubeBadge('Public signals only')}</div><div class="filter-row"><button class="chip selected">Needs review ${creators.length-state.sentEmails.length}</button><button class="chip">Sent ${state.sentEmails.length}</button></div>${creators.map((c,i)=>`<button class="thread email-thread" data-open-email="${i}"><img src="${c.image}" alt=""><div><span class="email-to">TO · ${creatorEmail(c)}</span><h3>${c.name}</h3><p>${emailSubject(c)}</p></div><div><span class="status ${state.sentEmails.includes(i)?'':'neutral'}">${state.sentEmails.includes(i)?'Sent':'Draft ready'}</span><b aria-hidden="true">›</b></div></button>`).join('')}`,
 
@@ -181,10 +182,7 @@ const screens = {
 };
 
 function render() {
-  phone.querySelector(':scope > .web-action-dock')?.remove();
   app.innerHTML = screens[state.screen]();
-  const webDock=app.querySelector('.web-action-dock');
-  if(webDock) phone.append(webDock);
   app.dataset.screen = state.screen;
   app.scrollTop = 0;
   const introMode = ['welcome','onboarding','transition'].includes(state.screen);
@@ -203,21 +201,22 @@ function clearTourUI() {
   tourSpotlightFrame=null;
   document.querySelector('#tourLayer')?.remove();
   document.querySelector('.tour-target')?.classList.remove('tour-target');
-  document.querySelector('.phone')?.classList.remove('tour-running');
+  document.querySelector('.tour-swipe-preview')?.classList.remove('tour-swipe-preview');
+  document.querySelector('.phone')?.classList.remove('tour-running','tour-brief-preview');
 }
 function renderTour() {
   clearTourUI();
   if(!state.tourActive) return;
   closeDecision();
-  closeBriefDrawer();
   const step=tourSteps[state.tourStep];
   if(!step || step.screen!==state.screen) return;
+  if(step.action==='brief-preview') {
+    if(!document.querySelector('#briefDrawer').classList.contains('open')) openBriefDrawer();
+  } else closeBriefDrawer();
   const targetSelector=phone.classList.contains('browser-mode')
     ? step.target==='.match-memo'
       ? '.desktop-ai-panel'
-      : step.target==='.profile-actions'
-        ? '.web-action-dock'
-        : step.target==='[data-open-brief]'
+      : step.target==='[data-open-brief]'
           ? '.decision-rail [data-open-brief]'
           : step.target
     : step.target==='[data-open-brief]'
@@ -229,9 +228,11 @@ function renderTour() {
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
   if(step.coach==='top') layer.classList.add('coach-top');
-  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?(step.action==='continue'?'<button id="tourContinue">Continue →</button>':`<small>${step.action==='swipe-demo'?'Swipe the profile to continue':step.action==='expand-evidence'?'Tap the analysis to expand':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
+  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?(['continue','swipe-preview'].includes(step.action)?`<button id="tourContinue">${step.action==='swipe-preview'?'I see the swipe →':'Continue →'}</button>`:`<small>${step.action==='expand-evidence'?'Tap the analysis to expand':step.action==='brief-preview'?'Close the brief to continue':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
+  if(step.action==='brief-preview') document.querySelector('.phone').classList.add('tour-brief-preview');
+  if(step.action==='swipe-preview') (phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard'))?.classList.add('tour-swipe-preview');
   if(target) {
     target.classList.add('tour-target');
     const positionSpotlight=()=>{
@@ -251,7 +252,7 @@ function renderTour() {
     const trackSpotlight=()=>{positionSpotlight();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackSpotlight)};
     tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
     setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
-    if(!['swipe-demo','continue'].includes(step.action)) target.addEventListener('click',event=>{
+    if(!['swipe-preview','continue'].includes(step.action)) target.addEventListener('click',event=>{
         event.preventDefault();
         event.stopImmediatePropagation();
         runTourAction();
@@ -273,13 +274,14 @@ function runTourAction() {
   else if(step===6) { state.tourStep=7;render(); }
   else if(step===7) { state.tourStep=8;render();toast('Decision controls ready'); }
   else if(step===8) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=9;render()},650); }
-  else if(step===9) { clearTourUI();openBriefDrawer();toast('AI brief generated from campaign and creator evidence');setTimeout(()=>{closeBriefDrawer();state.tourStep=10;render()},1100); }
-  else if(step===10) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=11;toast('Selected for client review');setTimeout(()=>go('pool'),350); }
-  else if(step===11) { state.tourStep=12;go('compare'); }
-  else if(step===12) { state.tourStep=13;go('messages'); }
-  else if(step===13) { state.tourStep=14;go('chat'); }
-  else if(step===14) { state.tourStep=15;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
-  else if(step===15) { state.tourStep=16;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===9) { clearTourUI();openBriefDrawer();toast('AI brief generated from campaign and creator evidence');state.tourStep=10;renderTour(); }
+  else if(step===10) { closeBriefDrawer();state.tourStep=11;render(); }
+  else if(step===11) { state.pool++;state.compareSelection=[0,1];document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=12;toast('Selected for client review');setTimeout(()=>go('pool'),350); }
+  else if(step===12) { state.tourStep=13;go('compare'); }
+  else if(step===13) { state.tourStep=14;go('messages'); }
+  else if(step===14) { state.tourStep=15;go('chat'); }
+  else if(step===15) { state.tourStep=16;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
+  else if(step===16) { state.tourStep=17;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
@@ -303,6 +305,8 @@ function bind() {
   phone.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
   app.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{if(!state.tourActive) openDecision(b.dataset.pick)}));
   app.querySelectorAll('[data-open-email]').forEach(el=>el.addEventListener('click',()=>{state.selectedEmail=Number(el.dataset.openEmail);go('chat')}));
+  app.querySelectorAll('[data-expand-creator]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();const index=Number(button.dataset.expandCreator),scrollTop=app.scrollTop;state.expandedCreator=state.expandedCreator===index?null:index;render();requestAnimationFrame(()=>{app.scrollTop=scrollTop})}));
+  const compareTrigger=app.querySelector('[data-tour="compare"]');if(compareTrigger) compareTrigger.onclick=()=>{if(state.compareSelection.length>=2)go('compare');else toast('Choose at least 2 creators')};
   const draft=app.querySelector('#draft'); if(draft) draft.onclick=()=>toast(`${creators.length} personalized email drafts refreshed`);
   const sendEmail=app.querySelector('#sendEmail'); if(sendEmail) sendEmail.onclick=()=>{state.sentEmails=[...new Set([...state.sentEmails,state.selectedEmail])];toast('Email approved and sent');setTimeout(()=>go('messages'),550)};
   const approve=app.querySelector('#approve'); if(approve) approve.onclick=()=>{toast('Brief approved');setTimeout(()=>go('workspace'),500)};
@@ -317,11 +321,14 @@ function bind() {
 
 function updateCompareSelection(item, selected) {
   const index=Number(item.dataset.index), checkbox=item.querySelector('.check');
-  state.compareSelection=selected?[...new Set([...state.compareSelection,index])].slice(-2):state.compareSelection.filter(i=>i!==index);
+  state.compareSelection=selected?[...new Set([...state.compareSelection,index])]:state.compareSelection.filter(i=>i!==index);
   app.querySelectorAll('.creator-list-item').forEach(row=>{const active=state.compareSelection.includes(Number(row.dataset.index));row.classList.toggle('is-selected',active);row.querySelector('.check').checked=active});
   checkbox.checked=selected;item.classList.toggle('is-selected',selected);
   const count=app.querySelector('#compareCount');if(count) count.textContent=`${state.compareSelection.length} selected`;
-  toast(selected?'Selected for comparison':'Removed from comparison');
+  const compareButton=app.querySelector('[data-tour="compare"]');
+  if(compareButton){compareButton.disabled=state.compareSelection.length<2;compareButton.textContent=`Compare ${state.compareSelection.length||''} →`}
+  const compareHint=app.querySelector('.compare-bar small');if(compareHint)compareHint.textContent=state.compareSelection.length>=2?'Ready to compare':'Choose at least 2 creators';
+  toast(selected?`${state.compareSelection.length} selected for comparison`:'Removed from comparison');
 }
 function bindShortlistSwipe(item) {
   const checkbox=item.querySelector('.check');
@@ -432,6 +439,7 @@ deviceButtons.forEach(button=>button.addEventListener('click',()=>{
   phone.classList.toggle('browser-mode',laptop);
   phone.setAttribute('aria-label',laptop?'Orbit creator partnership workspace in a browser':'Orbit creator partnership workspace on Google Pixel');
   deviceButtons.forEach(b=>b.classList.toggle('active',b===button));
+  if(state.tourActive) renderTour();
 }));
 viewButtons.forEach(button=>button.addEventListener('click',()=>{
   state.tourActive=false;state.tourStep=0;go(button.dataset.demoView);
