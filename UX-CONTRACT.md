@@ -45,7 +45,6 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Button | Label + semantic tone | contrast/elevation | visible ring | pressed transform | non-interactive | stable geometry | inline recovery where applicable |
 | Icon button | accessible name | contrast/elevation | visible ring | pressed transform | non-interactive | stable geometry | n/a |
 | Input | labeled/placeholder | border | owned ring | n/a | muted | stable geometry | text guidance |
-| Search | local query + clear | border | owned ring | Enter applies | n/a | n/a | toast for no sample match |
 | Textarea | resize none | border | owned ring | n/a | muted | stable geometry | text guidance |
 | Table/list | visible rows | surface change | visible ring on controls | selected marker | n/a | stable region | retained navigation |
 
@@ -74,7 +73,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Sidebar/drawer/bottom-sheet transformation: 220px desktop rail becomes five-item mobile bottom navigation.
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
-- Focus restoration and sticky-obstruction policy: Sticky bars leave content padding; focused controls remain within the app scroller.
+- Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
 
 ## Overlays and feedback
 
