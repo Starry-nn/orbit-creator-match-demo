@@ -152,6 +152,7 @@ const screens = {
 
 function render() {
   app.innerHTML = screens[state.screen]();
+  app.dataset.screen = state.screen;
   app.scrollTop = 0;
   const introMode = ['welcome','onboarding','transition'].includes(state.screen);
   nav.classList.toggle('hidden', introMode);

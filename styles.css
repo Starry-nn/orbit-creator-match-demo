@@ -593,6 +593,37 @@ textarea { min-height: 85px; resize: none; }
 .browser-mode .profile-snapshot, .browser-mode .profile-prompt, .browser-mode .video-story, .browser-mode .match-memo { border-radius: 20px; }
 .browser-mode .snapshot-detail { min-height: 58px; }
 .browser-mode .profile-prompt { border: 1px solid #d9d4ff; }
+.browser-mode .app[data-screen="create"],
+.browser-mode .app[data-screen="compare"],
+.browser-mode .app[data-screen="profile"],
+.browser-mode .app[data-screen="brief"],
+.browser-mode .app[data-screen="review"],
+.browser-mode .app[data-screen="chat"] { max-width: 900px; margin: 0 auto; }
+.browser-mode .app[data-screen="create"] .choice-stack { grid-template-columns: repeat(3,1fr); }
+.browser-mode .app[data-screen="create"] .choice-card { min-height: 112px; align-content: center; }
+.browser-mode .app[data-screen="create"] .chips.large { max-width: 760px; }
+.browser-mode .app[data-screen="create"] .form-actions { max-width: 520px; margin-left: auto; }
+.browser-mode .app[data-screen="pool"] { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 16px; align-content: start; }
+.browser-mode .app[data-screen="pool"] > :not(.creator-list-item) { grid-column: 1 / -1; }
+.browser-mode .app[data-screen="pool"] .creator-list-item { margin-bottom: 12px; }
+.browser-mode .app[data-screen="pool"] .compare-bar { width: min(620px,100%); margin-left: auto; margin-right: auto; }
+.browser-mode .app[data-screen="messages"] { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 16px; align-content: start; }
+.browser-mode .app[data-screen="messages"] > :not(.thread) { grid-column: 1 / -1; }
+.browser-mode .app[data-screen="messages"] .thread { min-height: 84px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 17px; background: white; }
+.browser-mode .app[data-screen="workspace"] { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 16px; align-content: start; }
+.browser-mode .app[data-screen="workspace"] > :not(.action-card) { grid-column: 1 / -1; }
+.browser-mode .app[data-screen="workspace"] .action-card { min-height: 92px; margin-bottom: 12px; }
+.browser-mode .app[data-screen="workspace"] .pipeline-list,
+.browser-mode .app[data-screen="workspace"] .file-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; border: 0; background: transparent; }
+.browser-mode .app[data-screen="workspace"] .pipeline-list article,
+.browser-mode .app[data-screen="workspace"] .file-list button { min-height: 82px; border: 1px solid var(--line); border-radius: 15px; background: white; }
+.browser-mode .app[data-screen="compare"] .compare-grid { font-size: 12px; }
+.browser-mode .app[data-screen="profile"] .metric-row { gap: 12px; }
+.browser-mode .app[data-screen="profile"] .creator-photo { height: 360px !important; background-position: center 32%; }
+.browser-mode .app[data-screen="brief"] .brief-section { padding: 20px; }
+.browser-mode .app[data-screen="review"] .issue-list { grid-template-columns: repeat(2,1fr); }
+.browser-mode .app[data-screen="chat"] .chat { max-width: 720px; margin: 0 auto; }
+.browser-mode .app[data-screen="chat"] .chatbox { width: min(720px,100%); margin-left: auto; margin-right: auto; }
 .browser-mode .welcome-shell { display: grid; grid-template-columns: minmax(330px,.9fr) minmax(400px,1.1fr); grid-template-rows: auto 1fr auto; gap: 14px 60px; max-width: 1040px; margin: 0 auto; }
 .browser-mode .welcome-brand { grid-column: 1 / -1; }
 .browser-mode .welcome-copy { align-self: center; margin-top: 0; }
