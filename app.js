@@ -95,6 +95,7 @@ const screens = {
     <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===4?'Find creators ✦':'Continue'}</button></div>`,
 
   match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of 7 samples</span></div>
+    <div class="web-side-guides" aria-hidden="true"><div class="web-side-guide pass-guide"><span>×</span><strong>Pass</strong><small>Swipe left · ← key</small></div><div class="web-side-guide shortlist-guide"><span>☆</span><strong>Shortlist</strong><small>Swipe right · → key</small></div></div>
     <article class="profile-stream" id="creatorCard">
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
@@ -112,7 +113,7 @@ const screens = {
       <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Gemini fit analysis')}${youtubeBadge('12 uploads checked')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Explainable fit</span><h2>Why this creator fits the brief.</h2></div></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, and 12 recent YouTube uploads. Updated Sep 18. Public sponsorship signals require human verification.</p></div><button class="content-pick blue" data-pick="AI match evidence" aria-label="Shortlist AI match reason">＋</button></section>
       <section class="safety-card"><div><span class="eyebrow">Collaboration read</span><h3>${c.risk}</h3></div><span class="safety-mark">✓</span></section>
       <p class="end-note">Review complete for ${c.name}.<br><span>Pass, save, or add to the client shortlist.</span></p>
-    </article>`},
+    </article><div class="web-action-dock"><button data-action="pass">× <span>Pass</span></button><button data-action="undo" aria-label="Undo">↶</button><button data-action="save">☆ <span>Save</span></button><button class="primary-dock" data-action="shortlist">☆ <span>Shortlist</span></button></div>`},
 
   profile: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `${pageTitle(c.name,'match')}<div class="brand-badges profile-sources">${geminiBadge('Gemini analysis')}${youtubeBadge('Public channel data')}</div><div class="creator-photo" style="height:225px;border-radius:22px;background-image:url('${c.image}')"><div class="match-orbit"><strong>${c.score}</strong><small>FIT</small></div></div>
     <div class="section-head"><h3>Channel snapshot</h3><span class="status">Brand safe</span></div><div class="metric-row"><div class="metric"><strong>${c.subs}</strong><span>subscribers</span></div><div class="metric"><strong>${c.eng}</strong><span>engagement</span></div><div class="metric"><strong>+18%</strong><span>90d growth</span></div></div>
@@ -151,7 +152,11 @@ const screens = {
 };
 
 function render() {
+  phone.querySelector(':scope > .web-action-dock')?.remove();
   app.innerHTML = screens[state.screen]();
+  const webDock=app.querySelector('.web-action-dock');
+  if(webDock) phone.append(webDock);
+  app.dataset.screen = state.screen;
   app.scrollTop = 0;
   const introMode = ['welcome','onboarding','transition'].includes(state.screen);
   nav.classList.toggle('hidden', introMode);
@@ -249,7 +254,7 @@ function bind() {
   const sampleCampaign=app.querySelector('#sampleCampaign'); if(sampleCampaign) sampleCampaign.onclick=()=>{state.formStep=4;go('create')};
   const sampleBrief=app.querySelector('#sampleBrief'); if(sampleBrief) sampleBrief.onclick=()=>{state.formStep=4;render();toast('Sample brief loaded')};
   const editCriteria=app.querySelector('#editCriteria'); if(editCriteria) editCriteria.onclick=()=>toast('Criteria are ready to edit');
-  app.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
+  phone.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
   app.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>openDecision(b.dataset.pick)));
   app.querySelectorAll('[data-open-chat]').forEach(el=>el.addEventListener('click',()=>go('chat')));
   const draft=app.querySelector('#draft'); if(draft) draft.onclick=()=>toast('Personalized draft created');
@@ -334,6 +339,12 @@ function act(action) {
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
+document.addEventListener('keydown',event=>{
+  if(!phone.classList.contains('browser-mode')||state.screen!=='match'||event.target.closest('input,textarea,select,[contenteditable]')) return;
+  const action=event.key==='ArrowLeft'?'pass':event.key==='ArrowRight'?'shortlist':null;
+  if(!action) return;
+  event.preventDefault();act(action);
+});
 phone.addEventListener('click',event=>{
   if(!state.tourActive || event.target.closest('.tour-target, #finishTour, #tourContinue')) return;
   event.preventDefault();
@@ -347,9 +358,13 @@ document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision)
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{state.pool++;document.querySelector('#poolBadge').textContent=state.pool;closeDecision();toast('Shortlisted with your note')});
 deviceButtons.forEach(button=>button.addEventListener('click',()=>{
-  const compact=button.dataset.device==='pixel';
-  document.documentElement.style.setProperty('--device-width',compact?'360px':'393px');
-  document.documentElement.style.setProperty('--device-height',compact?'800px':'852px');
+  const device=button.dataset.device;
+  const compact=device==='pixel';
+  const laptop=device==='laptop';
+  document.documentElement.style.setProperty('--device-width',laptop?'1280px':compact?'360px':'393px');
+  document.documentElement.style.setProperty('--device-height',laptop?'760px':compact?'800px':'852px');
+  phone.classList.toggle('browser-mode',laptop);
+  phone.setAttribute('aria-label',laptop?'Orbit creator partnership workspace in a browser':'Orbit creator partnership workspace on Google Pixel');
   deviceButtons.forEach(b=>b.classList.toggle('active',b===button));
 }));
 viewButtons.forEach(button=>button.addEventListener('click',()=>{
