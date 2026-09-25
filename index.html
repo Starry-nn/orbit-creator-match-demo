@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f5f7fb" />
   <title>Orbit — Creator Partnership Workspace</title>
-  <link rel="stylesheet" href="styles.css?v=20260924-12" />
+  <link rel="stylesheet" href="styles.css?v=20260925-1" />
 </head>
 <body>
   <header class="demo-controls" aria-label="Demo controls">
@@ -42,9 +42,18 @@
         <textarea id="decisionNote" placeholder="Add a note for your team…"></textarea>
         <div class="sheet-actions"><button class="secondary" id="closeSheet">Cancel</button><button class="primary blue" id="confirmDecision">Add to shortlist</button></div>
       </section>
+      <div id="briefBackdrop" class="brief-backdrop" aria-hidden="true"></div>
+      <aside id="briefDrawer" class="brief-drawer" aria-modal="true" role="dialog" aria-labelledby="briefDrawerTitle">
+        <header><div><span class="eyebrow">Gemini creator brief</span><h2 id="briefDrawerTitle">A ready-to-edit direction</h2></div><button id="closeBriefDrawer" aria-label="Close brief">×</button></header>
+        <div class="brand-badges"><span class="source-badge gemini"><img src="assets/brands/gemini.svg" alt="">Powered by Gemini Multimodal API</span><span class="source-badge youtube"><img src="assets/brands/youtube.svg" alt="">YouTube video evidence</span></div>
+        <div class="brief-drawer-summary"><span id="briefCreator">Yoga With Adriene</span><strong id="briefFormat">60–90s mid-roll</strong></div>
+        <ol class="brief-ideas"><li><span>01</span><div><small>Recommended scene</small><p id="briefScene"></p></div></li><li><span>02</span><div><small>Opening line</small><p id="briefOpening"></p></div></li><li><span>03</span><div><small>Claims guardrail</small><p id="briefGuardrail"></p></div></li></ol>
+        <p class="drawer-note">Drafted from campaign requirements plus visual, audio, transcript, and public channel signals. Human approval required.</p>
+        <button class="primary blue" id="openFullBrief">Open editable brief →</button>
+      </aside>
     </section>
   </main>
   <button class="focus-exit" id="focusExit">Show demo controls</button>
-  <script src="app.js?v=20260924-9"></script>
+  <script src="app.js?v=20260925-1"></script>
 </body>
 </html>

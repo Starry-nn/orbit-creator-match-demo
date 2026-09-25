@@ -14,9 +14,9 @@
 
 | Domain / scope | Authoritative source | Source type | Reviewed date |
 |---|---|---|---|
-| Product scope and sample-data disclosure | `README.md` | Product brief | 2026-09-24 |
-| Interaction behavior | `app.js` | Prototype implementation | 2026-09-24 |
-| Visual system | `DESIGN.md` | Design contract | 2026-09-24 |
+| Product scope and sample-data disclosure | `README.md` | Product brief | 2026-09-25 |
+| Interaction behavior | `app.js` | Prototype implementation | 2026-09-25 |
+| Visual system | `DESIGN.md` | Design contract | 2026-09-25 |
 
 Permissions, billing, deletion, retention, and legal workflows are not implemented and are outside prototype scope.
 
@@ -37,6 +37,8 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Form | Shared field styles and `bind()` handlers | `styles.css`, `app.js` | create / review | browser workflow |
 | Scrollbar | Global application stylesheet | `DESIGN.md`, `styles.css` | thin app scroller | computed/visual check |
 | Toast | `#toast` and `toast()` | `app.js` | status acknowledgement | live region + browser check |
+| AI Brief drawer | `#briefDrawer` and drawer handlers | `index.html`, `app.js` | bottom sheet / right drawer | open, close, full-brief handoff |
+| Multimodal evidence | Discover decision panel | `app.js` creator evidence data | mobile memo / desktop rail | Vision + Transcript labels and timestamp proof |
 
 ## Component behavior
 
@@ -51,7 +53,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 ## Dataset navigation
 
 - Exploratory lists: Render the seven bounded sample creators; no pagination is needed for prototype data.
-- URL state: Demo state is intentionally transient and resets on reload.
+- URL state: Demo state is transient, with optional `screen`, `device`, and `step` parameters for deterministic pitch entry points.
 - Empty/no-results/error/loading treatment: Search reports no sample match without discarding the current creator.
 - Back/scroll restoration: Screen navigation resets the active content scroller to the top.
 - Selection scope: At most two creators are selected for comparison; checkboxes and buttons provide non-drag alternatives.
@@ -60,9 +62,10 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 
 | Operation | Trigger | Pending | Success destination | Success feedback | Failure recovery | Focus outcome | Source ref |
 |---|---|---|---|---|---|---|---|
-| Create campaign | Create/Continue | stable button | Discover | ranked toast | remain on form | next screen | `app.js` |
+| Create campaign | Five-step Create/Continue | stable button | Discover | analyzed/ranked toast | remain on form | next screen | `app.js` |
 | Search creator | Enter in search | none/local | matching creator | updated dossier | no-results toast | remains in search | `app.js` |
 | Shortlist | swipe/button/right arrow on desktop | exit animation | next creator | toast + count | Undo | next dossier | `app.js` |
+| Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
 
@@ -71,14 +74,15 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Route document title policy: Single prototype document title.
 - Breadcrumb/tab/route-state policy: Desktop rail and mobile bottom navigation share the same destinations and labels.
 - Sidebar/drawer/bottom-sheet transformation: 220px desktop rail becomes five-item mobile bottom navigation.
+- Responsive discovery strategy: Desktop uses creator queue + evidence dossier + decision rail; mobile uses one dossier column.
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
 - Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
-- Desktop input parity: Left/right arrow cues expose keyboard shortcuts; buttons and swipe remain available alternatives.
+- Desktop input parity: Pass, Save, and Shortlist buttons are primary; left/right arrows and swipe remain optional alternatives.
 
 ## Overlays and feedback
 
-- Dialog primitive: Existing decision sheet and backdrop.
+- Dialog primitives: Existing decision sheet plus the AI Brief drawer and dedicated backdrop.
 - Toast placement/duration/deduplication: Shared `#toast`, approximately 1.7 seconds.
 - Layer/z-index contract: tour > toast > decision sheet > backdrop > navigation/content.
 

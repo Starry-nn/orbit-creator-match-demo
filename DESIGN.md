@@ -45,7 +45,7 @@ components:
 
 ### Creative North Star
 
-Orbit should feel like a campaign control room with one decisive creator dossier at its center. The supplied CreatorMatch reference informs the desktop information architecture—persistent rail, discovery controls, centered decision object—but Orbit retains its own Google-pitch palette, evidence-first hierarchy, and circular orbital signature.
+Orbit should feel like a campaign control room that keeps the creator, source video, and decision evidence in one field of view. Desktop uses a queue–evidence–decision composition; mobile compresses the same hierarchy into one scrollable dossier. Orbit retains its Google-pitch palette, evidence-first hierarchy, and circular orbital signature.
 
 ### Product context and register
 
@@ -54,7 +54,7 @@ Orbit should feel like a campaign control room with one decisive creator dossier
 - **Locale(s) and language policy:** English UI. User requests may be bilingual, but shipped interface copy remains English until localization is explicitly scoped.
 - **Usage scene:** Mobile review at 360/393px and laptop pitch/demo at approximately 1280px; information is dense but decisions must remain obvious.
 - **Register:** Product UI with restrained brand expression.
-- **Memorable signature:** The centered creator decision dossier, with compact desktop arrow cues and the same Pass/Shortlist outcomes across desktop and mobile, supported by Gemini and YouTube evidence.
+- **Memorable signature:** A creator decision dossier connected to timestamped YouTube evidence and explicit Gemini Vision/Transcript reasoning, with the same Pass/Save/Shortlist outcomes across desktop and mobile.
 - **Restraint:** Lists, forms, messages, and campaign operations use familiar product patterns and quiet surfaces.
 - **Anti-references:** Do not resemble a generic analytics dashboard, a macOS device mockup, or a dating app clone. The creator card may borrow direct-manipulation clarity without romantic or consumer-social styling.
 - **Token ownership/runtime mapping:** `DESIGN.md` documents approved intent; the canonical runtime tokens are CSS variables in `styles.css`. Token changes must update both files in one change.
@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and a centered 570px creator dossier. Discover keeps its decision buttons in the bottom action dock and uses quiet, non-interactive cues beside the profile to teach left/right swipe and arrow-key input. The supplied reference informs only this spatial relationship. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and a three-column Discover workspace: ranked creator queue, creator/video dossier, and a decision panel with score, multimodal evidence, timestamp proof, and actions. Buttons are primary; swipe and arrow keys are optional accelerators taught with compact inline copy. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
@@ -96,6 +96,8 @@ Desktop uses the dark workspace rail; mobile uses bottom navigation. Discover pr
 ### Forms and overlays
 
 Fields use owned inline focus rings and text errors. Textareas do not resize. Decision capture uses the existing app-owned sheet; browser-native alert/confirm/prompt are forbidden. Toasts acknowledge actions but never hold the only critical information.
+
+Campaign creation separates business goal, target audience, budget/scale, YouTube format/placement, and final match criteria. The AI Brief is an app-owned bottom sheet on mobile and a right-side drawer on desktop.
 
 ### Iconography
 

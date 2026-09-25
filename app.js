@@ -8,8 +8,21 @@ const creators = [
   {name:'Blogilates', handle:'@blogilates', niche:'Pilates & lifestyle', subs:'11M', views:'572K', eng:'4.9%', score:82, image:'assets/avatars/blogilates.jpg', videoImage:'https://i.ytimg.com/vi/86PciGuG7Sk/hqdefault.jpg', tags:['Pilates','Founder-led'], prompt:'Channel signal', signal:'Energetic classes, product-building stories, and a recognizable host-led format drive loyalty.', videoTitle:'25-minute complete leg workout', risk:'Founder-owned product ecosystem · Check conflicts', why:'Cassey’s founder-led audience responds to energy and participation. Brand fit is promising, though product-category conflicts should be reviewed before outreach.'}
 ];
 
-const initialScreen = new URLSearchParams(window.location.search).get('mode') === 'workspace' ? 'home' : 'welcome';
-const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:1, compareSelection:[0,1], reviewComplete:false};
+const youtubeEvidence = [
+  {format:'60–90s mid-roll', formatNote:'Best in long-form routines', timestamp:'03:22', moment:'Product setup moment', visual:'Warm home-studio setup matches Peakline’s approachable brand aesthetic.', transcript:'Calm instructional language makes a benefit-led integration feel native.', visualFit:94, transcriptFit:92},
+  {format:'60s mid-roll', formatNote:'Best in evidence-led explainers', timestamp:'06:14', moment:'Evidence breakdown', visual:'Charts and exercise demonstrations support proof-led product education.', transcript:'High density of research language supports ingredient and testing claims.', visualFit:91, transcriptFit:96},
+  {format:'Dedicated segment', formatNote:'Best in experiment stories', timestamp:'04:48', moment:'Training preparation', visual:'Athlete preparation footage creates a credible hydration use occasion.', transcript:'First-person testing language can introduce the product without a hard sell.', visualFit:93, transcriptFit:90},
+  {format:'30–45s Shorts', formatNote:'Best as a workout-series cutdown', timestamp:'00:18', moment:'Workout transition', visual:'High-energy training transitions are suited to concise product visibility.', transcript:'Minimal spoken copy favors a visual routine and pinned-comment CTA.', visualFit:90, transcriptFit:84},
+  {format:'45–60s mid-roll', formatNote:'Best in cinematic routines', timestamp:'02:36', moment:'Kitchen routine', visual:'Clean food styling and natural light closely match the brand system.', transcript:'Measured wellness language supports clean-label education.', visualFit:97, transcriptFit:91},
+  {format:'YouTube Shorts', formatNote:'Best for challenge participation', timestamp:'00:11', moment:'Challenge hook', visual:'Immediate movement and a clear host presence create a strong Shorts hook.', transcript:'Simple repeatable phrasing supports localized campaign variants.', visualFit:89, transcriptFit:86},
+  {format:'60s mid-roll', formatNote:'Best in host-led classes', timestamp:'05:07', moment:'Community cue', visual:'Expressive host-led framing keeps sponsorship moments energetic.', transcript:'Participation cues can turn the product moment into a community prompt.', visualFit:88, transcriptFit:89}
+];
+creators.forEach((creator,index)=>Object.assign(creator,youtubeEvidence[index]));
+
+const urlParams = new URLSearchParams(window.location.search);
+const requestedScreen = urlParams.get('screen');
+const initialScreen = ['welcome','home','create','match','pool','messages','workspace'].includes(requestedScreen)?requestedScreen:(urlParams.get('mode') === 'workspace' ? 'home' : 'welcome');
+const state = {screen:initialScreen, onboardingStep:1, tourActive:false, tourStep:0, creator:0, lastAction:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[0,1], reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
@@ -42,9 +55,10 @@ const tourSteps = [
   {screen:'create', target:'#tourGoal', kicker:'Campaign goal', title:'Choose the outcome.', copy:'Start with the job the creator partnership needs to do.'},
   {screen:'create', target:'#tourAudience', kicker:'Target audience', title:'Choose the audience.', copy:'Set the people this campaign must reach and influence.'},
   {screen:'create', target:'#tourBudget', kicker:'Creator budget', title:'Set the investment range.', copy:'Orbit uses budget to balance reach, fit and creator mix.'},
-  {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget and brand guardrails.'},
-  {screen:'match', target:'.profile-snapshot', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal.', copy:'Start with campaign fit, audience scale, average views, engagement, and the creator’s strongest content signals.'},
-  {screen:'match', target:'#swipeGuide', action:'swipe-demo', kicker:'Gesture controls', title:'Swipe to make the call.', copy:'Drag the profile left to pass or right to shortlist. Use touch, a mouse, or a trackpad.'},
+  {screen:'create', target:'#tourFormat', kicker:'YouTube plan', title:'Choose the video format.', copy:'Long-form integrations and Shorts need different creator strengths and activation plans.'},
+  {screen:'create', target:'#nextStep', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria.', copy:'Gemini combines the goal, audience, budget, format and brand guardrails.'},
+  {screen:'match', target:'.profile-identity', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal.', copy:'Start with the creator, channel category, campaign role, and strongest public signals.'},
+  {screen:'match', target:'.profile-actions', kicker:'Decision controls', title:'Make the call.', copy:'Choose Pass, Save, or Shortlist. Swiping and arrow keys stay available as shortcuts.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Here’s why Gemini sees a strong fit.', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
   {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Shortlist saved', title:'Open your shortlist.', copy:'Your creator decision is saved with its supporting context. Open Shortlist to review and compare candidates.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Shortlist review', title:'Compare finalists.', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
@@ -80,27 +94,34 @@ const screens = {
     <article class="campaign-card" data-go="workspace"><div class="row"><div><span class="eyebrow">Peakline Hydration · US</span><h3>Summer Training Launch</h3></div><span class="status">● In outreach</span></div><div class="progress"><span style="width:58%"></span></div><div class="row"><small>8 of 12 creator slots</small><small>$31.5K of $45K committed</small></div></article>
     <div class="section-head compact-head"><h3>Up next</h3></div><section class="home-queue"><button data-go="review"><span class="queue-dot coral"></span><div><strong>Review Adriene’s draft</strong><small>2 claims flagged</small></div><b>›</b></button><button data-go="messages"><span class="queue-dot mint"></span><div><strong>Reply to Jeff</strong><small>Rate received</small></div><b>›</b></button></section>`,
 
-  create: () => `${pageTitle('Create campaign')}<div class="stepper">${[1,2,3,4].map(i=>`<span class="${i<=state.formStep?'on':''}"></span>`).join('')}</div>${state.formStep===1?`
-    <div class="wizard-head"><span class="eyebrow">1 of 4 · Goal</span><button id="sampleBrief">Use sample brief</button></div><h1>What should this campaign achieve?</h1><p class="wizard-help">Pick one. You can fine-tune everything later.</p>
-    <div class="choice-stack"><button class="choice-card selected" id="tourGoal"><span>◉</span><div><strong>Launch a product</strong><small>Build awareness and explain what makes it different.</small></div></button><button class="choice-card"><span>○</span><div><strong>Grow awareness</strong><small>Reach more of the right audience.</small></div></button><button class="choice-card"><span>○</span><div><strong>Drive action</strong><small>Generate trials, sign-ups, or sales.</small></div></button></div>`:state.formStep===2?`
-    <span class="eyebrow">2 of 4 · Audience</span><h1>Who are you trying to reach?</h1><p class="wizard-help">Choose a starting point. Orbit will infer the rest.</p>
-    <div class="chips large"><button class="chip selected" id="tourAudience">Active women 25–40</button><button class="chip">Everyday athletes</button><button class="chip">Wellness beginners</button><button class="chip">Endurance runners</button></div><label>Optional detail</label><input value="US audience interested in fitness, outdoors, and clean-label products" />`:state.formStep===3?`
-    <span class="eyebrow">3 of 4 · Budget</span><h1>What can you invest in creators?</h1><p class="wizard-help">A range is enough for the first match.</p>
-    <div class="choice-stack"><button class="choice-card"><span>○</span><div><strong>Under $15K</strong><small>Focused test with micro creators.</small></div></button><button class="choice-card selected" id="tourBudget"><span>◉</span><div><strong>$25K–$50K</strong><small>Balanced reach and creator variety.</small></div></button><button class="choice-card"><span>○</span><div><strong>$50K+</strong><small>Multiple creators and larger channels.</small></div></button></div>`:`
-    <span class="eyebrow">4 of 4 · Brief intelligence</span><h1>Review what Orbit will match.</h1><p class="wizard-help">Gemini extracted the criteria below from the campaign inputs and attached brief.</p>
-    <div class="chips large"><button class="chip selected">Evidence-led</button><button class="chip selected">Optimistic</button><button class="chip selected">Story-first</button><button class="chip">Comedy</button><button class="chip">Cinematic</button></div>
-    <div class="campaign-summary"><span class="ai-star">✦</span><div><strong>Peakline · Summer Training Launch</strong><p>Product launch · Active women 25–40 · $25K–$50K</p></div></div>
-    <section class="brief-extract"><div class="brand-badges">${geminiBadge('Brief parsed with Gemini')}</div><div class="extract-grid"><div><span>Primary goal</span><strong>Credible product education</strong></div><div><span>Best-fit audience</span><strong>Active women 25–40</strong></div><div><span>Match weights</span><strong>Audience 35 · Content 30</strong></div><div><span>Guardrails</span><strong>No medical or guaranteed claims</strong></div></div><button class="text-action" id="editCriteria">Edit extracted criteria</button></section>
+  create: () => `${pageTitle('Create campaign')}<div class="stepper">${[1,2,3,4,5].map(i=>`<span class="${i<=state.formStep?'on':''}"></span>`).join('')}</div>${state.formStep===1?`
+    <div class="wizard-head"><span class="eyebrow">1 of 5 · Goal</span><button id="sampleBrief">Use sample brief</button></div><h1>What should this campaign achieve?</h1><p class="wizard-help">Choose the primary business outcome. You can add secondary goals later.</p>
+    <div class="choice-stack campaign-options"><button class="choice-card selected" id="tourGoal"><span>◉</span><div><strong>Launch a product</strong><small>Build awareness and explain the difference.</small></div></button><button class="choice-card"><span>○</span><div><strong>Grow awareness</strong><small>Reach more of the right audience.</small></div></button><button class="choice-card"><span>○</span><div><strong>Drive consideration</strong><small>Educate viewers before purchase.</small></div></button><button class="choice-card"><span>○</span><div><strong>Drive conversion</strong><small>Generate trials, sign-ups, or sales.</small></div></button><button class="choice-card"><span>○</span><div><strong>Create reusable assets</strong><small>Source creator-led content and usage rights.</small></div></button></div>`:state.formStep===2?`
+    <span class="eyebrow">2 of 5 · Target audience</span><h1>Who must this campaign reach?</h1><p class="wizard-help">Set the market, demographics and audience mindset.</p>
+    <div class="filter-section"><label>Audience segment</label><div class="chips large"><button class="chip selected" id="tourAudience">Active women 25–40</button><button class="chip">Everyday athletes</button><button class="chip">Wellness beginners</button><button class="chip">Endurance runners</button><button class="chip">Parents</button><button class="chip">Gen Z fitness</button></div></div>
+    <div class="filter-grid"><label>Market<select><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Global English</option></select></label><label>Language<select><option>English</option><option>Spanish</option><option>French</option></select></label></div><label>Interests & context</label><input value="Fitness, outdoors, clean-label products, summer routines" />`:state.formStep===3?`
+    <span class="eyebrow">3 of 5 · Budget & scale</span><h1>How should the investment work?</h1><p class="wizard-help">A range helps Orbit balance creator tier, volume, and rights.</p>
+    <div class="choice-stack"><button class="choice-card"><span>○</span><div><strong>Under $15K</strong><small>Focused test with micro creators.</small></div></button><button class="choice-card selected" id="tourBudget"><span>◉</span><div><strong>$25K–$50K</strong><small>Balanced reach and creator variety.</small></div></button><button class="choice-card"><span>○</span><div><strong>$50K–$100K</strong><small>Multi-creator flight with usage rights.</small></div></button><button class="choice-card"><span>○</span><div><strong>$100K+</strong><small>Large channels and scaled activation.</small></div></button></div><div class="filter-grid"><label>Creator mix<select><option>Balanced mix</option><option>Micro & mid-tier</option><option>Macro & hero creator</option></select></label><label>Target partners<select><option>6–8 creators</option><option>3–5 creators</option><option>9–15 creators</option></select></label></div>`:state.formStep===4?`
+    <span class="eyebrow">4 of 5 · YouTube plan</span><h1>What should creators make?</h1><p class="wizard-help">Format and placement change which creators are likely to perform.</p>
+    <div class="youtube-format-grid"><button class="format-card selected" id="tourFormat"><img src="assets/brands/youtube.svg" alt=""><span><strong>Long-form integration</strong><small>60–90s mid-roll inside an existing series</small></span><b>✓</b></button><button class="format-card"><img src="assets/brands/youtube.svg" alt=""><span><strong>Dedicated video</strong><small>Product-led story, review, or challenge</small></span><b>＋</b></button><button class="format-card"><img src="assets/brands/youtube.svg" alt=""><span><strong>YouTube Shorts</strong><small>15–60s vertical hook and quick payoff</small></span><b>＋</b></button><button class="format-card"><img src="assets/brands/youtube.svg" alt=""><span><strong>Livestream</strong><small>Live demo, Q&A, or launch moment</small></span><b>＋</b></button></div>
+    <div class="filter-section"><label>Placement & rights</label><div class="chips large"><button class="chip selected">Mid-roll</button><button class="chip">Pre-roll</button><button class="chip selected">Product demo</button><button class="chip selected">Pinned comment</button><button class="chip">Partnership ads</button><button class="chip">30-day usage rights</button></div></div>`:`
+    <span class="eyebrow">5 of 5 · Match criteria</span><h1>Review the creator brief.</h1><p class="wizard-help">Gemini has combined your inputs and brief into explainable ranking criteria.</p>
+    <div class="criteria-toolbar"><div class="brand-badges">${geminiBadge('Powered by Gemini Multimodal API')}${youtubeBadge('YouTube-native signals')}</div></div>
+    <div class="chips large"><button class="chip selected">Evidence-led</button><button class="chip selected">Optimistic</button><button class="chip selected">Brand safe</button><button class="chip">Comedy</button><button class="chip">Cinematic</button></div>
+    <div class="campaign-summary"><span class="ai-star">✦</span><div><strong>Peakline · Summer Training Launch</strong><p>Long-form mid-roll · Active women 25–40 · $25K–$50K</p></div></div>
+    <section class="brief-extract"><div class="extract-grid"><div><span>Channel size</span><strong>250K–15M subscribers</strong></div><div><span>Performance floor</span><strong>250K avg views · 3% engagement</strong></div><div><span>Sponsorship fit</span><strong>≤2 sponsored uploads / month</strong></div><div><span>Brand safety</span><strong>No medical claims · exclude conflicts</strong></div><div><span>Publishing</span><strong>Posted within 45 days</strong></div><div><span>Deliverable</span><strong>60–90s mid-roll + pinned comment</strong></div></div><button class="text-action" id="editCriteria">Edit all criteria</button></section>
     <div class="upload compact"><div><strong>＋ Replace client brief</strong><br><span>PDF, DOCX, or shared document</span></div></div>`}
-    <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===4?'Find creators ✦':'Continue'}</button></div>`,
+    <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===5?'Analyze 84 videos ✦':'Continue'}</button></div>`,
 
-  match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of 7 samples</span></div>
-    <div class="web-side-guides" aria-hidden="true"><div class="web-side-guide pass-guide"><span>×</span><strong>Pass</strong><small>Swipe left · ← key</small></div><div class="web-side-guide shortlist-guide"><span>☆</span><strong>Shortlist</strong><small>Swipe right · → key</small></div></div>
+  match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of ${creators.length} creators</span></div>
+    <section class="scan-speed"><div><img src="assets/brands/gemini.svg" alt=""><span><strong>50+ hours analyzed in 2.8s</strong><small>Gemini reviewed 84 YouTube videos</small></span></div><div><b>4.5h</b><span>estimated manual review saved</span></div></section>
+    <div class="desktop-match-shell">
+    <aside class="creator-queue" aria-label="Creator match queue"><div class="queue-heading"><span>Ranked matches</span><b>${creators.length}</b></div>${creators.map((creator,index)=>`<button class="queue-creator ${index===state.creator%creators.length?'active':''}" data-creator-index="${index}"><img src="${creator.image}" alt=""><span><strong>${creator.name}</strong><small>${creator.format}</small></span><b>${creator.score}</b></button>`).join('')}<p>Ranked from campaign fit and public YouTube signals.</p></aside>
     <article class="profile-stream" id="creatorCard">
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Shortlist profile introduction">＋</button></section>
-      <div class="swipe-guide" id="swipeGuide"><span>← Pass</span><strong>Swipe the profile</strong><span>Shortlist →</span></div>
+      <div class="swipe-guide" id="swipeGuide"><span>← Pass</span><strong>Drag or use the buttons</strong><span>Shortlist →</span></div>
       <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Shortlist"><span>＋</span>Shortlist</button><button class="action save" data-action="save" aria-label="Save">☆</button></div>
       <section class="profile-snapshot" aria-label="Creator stats">
         <div class="profile-fit"><div><span class="snapshot-label">Campaign fit</span><strong>${c.score}<small>/100</small></strong></div><span class="fit-verdict">Top match</span></div>
@@ -109,11 +130,13 @@ const screens = {
         <div class="snapshot-detail"><span aria-hidden="true">✦</span><div><small>Strongest signals</small><strong>${c.tags.join(' · ')}</strong></div></div>
       </section>
       <section class="profile-prompt"><span class="prompt-label">Content fit</span><div class="signal-copy">${c.signal}</div><button class="content-pick dark" data-pick="Creator voice and community" aria-label="Shortlist creator prompt">＋</button></section>
-      <section class="video-story" style="background-image:url('${c.videoImage}')"><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> PUBLIC YOUTUBE VIDEO</span><h2>${c.videoTitle}</h2><span class="watch">▶ Review source</span></div><button class="content-pick" data-pick="Recent content performance" aria-label="Shortlist recent video">＋</button></section>
-      <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Gemini fit analysis')}${youtubeBadge('12 uploads checked')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Explainable fit</span><h2>Why this creator fits the brief.</h2></div></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, and 12 recent YouTube uploads. Updated Sep 18. Public sponsorship signals require human verification.</p></div><button class="content-pick blue" data-pick="AI match evidence" aria-label="Shortlist AI match reason">＋</button></section>
+      <section class="video-story" style="background-image:url('${c.videoImage}')"><span class="timestamp-proof">${c.timestamp}</span><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> VIDEO-LEVEL PROOF</span><h2>${c.videoTitle}</h2><span class="watch">▶ ${c.timestamp} · ${c.moment}</span></div><button class="content-pick" data-pick="Timestamped video evidence" aria-label="Shortlist recent video">＋</button></section>
+      <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Powered by Gemini Multimodal API')}${youtubeBadge('12 videos analyzed')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Gemini video analysis</span><h2>Vision and transcript agree.</h2></div></div><div class="multimodal-signals"><article><span>VISION · ${c.visualFit}% FIT</span><p>${c.visual}</p></article><article><span>TRANSCRIPT & AUDIO · ${c.transcriptFit}% FIT</span><p>${c.transcript}</p></article></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, visual frames, audio/transcript, and 12 recent uploads. Human verification is required before outreach.</p></div><button class="brief-generate mobile-brief-button" data-open-brief>⚡ Generate AI Brief</button></section>
       <section class="safety-card"><div><span class="eyebrow">Collaboration read</span><h3>${c.risk}</h3></div><span class="safety-mark">✓</span></section>
       <p class="end-note">Review complete for ${c.name}.<br><span>Pass, save, or add to the client shortlist.</span></p>
-    </article><div class="web-action-dock"><button data-action="pass">× <span>Pass</span></button><button data-action="undo" aria-label="Undo">↶</button><button data-action="save">☆ <span>Save</span></button><button class="primary-dock" data-action="shortlist">☆ <span>Shortlist</span></button></div>`},
+    </article>
+    <aside class="decision-rail"><div class="decision-score"><span>Campaign fit</span><strong>${c.score}<small>/100</small></strong><b>Top match</b></div><div class="format-recommendation"><span>YouTube activation</span><strong>${c.format}</strong><small>${c.formatNote}</small></div><section class="desktop-ai-panel"><div class="brand-badges">${geminiBadge('Gemini Multimodal API')}</div><h2>Video evidence</h2><article><span>Vision · ${c.visualFit}% visual fit</span><p>${c.visual}</p></article><article><span>Transcript & audio · ${c.transcriptFit}% message fit</span><p>${c.transcript}</p></article><div class="mini-proof"><img src="${c.videoImage}" alt=""><span><b>${c.timestamp}</b><strong>${c.moment}</strong><small>Open timestamp proof ↗</small></span></div></section><div class="desktop-actions"><button data-action="pass">× Pass</button><button data-action="save">☆ Save</button><button class="primary-dock" data-action="shortlist">＋ Shortlist</button></div><button class="brief-generate" data-open-brief>⚡ Generate AI Brief</button><small class="keyboard-hint">Shortcuts: ← pass · → shortlist</small></aside>
+    </div>`},
 
   profile: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `${pageTitle(c.name,'match')}<div class="brand-badges profile-sources">${geminiBadge('Gemini analysis')}${youtubeBadge('Public channel data')}</div><div class="creator-photo" style="height:225px;border-radius:22px;background-image:url('${c.image}')"><div class="match-orbit"><strong>${c.score}</strong><small>FIT</small></div></div>
     <div class="section-head"><h3>Channel snapshot</h3><span class="status">Brand safe</span></div><div class="metric-row"><div class="metric"><strong>${c.subs}</strong><span>subscribers</span></div><div class="metric"><strong>${c.eng}</strong><span>engagement</span></div><div class="metric"><strong>+18%</strong><span>90d growth</span></div></div>
@@ -134,7 +157,7 @@ const screens = {
   chat: () => `${pageTitle('Yoga With Adriene','messages')}<div class="chat"><div class="status">● Interested</div><div class="bubble">Hi Adriene — your welcoming approach to movement feels like a natural fit for Peakline’s summer training launch.</div><div class="bubble me">We’re planning one integrated YouTube feature plus 30-day usage rights. Budget range is $12–15K.</div><div class="bubble">I’d love to hear more about the launch! Mid-June could work for our team.</div><div class="ai-note"><strong>✦ Suggested reply</strong><br>Great — I’ll send over the creator brief, review dates, and usage terms.</div></div><div class="chatbox"><input value="Great — I’ll send over the brief." aria-label="Message"><button id="send">↑</button></div>`,
 
   workspace: () => `${appHeader()}<span class="eyebrow">Peakline Hydration · US</span><h1>Summer Training Launch</h1><div class="campaign-meta"><span>Owner · A. Chen</span><span>Jun 3–Jul 26</span></div>
-    <section class="workspace-summary"><div class="row"><small>NEXT MILESTONE</small><span class="status warning">Due today</span></div><h2>Client shortlist approval</h2><p>4 candidates are ready for client review. Two have unresolved category conflicts.</p><button class="workspace-cta" data-go="pool">Review shortlist →</button></section>
+    <section class="workspace-summary"><div class="row"><small>NEXT MILESTONE</small><span class="status warning">Due today</span></div><h2>Client shortlist approval</h2><p>4 candidates are ready for client review. Two have unresolved category conflicts.</p><button class="workspace-cta" data-go="pool">Review shortlist →</button><div class="milestone-flow"><span><b>8</b> matched</span><i>→</i><span><b>4</b> approved</span><i>→</i><span><b>3</b> briefs</span></div></section>
     <div class="workspace-kpis"><article><span>Budget committed</span><strong>$31.5K</strong><small>of $45K</small></article><article><span>Creators confirmed</span><strong>4</strong><small>of 8 target</small></article><article><span>Deliverables approved</span><strong>3</strong><small>of 12</small></article><article><span>Next publish</span><strong>Jun 18</strong><small>Adriene</small></article></div>
     <section class="acceleration-card"><div class="brand-badges">${geminiBadge('AI-assisted workflow')}${youtubeBadge('Public video evidence')}</div><div class="time-compare"><div><span>Manual estimate</span><strong>14h 20m</strong></div><i>→</i><div><span>Orbit run</span><strong>12m</strong></div></div><small>Estimated across creator research, scoring, brief drafting and first-pass review.</small></section>
     <div class="section-head"><h3>Needs action</h3><button>4 open</button></div>
@@ -181,7 +204,8 @@ function renderTour() {
   if(!state.tourActive) return;
   const step=tourSteps[state.tourStep];
   if(!step || step.screen!==state.screen) return;
-  const target=step.target?(app.querySelector(step.target) || phone.querySelector(step.target)):null;
+  const targetSelector=step.target==='.match-memo' && phone.classList.contains('browser-mode')?'.desktop-ai-panel':step.target;
+  const target=targetSelector?(app.querySelector(targetSelector) || phone.querySelector(targetSelector)):null;
   const layer=document.createElement('section');
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
@@ -226,15 +250,17 @@ function runTourAction() {
   else if(step===1) { state.tourStep=2;state.formStep=2;render();toast('Campaign goal set'); }
   else if(step===2) { state.tourStep=3;state.formStep=3;render();toast('Target audience set'); }
   else if(step===3) { state.tourStep=4;state.formStep=4;render();toast('Budget range set'); }
-  else if(step===4) { state.tourStep=5;toast('7 creators ranked');setTimeout(()=>go('match'),350); }
-  else if(step===5) { state.tourStep=6;render(); }
-  else if(step===7) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=8;render()},650); }
-  else if(step===8) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=9;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
-  else if(step===9) { state.tourStep=10;go('compare'); }
-  else if(step===10) { state.tourStep=11;go('messages'); }
-  else if(step===11) { state.tourStep=12;go('chat'); }
-  else if(step===12) { state.tourStep=13;toast('Message sent');setTimeout(()=>go('brief'),350); }
-  else if(step===13) { state.tourStep=14;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===4) { state.tourStep=5;state.formStep=5;render();toast('YouTube format set'); }
+  else if(step===5) { state.tourStep=6;toast('84 videos analyzed');setTimeout(()=>go('match'),350); }
+  else if(step===6) { state.tourStep=7;render(); }
+  else if(step===7) { state.tourStep=8;render();toast('Decision controls ready'); }
+  else if(step===8) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=9;render()},650); }
+  else if(step===9) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=10;toast('Added to shortlist');setTimeout(()=>go('pool'),350); }
+  else if(step===10) { state.tourStep=11;go('compare'); }
+  else if(step===11) { state.tourStep=12;go('messages'); }
+  else if(step===12) { state.tourStep=13;go('chat'); }
+  else if(step===13) { state.tourStep=14;toast('Message sent');setTimeout(()=>go('brief'),350); }
+  else if(step===14) { state.tourStep=15;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
@@ -248,11 +274,12 @@ function bind() {
   const fastForward=app.querySelector('#fastForward'); if(fastForward) fastForward.onclick=()=>{app.querySelector('.transition-shell')?.classList.add('leaving');setTimeout(()=>go('home'),420)};
   app.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('selected')));
   app.querySelectorAll('.choice-stack').forEach(group=>group.querySelectorAll('.choice-card').forEach(card=>card.addEventListener('click',()=>{group.querySelectorAll('.choice-card').forEach(c=>{c.classList.remove('selected');c.querySelector('span').textContent='○'});card.classList.add('selected');card.querySelector('span').textContent='◉'})));
+  app.querySelectorAll('.youtube-format-grid').forEach(group=>group.querySelectorAll('.format-card').forEach(card=>card.addEventListener('click',()=>{card.classList.toggle('selected');card.querySelector('b').textContent=card.classList.contains('selected')?'✓':'＋'})));
   const reasonButton=app.querySelector('#reasonButton'); if(reasonButton) reasonButton.onclick=()=>{app.querySelector('#reasonDetail').classList.toggle('open');reasonButton.classList.toggle('open')};
-  const next=app.querySelector('#nextStep'); if(next) next.onclick=()=>{ if(state.formStep<4){state.formStep++;render()} else {toast('7 sample profiles ranked');setTimeout(()=>go('match'),400)} };
+  const next=app.querySelector('#nextStep'); if(next) next.onclick=()=>{ if(state.formStep<5){state.formStep++;render()} else {toast('84 videos analyzed · 7 creators ranked');setTimeout(()=>go('match'),400)} };
   const prev=app.querySelector('#prevStep'); if(prev) prev.onclick=()=>{ if(state.formStep>1){state.formStep--;render()} else toast('Draft saved') };
-  const sampleCampaign=app.querySelector('#sampleCampaign'); if(sampleCampaign) sampleCampaign.onclick=()=>{state.formStep=4;go('create')};
-  const sampleBrief=app.querySelector('#sampleBrief'); if(sampleBrief) sampleBrief.onclick=()=>{state.formStep=4;render();toast('Sample brief loaded')};
+  const sampleCampaign=app.querySelector('#sampleCampaign'); if(sampleCampaign) sampleCampaign.onclick=()=>{state.formStep=5;go('create')};
+  const sampleBrief=app.querySelector('#sampleBrief'); if(sampleBrief) sampleBrief.onclick=()=>{state.formStep=5;render();toast('Sample brief loaded')};
   const editCriteria=app.querySelector('#editCriteria'); if(editCriteria) editCriteria.onclick=()=>toast('Criteria are ready to edit');
   phone.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.action)));
   app.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>openDecision(b.dataset.pick)));
@@ -264,6 +291,8 @@ function bind() {
   const applyRewrite=app.querySelector('#applyRewrite'); if(applyRewrite) applyRewrite.onclick=()=>{const draft=app.querySelector('#draftContent');draft.value='After a warm practice, Peakline fits naturally into my post-practice hydration routine. It has zero added sugar and is a simple hydration option for warm-weather movement.';toast('Safe rewrite applied')};
   const sendReview=app.querySelector('#sendReview'); if(sendReview) sendReview.onclick=()=>{toast('Sent for human approval');setTimeout(()=>go('workspace'),600)};
   const swipeCard=app.querySelector('#creatorCard'); if(swipeCard) bindSwipe(swipeCard);
+  app.querySelectorAll('[data-creator-index]').forEach(button=>button.addEventListener('click',()=>{state.creator=Number(button.dataset.creatorIndex);render()}));
+  app.querySelectorAll('[data-open-brief]').forEach(button=>button.addEventListener('click',openBriefDrawer));
   app.querySelectorAll('.creator-list-item').forEach(bindShortlistSwipe);
 }
 
@@ -328,6 +357,20 @@ function closeDecision() {
   document.querySelector('#decisionSheet').classList.remove('open');
   document.querySelector('#sheetBackdrop').classList.remove('open');
 }
+function openBriefDrawer() {
+  const c=creators[state.creator%creators.length];
+  document.querySelector('#briefCreator').textContent=c.name;
+  document.querySelector('#briefFormat').textContent=c.format;
+  document.querySelector('#briefScene').textContent=`Place Peakline at the ${c.moment.toLowerCase()} around ${c.timestamp}, where it already feels native to the story.`;
+  document.querySelector('#briefOpening').textContent=`“Before we get started, here’s the simple hydration step I’ve added to this routine.”`;
+  document.querySelector('#briefGuardrail').textContent='Avoid medical outcomes, guaranteed performance, and “best” comparisons. Use approved facts only.';
+  document.querySelector('#briefDrawer').classList.add('open');
+  document.querySelector('#briefBackdrop').classList.add('open');
+}
+function closeBriefDrawer() {
+  document.querySelector('#briefDrawer').classList.remove('open');
+  document.querySelector('#briefBackdrop').classList.remove('open');
+}
 function act(action) {
   if(action==='undo') { if(state.creator>0) state.creator--; if(state.lastAction==='shortlist') state.pool=Math.max(0,state.pool-1); document.querySelector('#poolBadge').textContent=state.pool; state.lastAction=null; toast('Last choice undone'); render(); return; }
   const card=app.querySelector('#creatorCard');
@@ -357,6 +400,9 @@ document.querySelector('#closeSheet').addEventListener('click',closeDecision);
 document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision);
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{state.pool++;document.querySelector('#poolBadge').textContent=state.pool;closeDecision();toast('Shortlisted with your note')});
+document.querySelector('#closeBriefDrawer').addEventListener('click',closeBriefDrawer);
+document.querySelector('#briefBackdrop').addEventListener('click',closeBriefDrawer);
+document.querySelector('#openFullBrief').addEventListener('click',()=>{closeBriefDrawer();go('brief')});
 deviceButtons.forEach(button=>button.addEventListener('click',()=>{
   const device=button.dataset.device;
   const compact=device==='pixel';
@@ -376,4 +422,6 @@ const setFocusMode=enabled=>{
 };
 document.querySelector('#focusMode').addEventListener('click',()=>setFocusMode(true));
 document.querySelector('#focusExit').addEventListener('click',()=>setFocusMode(false));
+if(urlParams.get('device')==='laptop') deviceButtons.forEach(button=>{if(button.dataset.device==='laptop') button.click()});
 render();
+if(urlParams.get('drawer')==='brief' && state.screen==='match') openBriefDrawer();
