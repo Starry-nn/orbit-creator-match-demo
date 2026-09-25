@@ -574,7 +574,7 @@ textarea { min-height: 85px; resize: none; }
 .chrome-address i { font-style: normal; color: #1a9b62; }
 .chrome-address b { font-size: 14px; font-weight: 500; }
 .browser-mode .statusbar, .browser-mode .pixel-gesture { display: none; }
-.browser-mode .app { position: relative; height: calc(100% - 72px); padding: 28px 38px 40px 258px; background: var(--web-canvas); }
+.browser-mode .app { position: relative; height: calc(100% - 72px); padding: 28px 38px 96px 258px; background: var(--web-canvas); }
 .browser-mode .app:not(.intro-mode) > * { max-width: 1040px; margin-left: auto; margin-right: auto; }
 .browser-mode .tabbar { top: 72px; right: auto; bottom: 0; width: 220px; height: auto; grid-template-columns: 1fr; grid-template-rows: repeat(5, 52px); align-content: start; gap: 5px; padding: 88px 14px 110px; border-top: 0; border-right: 0; background: var(--web-rail); }
 .browser-mode .tabbar::before { content: "Orbit\A Creator intelligence"; position: absolute; top: 24px; left: 22px; right: 18px; color: white; font: 800 15px/1.15 var(--font-display); letter-spacing: -.3px; white-space: pre-line; }
@@ -587,16 +587,14 @@ textarea { min-height: 85px; resize: none; }
 .browser-mode .tabbar button.active { background: var(--blue); color: white; }
 .browser-mode .tabbar i { top: 7px; right: 10px; }
 .browser-mode .app[data-screen="match"] { overflow-x: hidden; }
-.browser-mode .app[data-screen="match"] .discover-top { position: relative; top: auto; z-index: 2; max-width: 570px; margin: 0 auto 10px; padding: 0 3px; background: transparent; backdrop-filter: none; }
-.web-swipe-hints { display: none; }
-.browser-mode .web-swipe-hints { width: min(570px,calc(100% - 80px)); min-height: 38px; display: grid; grid-template-columns: 94px 1fr 94px; align-items: center; gap: 10px; margin: 0 auto 10px; padding: 3px; border: 1px solid #dfe3eb; border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 8px 24px rgba(31,38,57,.06); }
-.browser-mode .web-swipe-hints button { height: 30px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 0; border-radius: 16px; background: transparent; color: #697083; font-size: 9px; font-weight: 850; cursor: pointer; }
-.browser-mode .web-swipe-hints button:hover { background: #f2f4fa; color: var(--blue); }
-.browser-mode .web-swipe-hints button:focus-visible { outline: 3px solid #9db0ff; outline-offset: 2px; }
-.browser-mode .web-swipe-hints kbd { color: currentColor; font: 900 13px/1 var(--font-body); }
-.browser-mode .web-swipe-hints > small { color: #8c94a3; font-size: 8px; font-weight: 750; text-align: center; }
-.browser-mode .web-swipe-pass { justify-self: start; }
-.browser-mode .web-swipe-shortlist { justify-self: end; }
+.browser-mode .app[data-screen="match"] .discover-top { position: relative; top: auto; z-index: 2; max-width: 570px; margin: 0 auto 12px; padding: 0 3px; background: transparent; backdrop-filter: none; }
+.web-side-guides, .web-action-dock { display: none; }
+.browser-mode .web-side-guides { position: absolute; z-index: 7; top: 282px; left: calc(50% - 282px); right: calc(50% - 505px); display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+.browser-mode .web-side-guide { width: 94px; display: grid; justify-items: center; gap: 6px; color: #a3aab6; text-align: center; }
+.browser-mode .web-side-guide > span { width: 50px; height: 50px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; font-size: 23px; }
+.browser-mode .web-side-guide strong { font-size: 10px; letter-spacing: .7px; text-transform: uppercase; }
+.browser-mode .web-side-guide small { font-size: 8px; white-space: nowrap; }
+.browser-mode .shortlist-guide { color: #27866b; }
 .browser-mode .app[data-screen="match"] .profile-stream { width: min(570px,calc(100% - 80px)); display: block; margin: 0 auto; padding-bottom: 18px; border: 1px solid #dfe2ea; border-radius: 24px; background: white; box-shadow: 0 18px 48px rgba(31,38,57,.13); overflow: hidden; }
 .browser-mode .app[data-screen="match"] .profile-hero { aspect-ratio: 16 / 9; border-radius: 0; box-shadow: none; }
 .browser-mode .app[data-screen="match"] .profile-hero { height: 205px; aspect-ratio: auto; background-position: center 34%; }
@@ -611,9 +609,14 @@ textarea { min-height: 85px; resize: none; }
 .browser-mode .app[data-screen="match"] .end-note { margin-left: 18px; margin-right: 18px; }
 .browser-mode .app[data-screen="match"] .video-story { height: 330px; }
 .browser-mode .app[data-screen="match"] .match-memo { min-height: 0; }
+.browser-mode .web-action-dock { position: absolute; z-index: 24; left: 220px; right: 0; bottom: 0; min-height: 70px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 24px; border-top: 1px solid #dde1e8; background: rgba(255,255,255,.97); box-shadow: 0 -10px 24px rgba(31,38,57,.05); backdrop-filter: blur(18px); }
+.browser-mode .web-action-dock button { min-width: 86px; height: 40px; padding: 0 15px; border: 1px solid #dfe3ea; border-radius: 20px; background: white; color: var(--ink); font-size: 10px; font-weight: 900; cursor: pointer; }
+.browser-mode .web-action-dock button:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(31,38,57,.1); }
+.browser-mode .web-action-dock button:focus-visible { outline: 3px solid #9db0ff; outline-offset: 2px; }
+.browser-mode .web-action-dock button[aria-label="Undo"] { min-width: 44px; width: 44px; padding: 0; }
+.browser-mode .web-action-dock .primary-dock { border-color: var(--blue); background: var(--blue); color: white; }
 body.focus-mode .phone.browser-mode { width: min(calc(100vw - 56px), var(--device-width)); height: calc(100vh - 56px); max-height: 900px; }
-body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream,
-body.focus-mode .browser-mode .web-swipe-hints { width: min(560px,calc(100% - 80px)); }
+body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width: min(560px,calc(100% - 80px)); }
 .browser-mode .topline { margin-top: 0; }
 .browser-mode .home-glance { grid-template-columns: repeat(3, minmax(150px,1fr)); }
 .browser-mode .focus-card { min-height: 185px; padding: 26px; }
