@@ -53,7 +53,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 ## Dataset navigation
 
 - Exploratory lists: Render the seven bounded sample creators; no pagination is needed for prototype data.
-- URL state: Demo state is transient, with optional `screen`, `device`, and `step` parameters for deterministic pitch entry points.
+- URL state: Demo state is transient, with optional `screen`, `device`, `step`, and `tour` parameters for deterministic pitch entry points and QA.
 - Empty/no-results/error/loading treatment: Search reports no sample match without discarding the current creator.
 - Back/scroll restoration: Screen navigation resets the active content scroller to the top.
 - Selection scope: At most two creators are selected for comparison; checkboxes and buttons provide non-drag alternatives.
@@ -84,7 +84,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 
 - Dialog primitives: Existing decision sheet plus the AI Brief drawer and dedicated backdrop.
 - Toast placement/duration/deduplication: Shared `#toast`, approximately 1.7 seconds.
-- Layer/z-index contract: tour > toast > decision sheet > backdrop > navigation/content.
+- Layer/z-index contract: tour > toast > decision sheet > backdrop > navigation/content. Starting or advancing the tour closes decision and brief overlays so only one guided target can be active.
 
 ## Async and resilience
 

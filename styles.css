@@ -512,6 +512,7 @@ textarea { min-height: 85px; resize: none; }
 .time-compare i { align-self: center; color: var(--blue); font-style: normal; font-weight: 900; }
 .acceleration-card > small { display: block; color: var(--muted); font-size: 8px; line-height: 1.4; }
 .action-card { display: grid; grid-template-columns: 28px 1fr 12px; gap: 10px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 15px; background: white; margin-bottom: 8px; }
+.workspace-actions { display: contents; }
 .action-card.urgent { border-color: #f0c9bf; background: #fffafa; }
 .action-card > span:last-child { color: var(--muted); font-size: 18px; }
 .action-card p { margin: 3px 0; color: var(--muted); font-size: 9px; }
@@ -815,6 +816,37 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="workspace"] > .workspace-kpis { grid-column: 2; grid-row: 5; grid-template-columns: 1fr 1fr; margin: 0; }
 .browser-mode .app[data-screen="workspace"] > .acceleration-card { grid-column: 2; grid-row: 6; margin: 0; }
 .browser-mode .app[data-screen="workspace"] > .action-card { grid-column: auto !important; min-height: 92px; }
+
+/* Keep every desktop work surface on the same content grid. */
+.browser-mode .app[data-screen="create"],
+.browser-mode .app[data-screen="compare"],
+.browser-mode .app[data-screen="profile"],
+.browser-mode .app[data-screen="brief"],
+.browser-mode .app[data-screen="review"],
+.browser-mode .app[data-screen="chat"] { max-width: none; margin: 0; }
+.browser-mode .app[data-screen="pool"] > *,
+.browser-mode .app[data-screen="messages"] > *,
+.browser-mode .app[data-screen="workspace"] > * { width: 100%; max-width: none; margin-left: 0; margin-right: 0; }
+.browser-mode .app[data-screen="pool"],
+.browser-mode .app[data-screen="messages"] { gap: 0 16px; }
+.browser-mode .app[data-screen="pool"] .creator-list-item { min-height: 88px; padding: 12px 14px; }
+.browser-mode .app[data-screen="pool"] .compare-bar { width: 100%; max-width: none; }
+.browser-mode .app[data-screen="pool"] .compare-bar { position: static; }
+.browser-mode .app[data-screen="messages"] .thread { width: 100%; min-height: 92px; padding: 14px; }
+.browser-mode .app[data-screen="workspace"] .action-card { width: 100%; min-height: 96px; padding: 16px; }
+.browser-mode .app[data-screen="workspace"] > .workspace-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; }
+.browser-mode .app[data-screen="workspace"] .workspace-actions .action-card { margin: 0; }
+.browser-mode .app[data-screen="workspace"] > .section-head { margin-top: 24px; }
+.browser-mode .app[data-screen="workspace"] .pipeline-list article,
+.browser-mode .app[data-screen="workspace"] .file-list button { width: 100%; padding: 14px; }
+
+/* Desktop tour cards stay contextual and never become a full-width banner. */
+.browser-mode .tour-coach { left: 244px; right: auto; bottom: 24px; width: 360px; min-height: 0; grid-template-columns: 40px 1fr; gap: 9px 12px; padding: 14px; border-radius: 18px; }
+.browser-mode .tour-layer.coach-top .tour-coach { top: 24px; bottom: auto; }
+.browser-mode .tour-orbit { width: 40px; height: 40px; }
+.browser-mode .tour-copy h2 { font-size: 17px; }
+.browser-mode .tour-coach > small { font-size: 7px; }
+.browser-mode .tour-finish .tour-coach { left: 50%; top: 50%; width: 420px; transform: translate(-50%,-50%); }
 @media (max-width: 599px) {
   body { overflow: hidden; }
   .demo-controls, .focus-exit { display: none !important; }

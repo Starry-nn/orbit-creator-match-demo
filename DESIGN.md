@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and a three-column Discover workspace: ranked creator queue, creator/video dossier, and a decision panel with score, multimodal evidence, timestamp proof, and actions. Buttons are primary; swipe and arrow keys are optional accelerators taught with compact inline copy. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and one shared content grid for every work surface. Discover uses three columns: ranked creator queue, creator/video dossier, and a decision panel with score, multimodal evidence, timestamp proof, and actions. Shortlist, Inbox, and Campaign use the same outer edges, equal card widths within each repeated module, and full-width section bars. Buttons are primary; swipe and arrow keys are optional accelerators taught with a compact contextual coach card. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
