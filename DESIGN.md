@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail, a 64px discovery toolbar, a centered 610px creator dossier, and a persistent bottom decision dock. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail, a 64px discovery toolbar, a centered 570px creator dossier, and a persistent bottom decision dock. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
