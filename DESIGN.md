@@ -54,7 +54,7 @@ Orbit should feel like a campaign control room with one decisive creator dossier
 - **Locale(s) and language policy:** English UI. User requests may be bilingual, but shipped interface copy remains English until localization is explicitly scoped.
 - **Usage scene:** Mobile review at 360/393px and laptop pitch/demo at approximately 1280px; information is dense but decisions must remain obvious.
 - **Register:** Product UI with restrained brand expression.
-- **Memorable signature:** The centered creator decision dossier, with the same embedded Pass/Shortlist controls on mobile and desktop and evidence from Gemini and YouTube.
+- **Memorable signature:** The centered creator decision dossier, with compact desktop arrow cues and the same Pass/Shortlist outcomes across desktop and mobile, supported by Gemini and YouTube evidence.
 - **Restraint:** Lists, forms, messages, and campaign operations use familiar product patterns and quiet surfaces.
 - **Anti-references:** Do not resemble a generic analytics dashboard, a macOS device mockup, or a dating app clone. The creator card may borrow direct-manipulation clarity without romantic or consumer-social styling.
 - **Token ownership/runtime mapping:** `DESIGN.md` documents approved intent; the canonical runtime tokens are CSS variables in `styles.css`. Token changes must update both files in one change.
@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and a centered 570px creator dossier. Discover retains the same actions and YouTube-only scope as mobile instead of adding desktop-only controls. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and a centered 570px creator dossier. Discover uses compact left/right cues for swipe and arrow-key decisions while retaining the same actions and YouTube-only scope as mobile. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 

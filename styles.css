@@ -588,12 +588,21 @@ textarea { min-height: 85px; resize: none; }
 .browser-mode .tabbar i { top: 7px; right: 10px; }
 .browser-mode .app[data-screen="match"] { overflow-x: hidden; }
 .browser-mode .app[data-screen="match"] .discover-top { position: relative; top: auto; z-index: 2; max-width: 570px; margin: 0 auto 12px; padding: 0 3px; background: transparent; backdrop-filter: none; }
+.web-swipe-hints { display: none; }
+.browser-mode .web-swipe-hints { position: absolute; z-index: 8; top: 302px; left: calc(50% - 382px); right: calc(50% - 540px); display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+.browser-mode .web-swipe-hints button { min-width: 84px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border: 1px solid #d9deea; border-radius: 18px; background: rgba(255,255,255,.9); color: #697083; font-size: 9px; font-weight: 850; box-shadow: 0 7px 20px rgba(31,38,57,.08); cursor: pointer; pointer-events: auto; }
+.browser-mode .web-swipe-hints button:hover { border-color: #aeb9dd; color: var(--blue); transform: translateY(-1px); }
+.browser-mode .web-swipe-hints button:focus-visible { outline: 3px solid #9db0ff; outline-offset: 2px; }
+.browser-mode .web-swipe-hints kbd { min-width: 21px; height: 21px; display: grid; place-items: center; border: 1px solid #cfd5e1; border-radius: 6px; background: #f5f6f9; color: var(--ink); font: 800 12px/1 var(--font-body); box-shadow: 0 1px 0 #cfd5e1; }
+.browser-mode .web-swipe-hints > small { position: absolute; left: 50%; top: 48px; width: 150px; transform: translateX(-50%); color: #8c94a3; font-size: 8px; font-weight: 750; text-align: center; }
 .browser-mode .app[data-screen="match"] .profile-stream { width: min(570px,calc(100% - 210px)); display: block; margin: 0 auto; padding-bottom: 18px; border: 1px solid #dfe2ea; border-radius: 24px; background: white; box-shadow: 0 18px 48px rgba(31,38,57,.13); overflow: hidden; }
 .browser-mode .app[data-screen="match"] .profile-hero { aspect-ratio: 16 / 9; border-radius: 0; box-shadow: none; }
 .browser-mode .app[data-screen="match"] .profile-hero { height: 205px; aspect-ratio: auto; background-position: center 34%; }
 .browser-mode .app[data-screen="match"] .profile-identity { margin: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); }
-.browser-mode .app[data-screen="match"] .swipe-guide { margin: 14px 18px 2px; }
-.browser-mode .app[data-screen="match"] .profile-actions { margin: 13px 18px 3px; }
+.browser-mode .app[data-screen="match"] .swipe-guide { display: none; }
+.browser-mode .app[data-screen="match"] .profile-actions { gap: 6px; margin: 12px 18px 4px; }
+.browser-mode .app[data-screen="match"] .profile-actions .decision { min-width: 92px; min-height: 36px; padding: 8px 12px; font-size: 9px; }
+.browser-mode .app[data-screen="match"] .profile-actions .action { width: 36px; height: 36px; }
 .browser-mode .app[data-screen="match"] .profile-snapshot,
 .browser-mode .app[data-screen="match"] .profile-prompt,
 .browser-mode .app[data-screen="match"] .video-story,

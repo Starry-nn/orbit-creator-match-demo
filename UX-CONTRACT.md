@@ -62,7 +62,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 |---|---|---|---|---|---|---|---|
 | Create campaign | Create/Continue | stable button | Discover | ranked toast | remain on form | next screen | `app.js` |
 | Search creator | Enter in search | none/local | matching creator | updated dossier | no-results toast | remains in search | `app.js` |
-| Shortlist | swipe/button | exit animation | next creator | toast + count | Undo | next dossier | `app.js` |
+| Shortlist | swipe/button/right arrow on desktop | exit animation | next creator | toast + count | Undo | next dossier | `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
 
@@ -74,6 +74,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
 - Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
+- Desktop input parity: Left/right arrow cues expose keyboard shortcuts; buttons and swipe remain available alternatives.
 
 ## Overlays and feedback
 

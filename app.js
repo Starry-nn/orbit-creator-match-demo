@@ -95,6 +95,7 @@ const screens = {
     <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===4?'Find creators ✦':'Continue'}</button></div>`,
 
   match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of 7 samples</span></div>
+    <div class="web-swipe-hints" aria-label="Swipe or use the left and right arrow keys"><button class="web-swipe-pass" data-action="pass" aria-label="Pass creator with left arrow key"><kbd>←</kbd><span>Pass</span></button><small>Swipe or use arrow keys</small><button class="web-swipe-shortlist" data-action="shortlist" aria-label="Shortlist creator with right arrow key"><span>Shortlist</span><kbd>→</kbd></button></div>
     <article class="profile-stream" id="creatorCard">
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
@@ -335,6 +336,12 @@ function act(action) {
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
+document.addEventListener('keydown',event=>{
+  if(!phone.classList.contains('browser-mode')||state.screen!=='match'||event.target.closest('input,textarea,select,[contenteditable]')) return;
+  const action=event.key==='ArrowLeft'?'pass':event.key==='ArrowRight'?'shortlist':null;
+  if(!action) return;
+  event.preventDefault();act(action);
+});
 phone.addEventListener('click',event=>{
   if(!state.tourActive || event.target.closest('.tour-target, #finishTour, #tourContinue')) return;
   event.preventDefault();
