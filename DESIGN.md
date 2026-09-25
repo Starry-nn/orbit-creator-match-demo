@@ -56,7 +56,7 @@ Orbit should feel like a campaign control room that keeps the creator, source vi
 - **Register:** Product UI with restrained brand expression.
 - **Memorable signature:** A creator decision dossier connected to timestamped YouTube evidence and explicit Gemini Vision/Transcript reasoning, with the same Pass/Save for later/Select outcomes across desktop and mobile.
 - **Restraint:** Lists, forms, email outreach, and campaign operations use familiar product patterns and quiet surfaces.
-- **Brand asset rule:** The favicon, demo chrome, onboarding, app navigation, and guided tour share `assets/brands/orbit.svg`. Gemini and YouTube identify analysis sources; Gmail identifies the email delivery channel.
+- **Brand asset rule:** The favicon, demo chrome, onboarding, app navigation, and guided tour share `assets/brands/orbit.svg`. Gemini and YouTube identify analysis sources; the Gmail mark appears only on the bottom/side Email navigation destination.
 - **Anti-references:** Do not resemble a generic analytics dashboard, a macOS device mockup, or a dating app clone. The creator card may borrow direct-manipulation clarity without romantic or consumer-social styling.
 - **Token ownership/runtime mapping:** `DESIGN.md` documents approved intent; the canonical runtime tokens are CSS variables in `styles.css`. Token changes must update both files in one change.
 

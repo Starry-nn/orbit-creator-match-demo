@@ -82,7 +82,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Desktop input parity: Pass and Select form the primary decision row. Save for later is a same-size icon counterpart to Undo. Left/right arrows and swipe remain optional alternatives and are taught in the Browser tutorial.
 - Creator records come from public YouTube data; the workflow does not depend on creators joining Orbit.
 - Outreach uses email, not in-product creator messaging. Gemini can draft a personalized email for each selected creator from campaign inputs and public signals, but nothing sends until the user reviews and explicitly approves it.
-- Discover teaches the full decision model in context: swipe left or Pass, swipe right or Select, Undo the last decision, or Save for later to move a creator to the end of the queue. Gmail is the visible delivery channel for approved outreach.
+- Discover teaches the full decision model in context: swipe left or Pass, swipe right or Select, Undo the last decision, or Save for later to move a creator to the end of the queue. The next guided step requires the user to generate an AI brief from the highlighted control. Gmail identifies the Email navigation destination without adding channel branding inside the outreach workflow.
 
 ## Overlays and feedback
 
