@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and a centered 570px creator dossier. Discover uses compact left/right cues for swipe and arrow-key decisions while retaining the same actions and YouTube-only scope as mobile. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and a centered 570px creator dossier. Discover places one compact, card-aligned decision bar above the dossier for swipe and arrow-key decisions; it must not duplicate actions inside the card or float them in unused canvas space. Supporting screens use responsive one- or two-column grids. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
