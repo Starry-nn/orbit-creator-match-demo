@@ -4,7 +4,7 @@ A dependency-free, mobile-first clickable prototype for an agency-facing creator
 
 The name **Orbit** reflects the product's job: keeping clients, creators, briefs, approvals, outreach, and deliverables in one campaign system. The circular mark reinforces that idea without making AI the brand itself.
 
-The discovery experience borrows the interaction principles—not the branding—from story-led profile products such as Hinge: one creator is presented as a scrollable narrative made of media, prompts, performance evidence, and AI reasoning. Teams can shortlist a creator from a specific profile section and preserve that context as a decision note.
+The discovery experience borrows the interaction principles—not the branding—from story-led profile products such as Hinge: one creator is presented as a scrollable narrative made of media, prompts, performance evidence, and AI reasoning. Teams can select a creator from a specific profile section and preserve that context as a decision note.
 
 ## Demo
 
@@ -13,7 +13,7 @@ The discovery experience borrows the interaction principles—not the branding�
 ## Included flows
 
 - Campaign dashboard and low-friction four-step campaign setup with a ready-made sample brief
-- Locked 13-step first-run tour that requires users to set the campaign goal, target audience and budget before guiding them through matching, shortlist, comparison, outreach, creator brief, and workspace interfaces
+- Locked first-run tour that requires users to set the campaign goal, target audience and budget before guiding them through matching, selection, comparison, outreach, creator brief, and workspace interfaces
 - AI-ranked creator discovery feed
 - Explainable, weighted fit scoring with traceable campaign and YouTube evidence
 - Seven real public YouTube creator samples using locally stored official channel avatars
@@ -21,9 +21,9 @@ The discovery experience borrows the interaction principles—not the branding�
 - Explainable AI match memo and evidence
 - Gemini-assisted brief extraction, personalized creator briefs, and first-pass draft risk review
 - Before/after workflow timing to show campaign acceleration
-- Gesture controls: swipe left to pass, swipe right to shortlist, plus save and undo actions
-- Contextual shortlist notes on individual profile sections
-- Client shortlist review, finalist comparison, outreach, creator briefs, and a campaign control room
+- Gesture controls: swipe left to pass, swipe right to select, plus save-for-later and undo actions
+- Contextual selection notes on individual profile sections
+- Client selection review, finalist comparison, outreach, creator briefs, and a campaign control room
 - Operational campaign views for owners, deadlines, client approvals, conflicts, budgets, creator stages, deliverables, and files
 
 ## Run

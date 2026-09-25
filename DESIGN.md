@@ -54,7 +54,7 @@ Orbit should feel like a campaign control room that keeps the creator, source vi
 - **Locale(s) and language policy:** English UI. User requests may be bilingual, but shipped interface copy remains English until localization is explicitly scoped.
 - **Usage scene:** Mobile review at 360/393px and laptop pitch/demo at approximately 1280px; information is dense but decisions must remain obvious.
 - **Register:** Product UI with restrained brand expression.
-- **Memorable signature:** A creator decision dossier connected to timestamped YouTube evidence and explicit Gemini Vision/Transcript reasoning, with the same Pass/Save for later/Advance outcomes across desktop and mobile.
+- **Memorable signature:** A creator decision dossier connected to timestamped YouTube evidence and explicit Gemini Vision/Transcript reasoning, with the same Pass/Save for later/Select outcomes across desktop and mobile.
 - **Restraint:** Lists, forms, messages, and campaign operations use familiar product patterns and quiet surfaces.
 - **Anti-references:** Do not resemble a generic analytics dashboard, a macOS device mockup, or a dating app clone. The creator card may borrow direct-manipulation clarity without romantic or consumer-social styling.
 - **Token ownership/runtime mapping:** `DESIGN.md` documents approved intent; the canonical runtime tokens are CSS variables in `styles.css`. Token changes must update both files in one change.
@@ -69,7 +69,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and one shared content grid for every work surface. Discover uses two columns: creator/video profile and a decision panel with score, multimodal evidence, timestamp proof, and actions. Selected, Inbox, and Campaign use the same outer edges, equal card widths within each repeated module, and full-width section bars. Buttons are primary; swipe and arrow keys are optional accelerators taught with a compact contextual coach card. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and one shared content grid for every work surface. Discover uses two columns: creator/video profile and a decision panel with score, multimodal evidence, and timestamp proof. The two columns move as one swipe surface. The only decision row sits below the profile; Save for later is a quiet secondary action beneath it and defers the creator until the rest of the queue has been reviewed. Selected, Inbox, and Campaign use the same outer edges, equal card widths within each repeated module, and full-width section bars. Buttons are primary; swipe and arrow keys are optional accelerators taught with a compact contextual coach card. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
@@ -87,7 +87,7 @@ Interactive controls require default, hover, visible focus, pressed, disabled, a
 
 ### Buttons and actions
 
-Primary actions are solid Orbit blue. Neutral actions are white/outlined. Pass uses neutral/danger semantics; Advance uses primary or success semantics with an explicit label. Save for later never changes campaign-selection status. Icon-only controls require accessible names.
+Primary actions are solid Orbit blue. Neutral actions are white/outlined. Pass uses neutral/danger semantics; Select uses primary or success semantics with an explicit label. Save for later never changes campaign-selection status and requeues the creator after the remaining candidates. Icon-only controls require accessible names.
 
 ### Navigation and data display
 
@@ -109,7 +109,7 @@ Motion communicates selection, swipe direction, sheets, and navigation. Typical 
 
 ### Content and data visualization
 
-Copy is direct and operational: Pass, Save for later, Advance, Compare, Prepare outreach. Match scores always expose supporting factors and evidence. Prototype figures remain clearly illustrative in project documentation.
+Copy is direct and operational: Pass, Save for later, Select, Compare, Prepare outreach. Match scores always expose supporting factors and evidence. Prototype figures remain clearly illustrative in project documentation.
 
 ## Do's and Don'ts
 

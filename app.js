@@ -23,7 +23,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const requestedScreen = urlParams.get('screen');
 const initialScreen = ['welcome','home','create','match','pool','messages','workspace'].includes(requestedScreen)?requestedScreen:(urlParams.get('mode') === 'workspace' ? 'home' : 'welcome');
 const requestedTour = urlParams.has('tour')?Math.min(15,Math.max(0,Number(urlParams.get('tour'))||0)):null;
-const state = {screen:initialScreen, onboardingStep:1, tourActive:requestedTour!==null, tourStep:requestedTour||0, creator:0, lastAction:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[0,1], reviewComplete:false};
+const state = {screen:initialScreen, onboardingStep:1, tourActive:requestedTour!==null, tourStep:requestedTour||0, creator:0, creatorOrder:creators.map((_,index)=>index), lastAction:null, lastCreatorState:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[0,1], reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
 const phone = document.querySelector('.phone');
@@ -59,9 +59,9 @@ const tourSteps = [
   {screen:'create', target:'#tourFormat', kicker:'YouTube plan', title:'Choose the video format', copy:'Long-form integrations and Shorts need different creator strengths and activation plans.'},
   {screen:'create', target:'.form-actions', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria', copy:'Gemini combines the goal, audience, budget, format and brand guardrails.'},
   {screen:'match', target:'.profile-identity', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal', copy:'Start with the creator, channel category, campaign role, and strongest public signals.'},
-  {screen:'match', target:'.profile-actions', kicker:'Decision controls', title:'Make the call', copy:'Choose Pass, Save for later, or Advance. Swiping and arrow keys stay available as shortcuts.'},
+  {screen:'match', target:'.profile-decision-zone', kicker:'Decision controls', title:'Make the call', copy:'Choose Pass or Select. In Browser, press the left or right arrow key—or swipe with a mouse or trackpad. Save for later returns this creator after the rest of the queue.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
-  {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Creator advanced', title:'Open selected creators', copy:'Your decision is saved with its supporting context. Open Selected to review and compare candidates.'},
+  {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Creator selected', title:'Open selected creators', copy:'Your decision is saved with its supporting context. Open Selected to review and compare candidates.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Selected creators', title:'Compare finalists', copy:'Swipe right to select or left to remove with a mouse or trackpad, then compare fit, cost and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Activation', title:'Prepare outreach', copy:'Move the approved pairing into a personalized conversation.'},
   {screen:'messages', target:'[data-open-chat="0"]', kicker:'Outreach', title:'Open the reply', copy:'Track status and keep the creator conversation in one place.'},
@@ -85,7 +85,7 @@ const screens = {
     ${state.onboardingStep===1?`<div class="onboarding-copy"><span class="eyebrow">Start here</span><h1>Bring the brief</h1><p>Orbit turns campaign requirements into match criteria.</p></div><section class="brief-file"><span class="file-mark">PDF</span><div><strong>Peakline_launch_brief.pdf</strong><small>Goal · audience · budget · guardrails</small></div><span class="file-check">✓</span></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext"><img class="button-icon invert" src="assets/brands/gemini.svg" alt=""> Analyze sample brief</button><small>Sample data · no upload needed</small></div>`:state.onboardingStep===2?`<div class="onboarding-copy"><span class="eyebrow">Brief understood</span><h1>Here’s the signal</h1><p>Review the criteria before Orbit ranks creators.</p></div><section class="signal-sheet"><div class="brand-badges">${geminiBadge('Extracted with Gemini')}</div><article><span>Goal</span><strong>Credible product education</strong></article><article><span>Audience</span><strong>Active women · 25–40</strong></article><article><span>Creative</span><strong>Evidence-led · optimistic</strong></article><article><span>Avoid</span><strong>Medical or guaranteed claims</strong></article></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext">Rank creators →</button></div>`:`<div class="onboarding-copy"><span class="eyebrow">First recommendation</span><h1>Your top match</h1></div><section class="first-match"><img src="${creators[0].image}" alt="Yoga With Adriene"><div class="first-match-score"><strong>96</strong><small>FIT</small></div><div><h2>Yoga With Adriene</h2><p>Trust-led wellness · 13.7M</p><div class="chips"><span class="chip selected">Audience</span><span class="chip selected">Brand safe</span></div></div></section><section class="match-proof"><div><span>12</span><small>videos checked</small></div><div><span>4.8%</span><small>engagement</small></div><div><span>Low</span><small>risk</small></div></section><div class="onboarding-bottom"><button class="primary blue" id="onboardingNext">Build creator slate</button></div>`}
   </section>`,
 
-  transition: () => `<section class="transition-shell"><div class="transition-mark"><span class="brandmark"></span><i></i></div><span class="eyebrow">First slate ready</span><h1>Now let the campaign move</h1><div class="transition-stats"><div><strong>7</strong><span>ranked</span></div><div><strong>3</strong><span>advanced</span></div><div><strong>1</strong><span>brief ready</span></div></div><p>Jump ahead to a live campaign after six weeks in Orbit.</p><button class="primary" id="fastForward">Fast-forward 6 weeks →</button></section>`,
+  transition: () => `<section class="transition-shell"><div class="transition-mark"><span class="brandmark"></span><i></i></div><span class="eyebrow">First slate ready</span><h1>Now let the campaign move</h1><div class="transition-stats"><div><strong>7</strong><span>ranked</span></div><div><strong>3</strong><span>selected</span></div><div><strong>1</strong><span>brief ready</span></div></div><p>Jump ahead to a live campaign after six weeks in Orbit.</p><button class="primary" id="fastForward">Fast-forward 6 weeks →</button></section>`,
 
   home: () => `${appHeader()}
     <div class="mature-heading"><div><span class="eyebrow">Tuesday · Sep 23</span><h1>Morning, Alex</h1></div><button data-go="create" data-tour="create" aria-label="Create campaign">＋</button></div>
@@ -114,38 +114,39 @@ const screens = {
     <div class="upload compact"><div><strong>＋ Replace client brief</strong><br><span>PDF, DOCX, or shared document</span></div></div>`}
     <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===5?'Analyze 84 videos ✦':'Continue'}</button></div>`,
 
-  match: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${state.creator%creators.length+1} of ${creators.length} creators</span></div>
+  match: () => { const position=state.creator%state.creatorOrder.length, c=creators[state.creatorOrder[position]], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${position+1} of ${creators.length} creators</span></div>
     <section class="scan-speed"><div><img src="assets/brands/gemini.svg" alt=""><span><strong>50+ hours analyzed in 2.8s</strong><small>Gemini reviewed 84 YouTube videos</small></span></div><div><b>4.5h</b><span>estimated manual review saved</span></div></section>
-    <div class="desktop-match-shell">
+    <div class="desktop-match-shell" id="matchDecisionGroup">
     <article class="profile-stream" id="creatorCard">
-      <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SHORTLIST</div>
+      <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SELECTED</div>
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
-      <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Advance profile introduction">＋</button></section>
-      <div class="swipe-guide" id="swipeGuide"><span>← Pass</span><strong>Drag or use the buttons</strong><span>Advance →</span></div>
-      <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Advance creator"><span>＋</span>Advance</button><button class="action save" data-action="save" aria-label="Save for later">☆</button></div>
+      <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Select using profile introduction">＋</button></section>
+      <div class="profile-decision-zone"><div class="swipe-guide" id="swipeGuide"><span>← Pass</span><strong>Swipe or use the buttons</strong><span>Select →</span></div>
+      <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Select creator"><span>＋</span>Select</button></div>
+      <div class="profile-secondary-actions"><button data-action="save">☆ Save for later</button><span class="browser-key-hint">Press ← / → arrow keys or swipe</span></div></div>
       <section class="profile-snapshot" aria-label="Creator stats">
         <div class="profile-fit"><div><span class="snapshot-label">Campaign fit</span><strong>${c.score}<small>/100</small></strong></div><span class="fit-verdict">Top match</span></div>
         <div class="snapshot-stats"><div><strong>${c.subs}</strong><small>Subscribers</small></div><div><strong>${c.views}</strong><small>Avg. views</small></div><div><strong>${c.eng}</strong><small>Engagement</small></div></div>
         <div class="snapshot-detail"><span aria-hidden="true">◎</span><div><small>Creator category</small><strong>${c.niche}</strong></div></div>
         <div class="snapshot-detail"><span aria-hidden="true">✦</span><div><small>Strongest signals</small><strong>${c.tags.join(' · ')}</strong></div></div>
       </section>
-      <section class="profile-prompt"><span class="prompt-label">Content fit</span><div class="signal-copy">${c.signal}</div><button class="content-pick dark" data-pick="Creator voice and community" aria-label="Advance creator prompt">＋</button></section>
-      <section class="video-story" style="background-image:url('${c.videoImage}')"><span class="timestamp-proof">${c.timestamp}</span><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> VIDEO-LEVEL PROOF</span><h2>${c.videoTitle}</h2><span class="watch">▶ ${c.timestamp} · ${c.moment}</span></div><button class="content-pick" data-pick="Timestamped video evidence" aria-label="Advance recent video">＋</button></section>
+      <section class="profile-prompt"><span class="prompt-label">Content fit</span><div class="signal-copy">${c.signal}</div><button class="content-pick dark" data-pick="Creator voice and community" aria-label="Select using creator voice and community">＋</button></section>
+      <section class="video-story" style="background-image:url('${c.videoImage}')"><span class="timestamp-proof">${c.timestamp}</span><div class="video-overlay"><span class="video-kicker"><img src="assets/brands/youtube.svg" alt=""> VIDEO-LEVEL PROOF</span><h2>${c.videoTitle}</h2><span class="watch">▶ ${c.timestamp} · ${c.moment}</span></div><button class="content-pick" data-pick="Timestamped video evidence" aria-label="Select using recent video evidence">＋</button></section>
       <section class="match-memo"><div class="brand-badges memo-badges">${geminiBadge('Powered by Gemini Multimodal API')}${youtubeBadge('12 videos analyzed')}</div><div class="memo-top"><span class="ai-star">✦</span><div><span class="eyebrow">Gemini video analysis</span><h2>Vision and transcript agree</h2></div></div><div class="multimodal-signals"><article><span>VISION · ${c.visualFit}% FIT</span><p>${c.visual}</p></article><article><span>TRANSCRIPT & AUDIO · ${c.transcriptFit}% FIT</span><p>${c.transcript}</p></article></div><p>${c.why}</p><div class="evidence-row"><span>Audience fit · 35% weight <b>${fit.audience}</b></span><span>Content alignment · 30% <b>${fit.brand}</b></span><span>Momentum · 20% <b>${fit.momentum}</b></span><span>Brand safety · 15% <b>${fit.safety}</b></span></div><button class="evidence-toggle" id="reasonButton">Review evidence and sources <span>↓</span></button><div class="evidence-detail" id="reasonDetail"><p><strong>Evidence:</strong> campaign brief v3, public channel metadata, visual frames, audio/transcript, and 12 recent uploads. Human verification is required before outreach.</p></div><button class="brief-generate mobile-brief-button" data-open-brief>⚡ Generate AI Brief</button></section>
       <section class="safety-card"><div><span class="eyebrow">Collaboration read</span><h3>${c.risk}</h3></div><span class="safety-mark">✓</span></section>
-      <p class="end-note">Review complete for ${c.name}<br><span>Pass, save for later, or advance to client review</span></p>
+      <p class="end-note">Review complete for ${c.name}<br><span>Pass, save for later, or select for client review</span></p>
     </article>
-    <aside class="decision-rail"><div class="decision-score"><span>Campaign fit</span><strong>${c.score}<small>/100</small></strong><b>Top match</b></div><div class="format-recommendation"><span>YouTube activation</span><strong>${c.format}</strong><small>${c.formatNote}</small></div><section class="desktop-ai-panel"><div class="brand-badges">${geminiBadge('Gemini Multimodal API')}</div><h2>Video evidence</h2><article><span>Vision · ${c.visualFit}% visual fit</span><p>${c.visual}</p></article><article><span>Transcript & audio · ${c.transcriptFit}% message fit</span><p>${c.transcript}</p></article><div class="mini-proof"><img src="${c.videoImage}" alt=""><span><b>${c.timestamp}</b><strong>${c.moment}</strong><small>Open timestamp proof ↗</small></span></div></section><div class="desktop-actions"><button data-action="pass">× Pass</button><button data-action="save">☆ Save for later</button><button class="primary-dock" data-action="shortlist">＋ Advance</button></div><button class="brief-generate" data-open-brief>⚡ Generate AI Brief</button><small class="keyboard-hint">Shortcuts: ← pass · → advance</small></aside>
+    <aside class="decision-rail"><div class="decision-score"><span>Campaign fit</span><strong>${c.score}<small>/100</small></strong><b>Top match</b></div><div class="format-recommendation"><span>YouTube activation</span><strong>${c.format}</strong><small>${c.formatNote}</small></div><section class="desktop-ai-panel"><div class="brand-badges">${geminiBadge('Gemini Multimodal API')}</div><h2>Video evidence</h2><article><span>Vision · ${c.visualFit}% visual fit</span><p>${c.visual}</p></article><article><span>Transcript & audio · ${c.transcriptFit}% message fit</span><p>${c.transcript}</p></article><div class="mini-proof"><img src="${c.videoImage}" alt=""><span><b>${c.timestamp}</b><strong>${c.moment}</strong><small>Open timestamp proof ↗</small></span></div></section><button class="brief-generate" data-open-brief>⚡ Generate AI Brief</button></aside>
     </div>`},
 
-  profile: () => { const c=creators[state.creator%creators.length], fit=fitSignals(c); return `${pageTitle(c.name,'match')}<div class="brand-badges profile-sources">${geminiBadge('Gemini analysis')}${youtubeBadge('Public channel data')}</div><div class="creator-photo" style="height:225px;border-radius:22px;background-image:url('${c.image}')"><div class="match-orbit"><strong>${c.score}</strong><small>FIT</small></div></div>
+  profile: () => { const c=creators[state.creatorOrder[state.creator%state.creatorOrder.length]], fit=fitSignals(c); return `${pageTitle(c.name,'match')}<div class="brand-badges profile-sources">${geminiBadge('Gemini analysis')}${youtubeBadge('Public channel data')}</div><div class="creator-photo" style="height:225px;border-radius:22px;background-image:url('${c.image}')"><div class="match-orbit"><strong>${c.score}</strong><small>FIT</small></div></div>
     <div class="section-head"><h3>Channel snapshot</h3><span class="status">Brand safe</span></div><div class="metric-row"><div class="metric"><strong>${c.subs}</strong><span>subscribers</span></div><div class="metric"><strong>${c.eng}</strong><span>engagement</span></div><div class="metric"><strong>+18%</strong><span>90d growth</span></div></div>
     <div class="section-head"><h3>Explainable fit score</h3><span class="score">${c.score}/100</span></div><section class="score-breakdown"><div><span>Audience fit <small>35%</small></span><div><i style="width:${fit.audience}%"></i></div><b>${fit.audience}</b></div><div><span>Content alignment <small>30%</small></span><div><i style="width:${fit.brand}%"></i></div><b>${fit.brand}</b></div><div><span>Momentum <small>20%</small></span><div><i style="width:${fit.momentum}%"></i></div><b>${fit.momentum}</b></div><div><span>Brand safety <small>15%</small></span><div><i style="width:${fit.safety}%"></i></div><b>${fit.safety}</b></div></section>
     <div class="section-head"><h3>Recent content evidence</h3></div><section class="evidence-list"><article><img src="assets/brands/youtube.svg" alt=""><div><strong>12 recent uploads analyzed</strong><small>Titles, descriptions, topics, cadence and public performance</small></div></article><article><span>↗</span><div><strong>+23% vs. channel baseline</strong><small>Recent view performance is trending above the prior period</small></div></article><article><span>◎</span><div><strong>${c.signal}</strong><small>Recurring content pattern identified by Gemini</small></div></article></section>
     <div class="section-head"><h3>Content fit</h3></div><div class="brief-section"><h3>${c.tags[0]} · ${c.tags[1]}</h3><p>${c.why}</p><div class="chips"><span class="chip selected">Recovery</span><span class="chip selected">Hydration</span><span class="chip">Training</span></div></div>
-    <button class="primary blue" style="width:100%" data-action="shortlist">Advance to client review</button>`},
+    <button class="primary blue" style="width:100%" data-action="shortlist">Select for client review</button>`},
 
-  pool: () => `${appHeader()}<span class="eyebrow">Selected creators</span><h1>Build the client slate</h1><div class="swipe-tip"><span>↔</span><div><strong>Select creators to compare</strong><small>Use the checkboxes, or swipe right to select and left to remove</small></div></div><div class="filter-row"><button class="chip selected">7 advanced</button><button class="chip">Client-ready 4</button><button class="chip">Saved for later 3</button><button class="chip">Fit 90+</button></div>
+  pool: () => `${appHeader()}<span class="eyebrow">Selected creators</span><h1>Build the client slate</h1><div class="swipe-tip"><span>↔</span><div><strong>Select creators to compare</strong><small>Use the checkboxes, or swipe right to select and left to remove</small></div></div><div class="filter-row"><button class="chip selected">7 selected</button><button class="chip">Client-ready 4</button><button class="chip">Saved for later 3</button><button class="chip">Fit 90+</button></div>
     ${creators.map((c,i)=>`<article class="creator-list-item ${state.compareSelection.includes(i)?'is-selected':''}" data-index="${i}" data-go="profile"><span class="list-swipe-state remove">REMOVE</span><span class="list-swipe-state select">SELECT</span><input class="check" type="checkbox" ${state.compareSelection.includes(i)?'checked':''} aria-label="Compare ${c.name}"><img src="${c.image}" alt="${c.name}"><div><h3>${c.name}</h3><p>${c.subs} subs · ${c.niche}</p></div><span class="score">Fit ${c.score}</span></article>`).join('')}
     <div class="section-head"><h3>Review note</h3></div><textarea placeholder="Add a note for your team…">Adriene is the strongest trust fit; confirm wellness category exclusivity before client review.</textarea><div class="compare-bar"><span><strong id="compareCount">${state.compareSelection.length} selected</strong><br><small>Compare fit, cost & risk</small></span><button data-go="compare" data-tour="compare">Compare →</button></div>`,
 
@@ -257,7 +258,7 @@ function runTourAction() {
   else if(step===6) { state.tourStep=7;render(); }
   else if(step===7) { state.tourStep=8;render();toast('Decision controls ready'); }
   else if(step===8) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=9;render()},650); }
-  else if(step===9) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=10;toast('Advanced to client review');setTimeout(()=>go('pool'),350); }
+  else if(step===9) { state.pool++;document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=10;toast('Selected for client review');setTimeout(()=>go('pool'),350); }
   else if(step===10) { state.tourStep=11;go('compare'); }
   else if(step===11) { state.tourStep=12;go('messages'); }
   else if(step===12) { state.tourStep=13;go('chat'); }
@@ -292,7 +293,7 @@ function bind() {
   const runReview=app.querySelector('#runReview'); if(runReview) runReview.onclick=()=>{state.reviewComplete=true;render();toast('Draft checked against 3 sources')};
   const applyRewrite=app.querySelector('#applyRewrite'); if(applyRewrite) applyRewrite.onclick=()=>{const draft=app.querySelector('#draftContent');draft.value='After a warm practice, Peakline fits naturally into my post-practice hydration routine. It has zero added sugar and is a simple hydration option for warm-weather movement.';toast('Safe rewrite applied')};
   const sendReview=app.querySelector('#sendReview'); if(sendReview) sendReview.onclick=()=>{toast('Sent for human approval');setTimeout(()=>go('workspace'),600)};
-  const swipeCard=app.querySelector('#creatorCard'); if(swipeCard) bindSwipe(swipeCard);
+  const swipeSurface=phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard'); if(swipeSurface) bindSwipe(swipeSurface);
   app.querySelectorAll('[data-creator-index]').forEach(button=>button.addEventListener('click',()=>{state.creator=Number(button.dataset.creatorIndex);render()}));
   app.querySelectorAll('[data-open-brief]').forEach(button=>button.addEventListener('click',openBriefDrawer));
   app.querySelectorAll('.creator-list-item').forEach(bindShortlistSwipe);
@@ -342,7 +343,7 @@ function bindSwipe(card) {
     const decision=Math.abs(dx)>82?(dx<0?'pass':'shortlist'):null;
     reset();
     if(decision && state.tourActive && tourSteps[state.tourStep]?.action==='swipe-demo') {
-      state.tourStep=7;toast(decision==='pass'?'Swipe left passes':'Swipe right advances');render();return;
+      state.tourStep=7;toast(decision==='pass'?'Swipe left passes':'Swipe right selects');render();return;
     }
     if(decision) act(decision);
   };
@@ -350,7 +351,7 @@ function bindSwipe(card) {
   card.addEventListener('pointercancel',reset);
 }
 function openDecision(context) {
-  document.querySelector('#sheetContext').textContent=`Record ${context.toLowerCase()} as the reason your team advanced this creator.`;
+  document.querySelector('#sheetContext').textContent=`Record ${context.toLowerCase()} as the reason your team selected this creator.`;
   document.querySelector('#decisionNote').value='';
   document.querySelector('#decisionSheet').classList.add('open');
   document.querySelector('#sheetBackdrop').classList.add('open');
@@ -374,13 +375,14 @@ function closeBriefDrawer() {
   document.querySelector('#briefBackdrop').classList.remove('open');
 }
 function act(action) {
-  if(action==='undo') { if(state.creator>0) state.creator--; if(state.lastAction==='shortlist') state.pool=Math.max(0,state.pool-1); document.querySelector('#poolBadge').textContent=state.pool; state.lastAction=null; toast('Last choice undone'); render(); return; }
-  const card=app.querySelector('#creatorCard');
+  if(action==='undo') { if(!state.lastCreatorState) return; state.creator=state.lastCreatorState.creator;state.creatorOrder=[...state.lastCreatorState.creatorOrder];if(state.lastAction==='shortlist') state.pool=Math.max(0,state.pool-1);document.querySelector('#poolBadge').textContent=state.pool;state.lastAction=null;state.lastCreatorState=null;toast('Last choice undone');render();return; }
+  const card=phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard');
+  state.lastCreatorState={creator:state.creator,creatorOrder:[...state.creatorOrder]};
   state.lastAction=action;
   if(action==='shortlist') { state.pool++; document.querySelector('#poolBadge').textContent=state.pool; }
-  card?.classList.add(action==='pass'?'exit-left':'exit-right');
-  toast(action==='pass'?'Passed — you can undo':action==='save'?'Saved for later':'Advanced to client review');
-  setTimeout(()=>{state.creator++; render()},320);
+  card?.classList.add(action==='pass'?'exit-left':action==='save'?'exit-save':'exit-right');
+  toast(action==='pass'?'Passed — you can undo':action==='save'?'Saved for later — shown again after this round':'Selected for client review');
+  setTimeout(()=>{const position=state.creator%state.creatorOrder.length;if(action==='save'){const [deferred]=state.creatorOrder.splice(position,1);state.creatorOrder.push(deferred);if(position===state.creatorOrder.length-1)state.creator++;}else state.creator++;render()},320);
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
@@ -401,7 +403,7 @@ phone.addEventListener('click',event=>{
 document.querySelector('#closeSheet').addEventListener('click',closeDecision);
 document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision);
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
-document.querySelector('#confirmDecision').addEventListener('click',()=>{state.pool++;document.querySelector('#poolBadge').textContent=state.pool;closeDecision();toast('Advanced with your note')});
+document.querySelector('#confirmDecision').addEventListener('click',()=>{closeDecision();act('shortlist')});
 document.querySelector('#closeBriefDrawer').addEventListener('click',closeBriefDrawer);
 document.querySelector('#briefBackdrop').addEventListener('click',closeBriefDrawer);
 document.querySelector('#openFullBrief').addEventListener('click',()=>{closeBriefDrawer();go('brief')});
