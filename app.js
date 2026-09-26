@@ -37,7 +37,7 @@ const appHeader = () => `<header class="topline"><div class="brand"><img class="
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
 const geminiBadge = (label='Gemini analysis') => `<span class="source-badge gemini"><img src="assets/brands/gemini.svg" alt="">${label}</span>`;
 const youtubeBadge = (label='YouTube public data') => `<span class="source-badge youtube"><img src="assets/brands/youtube.svg" alt="">${label}</span>`;
-const activeCreator = () => creators[state.creatorOrder[state.creator%state.creatorOrder.length]];
+const activeCreator = () => state.creatorOrder.length ? creators[state.creatorOrder[state.creator%state.creatorOrder.length]] : creators[0];
 const creatorBriefData = () => { const c=activeCreator(); return {
   brand:'Peakline Hydration', campaign:'Summer Training Launch', creator:c.name, product:'Peakline Hydration Mix',
   audience:'Active women ages 25-40 in the United States who value accessible, evidence-led movement',
@@ -88,8 +88,8 @@ const tourSteps = [
   {screen:'match', target:'#closeBriefDrawer', action:'brief-preview', kicker:'AI brief ready', title:'Review it at your own pace', copy:'The draft stays open so you can inspect the direction and export it. Close it when you are ready to continue.'},
   {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Creator selected', title:'Open selected creators', copy:'Your decision is saved with its supporting context. Open Selected to review and compare candidates.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Selected creators', title:'Compare your finalists', copy:'Choose any two or more creators, open their details in place, then compare fit, cost, role, and risk.'},
-  {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Email outreach', title:'Draft personalized emails', copy:'Gemini turns the campaign inputs and public YouTube signals into editable outreach drafts.'},
-  {screen:'messages', target:'[data-open-email="0"]', kicker:'AI email drafts', title:'Review before anything sends', copy:'Orbit drafts email for every selected creator. Open one to review the recipient, subject, and message.'},
+  {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Inbox outreach', title:'Draft personalized emails', copy:'Gemini turns the campaign inputs and public YouTube signals into editable outreach drafts.'},
+  {screen:'messages', target:'[data-open-email="0"]', kicker:'Inbox drafts', title:'Review before anything sends', copy:'Orbit drafts email for every selected creator. Open one to review the recipient, subject, and message.'},
   {screen:'chat', target:'#sendEmail', coach:'top', kicker:'Human approval', title:'Confirm and send', copy:'Edit the draft if needed, then approve this email. Orbit never sends outreach without your confirmation.'},
   {screen:'brief', target:'#approve', coach:'top', kicker:'Creator brief', title:'Approve the tailored brief', copy:'Creator signals become specific guidance, claims and deliverables.'},
   {screen:'workspace', target:null, kicker:'Tour complete', title:'The campaign is moving', copy:'You have gone from client brief to an activation-ready workspace.'}
@@ -113,7 +113,7 @@ const screens = {
   transition: () => `<section class="transition-shell"><div class="transition-mark"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i></i></div><span class="eyebrow">First slate ready</span><h1>Now let the campaign move</h1><div class="transition-stats"><div><strong>7</strong><span>ranked</span></div><div><strong>3</strong><span>selected</span></div><div><strong>1</strong><span>brief ready</span></div></div><p>Jump ahead to a live campaign after six weeks in Orbit.</p><button class="primary" id="fastForward">Fast-forward 6 weeks →</button></section>`,
 
   home: () => `${appHeader()}
-    <div class="mature-heading"><div><span class="eyebrow">Tuesday · Sep 23</span><h1>Morning, Alex</h1></div><button data-go="create" data-tour="create" aria-label="Create campaign">＋</button></div>
+    <div class="mature-heading"><div><span class="eyebrow">Wednesday · Sep 23</span><h1>Morning, Alex</h1></div><button data-go="create" data-tour="create" aria-label="Create campaign">＋</button></div>
     <section class="focus-card" data-go="pool"><div class="row"><span class="focus-label">NEEDS YOU</span><span class="status warning">Due today</span></div><h2>Approve 4 creator picks</h2><p>Peakline · Summer Training</p><button>Review selected creators →</button></section>
     <div class="home-glance"><article><strong>4</strong><span>replies</span></article><article><strong>2</strong><span>drafts</span></article><article><strong>14h</strong><span>saved</span></article></div>
     <div class="section-head compact-head"><h3>Active campaign</h3><button data-go="workspace">Open</button></div>
@@ -139,12 +139,12 @@ const screens = {
     <div class="upload compact"><div><strong>＋ Replace client brief</strong><br><span>PDF, DOCX, or shared document</span></div></div>`}
     <div class="form-actions"><button class="secondary" id="prevStep">${state.formStep===1?'Save draft':'Back'}</button><button class="primary blue" id="nextStep">${state.formStep===5?'Find matching creators ✦':'Continue'}</button></div>`,
 
-  match: () => { const position=state.creator%state.creatorOrder.length, c=creators[state.creatorOrder[position]], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${position+1} of ${creators.length} creators</span></div>
+  match: () => { if(!state.creatorOrder.length) return `${appHeader()}<section class="deck-complete"><span class="complete-mark">✓</span><span class="eyebrow">Review complete</span><h1>You’ve reviewed every creator</h1><p>Passed and selected creators stay out of the queue. Creators saved for later return when they are available.</p><div><button class="secondary" data-go="pool">View selected</button><button class="primary blue" data-go="workspace">Open campaign</button></div></section>`; const position=state.creator%state.creatorOrder.length, c=creators[state.creatorOrder[position]], fit=fitSignals(c); return `<div class="discover-top"><button class="campaign-switch"><span>Peakline · Summer Training</span>⌄</button><span class="counter">${position+1} of ${state.creatorOrder.length} remaining</span></div>
     <section class="scan-speed"><div><img src="assets/brands/gemini.svg" alt=""><span><strong>50+ hours analyzed in 2.8s</strong><small>Gemini reviewed 84 YouTube videos</small></span></div><div><b>4.5h</b><span>estimated manual review saved</span></div></section>
     <div class="desktop-match-shell" id="matchDecisionGroup">
     <article class="profile-stream" id="creatorCard">
       <div class="swipe-stamp skip" aria-hidden="true">PASS</div><div class="swipe-stamp keep" aria-hidden="true">SELECTED</div>
-      <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div><button class="more" aria-label="More creator options">•••</button></section>
+      <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Select using profile introduction">＋</button></section>
       <div class="profile-decision-zone"><span class="browser-column-cue pass-cue">← Pass</span><span class="browser-column-cue select-cue">Select →</span>
       <div class="profile-actions"><button class="action undo" data-action="undo" aria-label="Undo" title="Undo">↶</button><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Select creator"><span>＋</span>Select</button><button class="action save" data-action="save" aria-label="Save for later" title="Save for later">◷</button></div>
@@ -178,7 +178,7 @@ const screens = {
   compare: () => { const picks=state.compareSelection.map(i=>({creator:creators[i],details:compareDetails[i]})); if(picks.length<2) return `${pageTitle('Compare finalists','pool')}<section class="compare-empty"><span>⇄</span><h1>Choose at least two creators</h1><p>Return to Selected and use the checkboxes to build a side-by-side comparison.</p><button class="primary blue" data-go="pool">Choose creators</button></section>`; return `${pageTitle('Compare finalists','pool')}<span class="eyebrow">Client review · ${picks.length} creators</span><h1>Choose the right role for each creator</h1><div class="compare-scroll"><div class="compare-grid" style="--compare-count:${picks.length}"><div class="compare-corner">Criteria</div>${picks.map(p=>`<div class="compare-creator-head"><img src="${p.creator.image}" alt=""><strong>${p.creator.name}</strong><span class="score">Fit ${p.creator.score}</span></div>`).join('')}<div class="label">Audience</div>${picks.map(p=>`<div>${p.details.audience}</div>`).join('')}<div class="label">Est. fee</div>${picks.map(p=>`<div>${p.details.fee}</div>`).join('')}<div class="label">Content role</div>${picks.map(p=>`<div>${p.details.role}</div>`).join('')}<div class="label">Conflict risk</div>${picks.map(p=>`<div>${p.details.risk}</div>`).join('')}<div class="label">Best format</div>${picks.map(p=>`<div>${p.creator.format}</div>`).join('')}<div class="label">Client status</div>${picks.map(()=>'<div>Ready</div>').join('')}</div></div>
     <div class="ai-note" style="margin-top:14px"><div class="brand-badges">${geminiBadge('Gemini recommendation')}</div><strong>Lead with ${picks[0].creator.name} for ${picks[0].details.role.toLowerCase()}.</strong><br>${picks.length>1?`${picks.slice(1).map(p=>p.creator.name).join(', ')} can cover complementary roles across the creator mix.`:''} Human approval is still required.</div><button class="primary blue" style="width:100%;margin-top:14px" data-go="messages" data-tour="outreach">Prepare outreach</button>`},
 
-  messages: () => `${appHeader()}<span class="eyebrow">Email outreach</span><h1>Review every draft before sending</h1><section class="email-batch"><div class="email-batch-icon">✦</div><div><strong>Gemini prepared ${creators.length} personalized emails</strong><p>Built from the campaign brief and public YouTube signals. ${state.sentEmails.length?'Only your approved emails were sent.':'Nothing has been sent.'}</p></div><button id="draft">Refresh drafts</button></section><div class="brand-badges page-badges">${geminiBadge('AI-assisted drafting')}${youtubeBadge('Public signals only')}</div><div class="filter-row"><button class="chip selected">Needs review ${creators.length-state.sentEmails.length}</button><button class="chip">Sent ${state.sentEmails.length}</button></div>${creators.map((c,i)=>`<button class="thread email-thread" data-open-email="${i}"><img src="${c.image}" alt=""><div><span class="email-to">TO · ${creatorEmail(c)}</span><h3>${c.name}</h3><p>${emailSubject(c)}</p></div><div><span class="status ${state.sentEmails.includes(i)?'':'neutral'}">${state.sentEmails.includes(i)?'Sent':'Draft ready'}</span><b aria-hidden="true">›</b></div></button>`).join('')}`,
+  messages: () => `${appHeader()}<span class="eyebrow">Creator inbox</span><h1>Review every draft before sending</h1><section class="email-batch"><div class="email-batch-icon"><img src="assets/brands/gmail.svg" alt=""></div><div><strong>Gemini prepared ${creators.length} personalized emails</strong><p>Built from the campaign brief and public YouTube signals. ${state.sentEmails.length?'Only your approved emails were sent.':'Nothing has been sent.'}</p></div><button id="draft">Refresh drafts</button></section><div class="brand-badges page-badges">${geminiBadge('AI-assisted drafting')}${youtubeBadge('Public signals only')}</div><div class="filter-row"><button class="chip selected">Needs review ${creators.length-state.sentEmails.length}</button><button class="chip">Sent ${state.sentEmails.length}</button></div>${creators.map((c,i)=>`<button class="thread email-thread" data-open-email="${i}"><img src="${c.image}" alt=""><div><span class="email-to">TO · ${creatorEmail(c)}</span><h3>${c.name}</h3><p>${emailSubject(c)}</p></div><div><span class="status ${state.sentEmails.includes(i)?'':'neutral'}">${state.sentEmails.includes(i)?'Sent':'Draft ready'}</span><b aria-hidden="true">›</b></div></button>`).join('')}`,
 
   chat: () => { const c=creators[state.selectedEmail]; return `${pageTitle('Review email','messages')}<div class="email-review-head"><div><span class="eyebrow">Human approval required</span><h1>${c.name}</h1><p>AI drafted this outreach from your campaign inputs and public YouTube data.</p></div><img src="${c.image}" alt="${c.name}"></div><form class="email-composer" novalidate><label for="emailTo">To</label><input id="emailTo" type="email" value="${creatorEmail(c)}" aria-describedby="contactNote"><small id="contactNote">Illustrative public business contact for this prototype.</small><label for="emailSubject">Subject</label><input id="emailSubject" value="${emailSubject(c)}"><label for="emailBody">Message</label><textarea id="emailBody">${emailBody(c)}</textarea><div class="email-source-note">${geminiBadge('Drafted with Gemini')}<p>Personalized using campaign fit, channel category, and recommended YouTube format. Review all details before sending.</p></div><div class="email-actions"><button type="button" class="secondary" data-go="messages">Back to drafts</button><button type="button" class="primary blue" id="sendEmail">Approve & send email</button></div></form>`},
 
@@ -210,6 +210,8 @@ function render() {
   nav.classList.toggle('hidden', introMode);
   app.classList.toggle('intro-mode', introMode);
   document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.nav===state.screen || (state.screen==='profile'&&b.dataset.nav==='match') || (state.screen==='compare'&&b.dataset.nav==='pool') || (state.screen==='chat'&&b.dataset.nav==='messages') || (['brief','review'].includes(state.screen)&&b.dataset.nav==='workspace')));
+  document.querySelector('#poolBadge').textContent=state.pool;
+  document.querySelector('#inboxBadge').textContent=Math.max(0,creators.length-state.sentEmails.length);
   viewButtons.forEach(b=>b.classList.toggle('active',b.dataset.demoView===state.screen));
   bind();
   renderTour();
@@ -302,7 +304,7 @@ function runTourAction() {
   else if(step===13) { state.tourStep=14;go('compare'); }
   else if(step===14) { state.tourStep=15;go('messages'); }
   else if(step===15) { state.tourStep=16;go('chat'); }
-  else if(step===16) { state.tourStep=17;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
+  else if(step===16) { state.sentEmails=[...new Set([...state.sentEmails,state.selectedEmail])];state.tourStep=17;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
   else if(step===17) { state.tourStep=18;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
@@ -407,7 +409,7 @@ function closeDecision() {
   document.querySelector('#sheetBackdrop').classList.remove('open');
 }
 function openBriefDrawer() {
-  const c=creators[state.creator%creators.length];
+  const c=activeCreator();
   document.querySelector('#briefCreator').textContent=c.name;
   document.querySelector('#briefFormat').textContent=c.format;
   document.querySelector('#briefScene').textContent=`Place Peakline at the ${c.moment.toLowerCase()} around ${c.timestamp}, where it already feels native to the story.`;
@@ -428,7 +430,7 @@ function act(action) {
   if(action==='shortlist') { state.pool++; document.querySelector('#poolBadge').textContent=state.pool; }
   card?.classList.add(action==='pass'?'exit-left':action==='save'?'exit-save':'exit-right');
   toast(action==='pass'?'Passed — you can undo':action==='save'?'Saved for later — shown again after this round':'Selected for client review');
-  setTimeout(()=>{const position=state.creator%state.creatorOrder.length;if(action==='save'){const [deferred]=state.creatorOrder.splice(position,1);state.creatorOrder.push(deferred);if(position===state.creatorOrder.length-1)state.creator++;}else state.creator++;render()},320);
+  setTimeout(()=>{if(!state.creatorOrder.length){render();return}const position=state.creator%state.creatorOrder.length;if(action==='save'){const [deferred]=state.creatorOrder.splice(position,1);state.creatorOrder.push(deferred);state.creator=position>=state.creatorOrder.length-1?0:position;}else{state.creatorOrder.splice(position,1);state.creator=state.creatorOrder.length?position%state.creatorOrder.length:0;}render()},320);
 }
 
 nav.addEventListener('click',e=>{ const b=e.target.closest('[data-nav]'); if(b) go(b.dataset.nav); });
@@ -451,7 +453,9 @@ document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision)
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{closeDecision();act('shortlist')});
 document.querySelector('#closeBriefDrawer').addEventListener('click',closeBriefDrawer);
+document.querySelector('#closeBriefDrawer').addEventListener('pointerup',event=>{event.preventDefault();closeBriefDrawer()});
 document.querySelector('#briefBackdrop').addEventListener('click',closeBriefDrawer);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.querySelector('#briefDrawer').classList.contains('open'))closeBriefDrawer()});
 document.querySelector('#openFullBrief').addEventListener('click',()=>{closeBriefDrawer();go('brief')});
 document.querySelector('#exportBriefPdfDrawer').addEventListener('click',()=>{try{exportCurrentBrief();toast('Creator brief PDF downloaded')}catch(error){toast('PDF export failed');console.error(error)}});
 deviceButtons.forEach(button=>button.addEventListener('click',()=>{

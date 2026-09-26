@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36" role="img" aria-labelledby="title">
-  <title id="title">Gmail</title>
-  <path fill="#4285F4" d="M3 31.5h7.5V13.3L3 7.7z"/>
-  <path fill="#34A853" d="M37.5 31.5H45V7.7l-7.5 5.6z"/>
-  <path fill="#EA4335" d="M3 7.7v-1A4.2 4.2 0 0 1 9.7 3.3L24 14 38.3 3.3A4.2 4.2 0 0 1 45 6.7v1L24 23.4z"/>
-  <path fill="#C5221F" d="M10.5 13.3 24 23.4V14L9.7 3.3A4.2 4.2 0 0 0 3 6.7v1z"/>
-  <path fill="#FBBC04" d="M24 14v9.4l13.5-10.1L45 7.7v-1a4.2 4.2 0 0 0-6.7-3.4z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img" aria-labelledby="title">
+  <title id="title">Inbox</title>
+  <path fill="#72727a" d="M7 43V10.4C7 5.2 13 2.3 17 5.5L32 17.3 47 5.5c4-3.2 10-.3 10 4.9V43H47V18.2L32 30 17 18.2V43H7Z"/>
+  <path fill="#9a9aa1" d="m17 5.5 15 11.8L47 5.5v12.7L32 30 17 18.2V5.5Z"/>
+  <path fill="#b8b8bd" d="M47 5.5c4-3.2 10-.3 10 4.9v5.7l-10 7.8V5.5Z"/>
 </svg>

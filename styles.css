@@ -316,7 +316,6 @@ textarea { min-height: 85px; resize: none; }
 .swipe-stamp.keep { left: 22px; color: var(--blue); transform: rotate(-9deg); }
 .profile-hero { position: relative; width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; border-radius: 25px 25px 0 0; overflow: hidden; box-shadow: 0 15px 36px rgba(25,29,42,.12); }
 .hero-shade { position: absolute; inset: 70% 0 0; background: linear-gradient(transparent, rgba(15,18,24,.22)); }
-.more { position: absolute; top: 15px; right: 15px; width: 39px; height: 39px; border: 0; border-radius: 50%; background: rgba(255,255,255,.9); font-weight: 900; letter-spacing: 1px; }
 .profile-identity { position: relative; min-height: 91px; padding: 17px 72px 16px 18px; border-radius: 0 0 25px 25px; background: white; box-shadow: 0 15px 36px rgba(25,29,42,.12); }
 .profile-title { display: flex; align-items: center; gap: 9px; }
 .profile-name { color: var(--ink); }
@@ -514,6 +513,7 @@ textarea { min-height: 85px; resize: none; }
 .thread:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .email-batch { display: grid; grid-template-columns: 42px 1fr auto; gap: 11px; align-items: center; margin: 14px 0; padding: 14px; border: 1px solid #d9d4ff; border-radius: 18px; background: var(--blue-soft); }
 .email-batch-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: white; color: var(--blue); font-size: 18px; }
+.email-batch-icon img { width: 24px; height: 18px; }
 .email-batch strong, .email-batch p { display: block; }
 .email-batch strong { font-size: 11px; }
 .email-batch p { margin: 4px 0 0; color: #65729a; font-size: 8px; line-height: 1.4; }
@@ -644,6 +644,12 @@ textarea { min-height: 85px; resize: none; }
 .brief-drawer header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .brief-drawer header h2 { margin: 6px 0 14px; }
 .brief-drawer header button { width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid var(--line); border-radius: 50%; background: white; font-size: 20px; }
+.brief-drawer header button { position: relative; z-index: 3; cursor: pointer; touch-action: manipulation; }
+.deck-complete { max-width: 620px; margin: 18vh auto 0; padding: 32px; text-align: center; border: 1px solid var(--line); border-radius: 28px; background: white; box-shadow: 0 18px 55px rgba(27,38,76,.08); }
+.deck-complete .complete-mark { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 18px; border-radius: 50%; background: #e4f8f1; color: #148660; font-size: 28px; font-weight: 900; }
+.deck-complete h1 { margin: 7px 0 10px; }
+.deck-complete p { max-width: 470px; margin: 0 auto 22px; color: var(--muted); line-height: 1.55; }
+.deck-complete > div { display: flex; justify-content: center; gap: 10px; }
 .brief-drawer-summary { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px; border-radius: 13px; background: var(--ink); color: white; font-size: 10px; }
 .brief-drawer-summary strong { color: #8de3c5; }
 .brief-ideas { display: grid; gap: 8px; padding: 0; margin: 14px 0; list-style: none; }
