@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb" />
   <title>Orbit — Creator Partnership Workspace</title>
   <link rel="icon" type="image/svg+xml" href="assets/brands/orbit.svg" />
-  <link rel="stylesheet" href="styles.css?v=20260925-11" />
+  <link rel="stylesheet" href="styles.css?v=20260926-1" />
 </head>
 <body>
   <header class="demo-controls" aria-label="Demo controls">
@@ -51,11 +51,12 @@
         <div class="brief-drawer-summary"><span id="briefCreator">Yoga With Adriene</span><strong id="briefFormat">60–90s mid-roll</strong></div>
         <ol class="brief-ideas"><li><span>01</span><div><small>Recommended scene</small><p id="briefScene"></p></div></li><li><span>02</span><div><small>Opening line</small><p id="briefOpening"></p></div></li><li><span>03</span><div><small>Claims guardrail</small><p id="briefGuardrail"></p></div></li></ol>
         <p class="drawer-note">Drafted from campaign requirements plus visual, audio, transcript, and public channel signals. Human approval required.</p>
-        <button class="primary blue" id="openFullBrief">Open editable brief →</button>
+        <div class="brief-drawer-actions"><button class="secondary" id="exportBriefPdfDrawer">Download PDF</button><button class="primary blue" id="openFullBrief">Open editable brief →</button></div>
       </aside>
     </section>
   </main>
   <button class="focus-exit" id="focusExit">Show demo controls</button>
-  <script src="app.js?v=20260925-11"></script>
+  <script src="pdf-export.js?v=20260926-1"></script>
+  <script src="app.js?v=20260926-1"></script>
 </body>
 </html>

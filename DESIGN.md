@@ -110,6 +110,8 @@ Motion communicates selection, swipe direction, sheets, and navigation. Typical 
 
 The Discover tutorial uses one deliberate left/right profile motion to teach the gesture before users rely on the equivalent buttons. Generated briefs remain open until the user closes them. Selected creator details expand in place so teams keep their comparison context.
 
+Generated creator briefs can be reviewed in-app or exported as a campaign-ready two-page PDF. The export mirrors the active creator and includes the objective, partnership details, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, timeline, commercial terms, usage rights, and supporting YouTube evidence. Brief export and approval controls remain in the document flow instead of using a fixed footer.
+
 ### Content and data visualization
 
 Copy is direct and operational: Pass, Save for later, Select, Compare, Prepare outreach. Creator discovery uses public YouTube data and does not imply creator onboarding. Outreach is email-based: Gemini may draft from campaign inputs and public signals, but a user must review and approve every message before sending. Match scores always expose supporting factors and evidence. Prototype figures and contact details remain clearly illustrative in project documentation.

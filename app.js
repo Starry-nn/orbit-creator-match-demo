@@ -21,8 +21,9 @@ creators.forEach((creator,index)=>Object.assign(creator,youtubeEvidence[index]))
 
 const urlParams = new URLSearchParams(window.location.search);
 const requestedScreen = urlParams.get('screen');
-const initialScreen = ['welcome','home','create','match','pool','messages','chat','workspace'].includes(requestedScreen)?requestedScreen:(urlParams.get('mode') === 'workspace' ? 'home' : 'welcome');
-const requestedTour = urlParams.has('tour')?Math.min(17,Math.max(0,Number(urlParams.get('tour'))||0)):null;
+const routableScreens = ['welcome','onboarding','transition','home','create','match','profile','pool','compare','messages','chat','workspace','brief','review'];
+const initialScreen = routableScreens.includes(requestedScreen)?requestedScreen:(urlParams.get('mode') === 'workspace' ? 'home' : 'welcome');
+const requestedTour = urlParams.has('tour')?Math.min(18,Math.max(0,Number(urlParams.get('tour'))||0)):null;
 const state = {screen:initialScreen, onboardingStep:1, tourActive:requestedTour!==null, tourStep:requestedTour||0, creator:0, selectedEmail:0, sentEmails:[], creatorOrder:creators.map((_,index)=>index), lastAction:null, lastCreatorState:null, pool:3, formStep:Math.min(5,Math.max(1,Number(urlParams.get('step'))||1)), compareSelection:[], expandedCreator:null, reviewComplete:false};
 const app = document.querySelector('#app');
 const nav = document.querySelector('.tabbar');
@@ -35,6 +36,22 @@ const appHeader = () => `<header class="topline"><div class="brand"><img class="
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
 const geminiBadge = (label='Gemini analysis') => `<span class="source-badge gemini"><img src="assets/brands/gemini.svg" alt="">${label}</span>`;
 const youtubeBadge = (label='YouTube public data') => `<span class="source-badge youtube"><img src="assets/brands/youtube.svg" alt="">${label}</span>`;
+const activeCreator = () => creators[state.creatorOrder[state.creator%state.creatorOrder.length]];
+const creatorBriefData = () => { const c=activeCreator(); return {
+  brand:'Peakline Hydration', campaign:'Summer Training Launch', creator:c.name, product:'Peakline Hydration Mix',
+  audience:'Active women ages 25-40 in the United States who value accessible, evidence-led movement',
+  objective:'Introduce Peakline as a clean, evidence-led hydration habit that supports consistent movement through summer.',
+  creatorFit:c.why, format:`${c.format} - ${c.formatNote}`, scene:`Place Peakline at the ${c.moment.toLowerCase()} around ${c.timestamp}, where it already feels native to the story.`,
+  opening:'Before we get started, here is the simple hydration step I have added to this routine.', tone:`Keep the delivery ${c.tags.join(' and ').toLowerCase()}, useful, and natural to the creator's established voice.`,
+  deliverables:[`1 x ${c.format} YouTube integration`,'Product visible within the first four minutes','Pinned comment with approved campaign link','One thumbnail/title review for brand accuracy'],
+  messages:['Zero added sugar','Third-party tested','A simple hydration option for warm-weather movement'], cta:'Invite viewers to learn more through the approved link in the description and pinned comment.',
+  mustInclude:'Peakline product name, zero added sugar, third-party tested, paid promotion disclosure, and approved campaign link.',
+  avoid:'Medical outcomes, guaranteed performance, fatigue prevention, superiority claims, or unsupported comparisons.',
+  disclosure:'Mark the upload as containing paid promotion in YouTube Studio and include any additional disclosure required by applicable law.',
+  timestamp:`${c.timestamp} - ${c.moment} in "${c.videoTitle}"`, evidence:`12 recent public uploads plus ${c.visualFit}% visual fit and ${c.transcriptFit}% transcript/audio fit.`,
+  usage:'30 days paid digital usage; organic reposting on brand-owned channels; no edits that change creator meaning.', exclusivity:'30-day hydration and sports nutrition category exclusivity, subject to conflict review.', compensation:compareDetails[creators.indexOf(c)].fee+' estimated; final fee subject to creator negotiation.'
+}; };
+const exportCurrentBrief = () => { if(!window.OrbitPDF) throw new Error('PDF export module unavailable'); return window.OrbitPDF.downloadCreatorBrief(creatorBriefData()); };
 const creatorEmail = creator => `${creator.handle.slice(1).replace(/[^a-z0-9]/gi,'').toLowerCase()}@creator-demo.example`;
 const emailSubject = creator => `Peakline × ${creator.name} — YouTube partnership`;
 const contactNames = {'Yoga With Adriene':'Adriene','Jeff Nippard':'Jeff','Natacha Océane':'Natacha','Caroline Girvan':'Caroline','Pick Up Limes':'Sadia','Chloe Ting':'Chloe','Blogilates':'Cassey'};
@@ -66,7 +83,8 @@ const tourSteps = [
   {screen:'match', target:'.profile-actions', action:'swipe-preview', kicker:'Swipe to decide', title:'Move the profile, not just the buttons', copy:'Swipe the creator left to Pass or right to Select. The buttons do the same job. Undo reverses your last decision, and Save for later moves the profile to the end of the queue.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
   {screen:'match', target:'[data-open-brief]', kicker:'One-click activation', title:'Generate a creator-ready AI brief', copy:'Turn the campaign requirements and this creator’s video evidence into editable scenes, messaging, deliverables, and claim guardrails.'},
-  {screen:'match', target:'#closeBriefDrawer', action:'brief-preview', kicker:'AI brief ready', title:'Review it at your own pace', copy:'The draft stays open so you can inspect the recommended scene, opening line, and claims guardrail. Close it when you are ready to continue.'},
+  {screen:'match', target:'#exportBriefPdfDrawer', action:'export-brief', kicker:'Shareable output', title:'Download the campaign-ready PDF', copy:'Export a structured creator brief with goals, deliverables, messaging, disclosures, timeline, usage rights, and evidence references.'},
+  {screen:'match', target:'#closeBriefDrawer', action:'brief-preview', kicker:'AI brief ready', title:'Review it at your own pace', copy:'The draft stays open so you can inspect the direction and export it. Close it when you are ready to continue.'},
   {screen:'match', target:'[data-nav="pool"]', coach:'top', kicker:'Creator selected', title:'Open selected creators', copy:'Your decision is saved with its supporting context. Open Selected to review and compare candidates.'},
   {screen:'pool', target:'[data-tour="compare"]', coach:'top', kicker:'Selected creators', title:'Compare your finalists', copy:'Choose any two or more creators, open their details in place, then compare fit, cost, role, and risk.'},
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Email outreach', title:'Draft personalized emails', copy:'Gemini turns the campaign inputs and public YouTube signals into editable outreach drafts.'},
@@ -176,7 +194,9 @@ const screens = {
     <section class="pipeline-list"><article><img src="${creators[0].image}" alt="Yoga With Adriene"><div><strong>Yoga With Adriene</strong><small>Brief ready · $12–15K</small></div><span class="status">Interested</span></article><article><img src="${creators[1].image}" alt="Jeff Nippard"><div><strong>Jeff Nippard</strong><small>Rate pending · $18–22K</small></div><span class="status warning">Follow-up</span></article><article><img src="${creators[2].image}" alt="Natacha Océane"><div><strong>Natacha Océane</strong><small>Client review · $9–12K</small></div><span class="status neutral">Review</span></article></section>
     <div class="section-head"><h3>Campaign files</h3><button>View all</button></div><section class="file-list"><button><span>▤</span><div><strong>Client brief v3</strong><small>Updated today · PDF</small></div><b>›</b></button><button data-go="brief"><span>✦</span><div><strong>Creator brief · Adriene</strong><small>Ready to send</small></div><b>›</b></button><button data-go="review"><span>✓</span><div><strong>Draft review · Adriene</strong><small>2 claims need attention</small></div><b>›</b></button></section>`,
 
-  brief: () => `${pageTitle('Creator brief','workspace')}<span class="eyebrow">Yoga With Adriene · Ready to send</span><h1>Hydration that keeps up</h1><div class="brand-badges page-badges">${geminiBadge('Generated with Gemini')}${youtubeBadge('12 uploads referenced')}</div><div class="ai-note"><strong>Adapted from campaign requirements and creator evidence</strong><br>Routine-led integrations, calm teaching language and audience accessibility were recurring patterns in the public content reviewed.</div><div class="section-head"><h3>Why this direction</h3><button data-go="profile">View evidence</button></div><section class="trace-card"><div><span>Creator signal</span><strong>Warm, routine-led teaching</strong></div><i>→</i><div><span>Brief decision</span><strong>Use setup or wind-down</strong></div></section><div class="section-head"><h3>Objective</h3><button>Edit</button></div><section class="brief-section"><p>Introduce Peakline as the clean, evidence-led hydration habit that supports consistent movement through summer.</p></section><section class="brief-section"><h3>Deliverables</h3><ul><li>1 × 60–90 sec YouTube integration</li><li>Product visible within first 4 minutes</li><li>30-day paid usage rights</li></ul></section><section class="brief-section"><h3>Creator-specific direction</h3><p>Integrate Peakline into the setup or wind-down of a warm-weather practice. Keep the teaching calm, inclusive, and centered on consistency rather than performance pressure.</p></section><section class="brief-section"><h3>Must say / must avoid</h3><p><strong>Include:</strong> zero added sugar, third-party tested.<br><strong>Avoid:</strong> medical outcomes or guaranteed performance claims.</p></section><button class="secondary review-link" data-go="review"><img class="button-icon" src="assets/brands/gemini.svg" alt=""> Review a creator draft</button><div class="form-actions"><button class="secondary">Export</button><button class="primary blue" id="approve">Approve & send</button></div>`,
+  brief: () => { const c=activeCreator(), brief=creatorBriefData(); return `${pageTitle('Creator brief','workspace')}<span class="eyebrow">${c.name} · Ready to send</span><h1>Hydration that keeps up</h1><div class="brand-badges page-badges">${geminiBadge('Generated with Gemini')}${youtubeBadge('12 uploads referenced')}</div><div class="ai-note"><strong>Adapted from campaign requirements and creator evidence</strong><br>${c.tags.join(' · ')} patterns and timestamped video evidence shaped this direction. Human approval is required.</div><div class="section-head"><h3>Why this direction</h3><button data-go="profile">View evidence</button></div><section class="trace-card"><div><span>Creator signal</span><strong>${c.tags.join(' · ')}</strong></div><i>→</i><div><span>Brief decision</span><strong>${c.moment} at ${c.timestamp}</strong></div></section>
+    <div class="brief-grid"><section class="brief-section brief-span"><h3>Campaign objective</h3><p>${brief.objective}</p></section><section class="brief-section"><h3>Partnership overview</h3><p><strong>Audience:</strong> ${brief.audience}<br><strong>Format:</strong> ${brief.format}<br><strong>Estimated fee:</strong> ${brief.compensation}</p></section><section class="brief-section"><h3>Deliverables</h3><ul>${brief.deliverables.map(item=>`<li>${item}</li>`).join('')}</ul></section><section class="brief-section brief-span"><h3>Creator-specific direction</h3><p><strong>Scene:</strong> ${brief.scene}<br><strong>Opening:</strong> “${brief.opening}”<br><strong>Tone:</strong> ${brief.tone}</p></section><section class="brief-section"><h3>Key messages & CTA</h3><ul>${brief.messages.map(item=>`<li>${item}</li>`).join('')}</ul><p><strong>CTA:</strong> ${brief.cta}</p></section><section class="brief-section"><h3>Disclosure & guardrails</h3><p><strong>Include:</strong> ${brief.mustInclude}<br><strong>Avoid:</strong> ${brief.avoid}<br><strong>Disclosure:</strong> ${brief.disclosure}</p></section><section class="brief-section"><h3>Timeline & approvals</h3><p><strong>Draft:</strong> June 6<br><strong>Feedback:</strong> One consolidated round<br><strong>Go-live:</strong> June 18<br><strong>Approval:</strong> Required before publication</p></section><section class="brief-section"><h3>Usage rights</h3><p><strong>Usage:</strong> ${brief.usage}<br><strong>Exclusivity:</strong> ${brief.exclusivity}</p></section></div>
+    <button class="secondary review-link" data-go="review"><img class="button-icon" src="assets/brands/gemini.svg" alt=""> Review a creator draft</button><div class="form-actions brief-actions"><button class="secondary" id="exportBriefPdf">Download PDF</button><button class="primary blue" id="approve">Approve & send</button></div>`},
 
   review: () => `${pageTitle('Draft review','workspace')}<span class="eyebrow">Creation & engagement</span><h1>Check the draft against the brief</h1><div class="brand-badges page-badges">${geminiBadge('Gemini review')}${youtubeBadge('YouTube deliverable')}</div><p class="wizard-help">Paste a creator script, title or description. Orbit checks campaign requirements, approved claims and creator-specific guidance.</p><label for="draftContent">Creator draft · Yoga With Adriene</label><textarea id="draftContent" class="draft-input">After a warm practice, Peakline helps prevent fatigue and keeps you performing at your best. It has zero added sugar and is the best hydration mix for every workout.</textarea>${state.reviewComplete?`<section class="review-summary"><div><span class="status warning">Needs changes</span><strong>2 claims need attention</strong><small>4 requirements passed · Human approval required</small></div><span class="review-score">82</span></section><section class="issue-list"><article class="issue-card pass"><span>✓</span><div><strong>Approved product fact</strong><p>“Zero added sugar” matches the approved claim sheet.</p></div></article><article class="issue-card warning"><span>!</span><div><strong>Unsupported performance claim</strong><p>“Helps prevent fatigue” implies a health or performance outcome not supported by the brief.</p><blockquote>Suggested: “fits naturally into my post-practice hydration routine.”</blockquote></div></article><article class="issue-card warning"><span>!</span><div><strong>Unsubstantiated comparison</strong><p>“The best hydration mix” requires comparative evidence.</p><blockquote>Suggested: “a simple hydration option for warm-weather movement.”</blockquote></div></article></section><div class="review-sources"><strong>Checked against</strong><span>Client brief v3</span><span>Approved claims sheet</span><span>Creator brief · Adriene</span></div><div class="review-actions"><button class="secondary" id="applyRewrite">Apply safe rewrite</button><button class="primary blue" id="sendReview">Send for approval</button></div>`:`<button class="primary blue run-review" id="runReview"><img class="button-icon invert" src="assets/brands/gemini.svg" alt=""> Analyze draft</button><p class="review-footnote">First-pass review only. Final legal and brand approval remains with the campaign team.</p>`}`
 };
@@ -210,7 +230,7 @@ function renderTour() {
   closeDecision();
   const step=tourSteps[state.tourStep];
   if(!step || step.screen!==state.screen) return;
-  if(step.action==='brief-preview') {
+  if(['export-brief','brief-preview'].includes(step.action)) {
     if(!document.querySelector('#briefDrawer').classList.contains('open')) openBriefDrawer();
   } else closeBriefDrawer();
   const targetSelector=phone.classList.contains('browser-mode')
@@ -231,7 +251,7 @@ function renderTour() {
   layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?(['continue','swipe-preview'].includes(step.action)?`<button id="tourContinue">${step.action==='swipe-preview'?'I see the swipe →':'Continue →'}</button>`:`<small>${step.action==='expand-evidence'?'Tap the analysis to expand':step.action==='brief-preview'?'Close the brief to continue':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
-  if(step.action==='brief-preview') document.querySelector('.phone').classList.add('tour-brief-preview');
+  if(['export-brief','brief-preview'].includes(step.action)) document.querySelector('.phone').classList.add('tour-brief-preview');
   if(step.action==='swipe-preview') (phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard'))?.classList.add('tour-swipe-preview');
   if(target) {
     target.classList.add('tour-target');
@@ -275,13 +295,14 @@ function runTourAction() {
   else if(step===7) { state.tourStep=8;render();toast('Decision controls ready'); }
   else if(step===8) { app.querySelector('#reasonDetail')?.classList.add('open');app.querySelector('#reasonButton')?.classList.add('open');setTimeout(()=>{state.tourStep=9;render()},650); }
   else if(step===9) { clearTourUI();openBriefDrawer();toast('AI brief generated from campaign and creator evidence');state.tourStep=10;renderTour(); }
-  else if(step===10) { closeBriefDrawer();state.tourStep=11;render(); }
-  else if(step===11) { state.pool++;state.compareSelection=[0,1];document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=12;toast('Selected for client review');setTimeout(()=>go('pool'),350); }
-  else if(step===12) { state.tourStep=13;go('compare'); }
-  else if(step===13) { state.tourStep=14;go('messages'); }
-  else if(step===14) { state.tourStep=15;go('chat'); }
-  else if(step===15) { state.tourStep=16;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
-  else if(step===16) { state.tourStep=17;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
+  else if(step===10) { try{exportCurrentBrief();toast('Creator brief PDF downloaded')}catch(error){toast('PDF export failed');console.error(error)} state.tourStep=11;renderTour(); }
+  else if(step===11) { closeBriefDrawer();state.tourStep=12;render(); }
+  else if(step===12) { state.pool++;state.compareSelection=[0,1];document.querySelector('#poolBadge').textContent=state.pool;state.tourStep=13;toast('Selected for client review');setTimeout(()=>go('pool'),350); }
+  else if(step===13) { state.tourStep=14;go('compare'); }
+  else if(step===14) { state.tourStep=15;go('messages'); }
+  else if(step===15) { state.tourStep=16;go('chat'); }
+  else if(step===16) { state.tourStep=17;toast('Email approved and sent');setTimeout(()=>go('brief'),350); }
+  else if(step===17) { state.tourStep=18;toast('Brief approved');setTimeout(()=>go('workspace'),420); }
 }
 function bind() {
   app.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
@@ -310,6 +331,7 @@ function bind() {
   const draft=app.querySelector('#draft'); if(draft) draft.onclick=()=>toast(`${creators.length} personalized email drafts refreshed`);
   const sendEmail=app.querySelector('#sendEmail'); if(sendEmail) sendEmail.onclick=()=>{state.sentEmails=[...new Set([...state.sentEmails,state.selectedEmail])];toast('Email approved and sent');setTimeout(()=>go('messages'),550)};
   const approve=app.querySelector('#approve'); if(approve) approve.onclick=()=>{toast('Brief approved');setTimeout(()=>go('workspace'),500)};
+  const exportBrief=app.querySelector('#exportBriefPdf');if(exportBrief) exportBrief.onclick=()=>{try{exportCurrentBrief();toast('Creator brief PDF downloaded')}catch(error){toast('PDF export failed');console.error(error)}};
   const runReview=app.querySelector('#runReview'); if(runReview) runReview.onclick=()=>{state.reviewComplete=true;render();toast('Draft checked against 3 sources')};
   const applyRewrite=app.querySelector('#applyRewrite'); if(applyRewrite) applyRewrite.onclick=()=>{const draft=app.querySelector('#draftContent');draft.value='After a warm practice, Peakline fits naturally into my post-practice hydration routine. It has zero added sugar and is a simple hydration option for warm-weather movement.';toast('Safe rewrite applied')};
   const sendReview=app.querySelector('#sendReview'); if(sendReview) sendReview.onclick=()=>{toast('Sent for human approval');setTimeout(()=>go('workspace'),600)};
@@ -430,6 +452,7 @@ document.querySelector('#confirmDecision').addEventListener('click',()=>{closeDe
 document.querySelector('#closeBriefDrawer').addEventListener('click',closeBriefDrawer);
 document.querySelector('#briefBackdrop').addEventListener('click',closeBriefDrawer);
 document.querySelector('#openFullBrief').addEventListener('click',()=>{closeBriefDrawer();go('brief')});
+document.querySelector('#exportBriefPdfDrawer').addEventListener('click',()=>{try{exportCurrentBrief();toast('Creator brief PDF downloaded')}catch(error){toast('PDF export failed');console.error(error)}});
 deviceButtons.forEach(button=>button.addEventListener('click',()=>{
   const device=button.dataset.device;
   const compact=device==='pixel';

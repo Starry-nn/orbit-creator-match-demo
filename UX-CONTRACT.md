@@ -67,6 +67,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Select creator | swipe/button/right arrow on desktop | both desktop Discover modules exit together | next creator | toast + selected count | Undo | next dossier | `app.js` |
 | Save for later | clock icon, symmetric with Undo | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
 | Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
+| Export creator brief | Download PDF in preview or full brief | local generation | browser download | campaign-ready two-page PDF | remain on current brief + failure toast | current brief | `pdf-export.js`, `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
 
@@ -84,7 +85,15 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Outreach uses email, not in-product creator messaging. Gemini can draft a personalized email for each selected creator from campaign inputs and public signals, but nothing sends until the user reviews and explicitly approves it.
 - Discover teaches the full decision model in context: swipe left or Pass, swipe right or Select, Undo the last decision, or Save for later to move a creator to the end of the queue. The next guided step requires the user to generate an AI brief from the highlighted control. Gmail identifies the Email navigation destination without adding channel branding inside the outreach workflow.
 - The swipe tutorial animates the complete creator decision surface on mobile and desktop. The generated AI brief remains open until the user explicitly closes it to continue.
+- The first-run tour requires a PDF export from the open brief preview before the reviewer closes it and continues to Selected creators.
 - Selected creator rows own their comparison checkbox independently from their photo/name disclosure. Photo or name expands creator evidence in place; comparison supports any user-selected set of two or more creators.
+
+## Creator brief export
+
+- The same Download PDF action is available in the Gemini brief preview and the full creator brief on mobile and desktop.
+- The exported two-page Letter PDF contains objectives, partnership overview, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, approvals, usage rights, commercial terms, and supporting YouTube evidence.
+- Export content follows the active creator state; switching creators changes the brief.
+- PDF generation is local to the browser and does not upload campaign content.
 
 ## Overlays and feedback
 

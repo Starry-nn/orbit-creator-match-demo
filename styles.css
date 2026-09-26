@@ -648,6 +648,8 @@ textarea { min-height: 85px; resize: none; }
 .brief-ideas p { margin: 4px 0 0; color: var(--ink); font-size: 10px; line-height: 1.45; }
 .drawer-note { color: var(--muted); font-size: 8px; line-height: 1.5; }
 .brief-drawer > .primary { width: 100%; }
+.brief-drawer-actions { display: grid; grid-template-columns: .9fr 1.35fr; gap: 8px; margin-top: 16px; }
+.brief-drawer-actions button { min-height: 44px; padding: 10px 12px; }
 
 .filter-section { margin-top: 18px; }
 .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
@@ -782,6 +784,8 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .welcome-actions { align-self: end; }
 .browser-mode .welcome-sources { justify-content: flex-start; }
 .browser-mode .onboarding-shell, .browser-mode .transition-shell { max-width: 720px; margin: 0 auto; }
+.browser-mode .app.intro-mode { padding: 0; }
+.browser-mode .app.intro-mode .transition-shell { width: min(720px,calc(100% - 48px)); max-width: none; margin: 0 auto; }
 .browser-mode .decision-sheet { left: 50%; right: auto; bottom: 22px; width: min(520px, calc(100% - 140px)); transform: translateX(-50%); border-radius: 28px; }
 .browser-mode .toast { bottom: 28px; }
 
@@ -873,6 +877,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .desktop-match-shell.exit-save { animation: exitSave .28s ease forwards; }
 .browser-mode .brief-drawer { top: 72px; left: auto; bottom: 0; width: min(430px,calc(100% - 240px)); max-height: none; padding: 26px; border-radius: 24px 0 0 0; transform: translateX(105%); }
 .browser-mode .brief-drawer.open { transform: translateX(0); }
+.browser-mode .brief-drawer-actions { grid-template-columns: 1fr; }
 .browser-mode .brief-backdrop { top: 72px; left: 220px; }
 .browser-mode .app[data-screen="create"] .youtube-format-grid { grid-template-columns: 1fr 1fr; }
 .browser-mode .app[data-screen="create"] .campaign-options { grid-template-columns: repeat(3,1fr); }
@@ -912,6 +917,12 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="workspace"] > .section-head { margin-top: 24px; }
 .browser-mode .app[data-screen="workspace"] .pipeline-list article,
 .browser-mode .app[data-screen="workspace"] .file-list button { width: 100%; padding: 14px; }
+
+.brief-grid { display: grid; gap: 10px; }
+.brief-actions { position: static; margin-top: 14px; padding-bottom: 12px; background: transparent; }
+.browser-mode .app[data-screen="brief"] .brief-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.browser-mode .app[data-screen="brief"] .brief-span { grid-column: 1 / -1; }
+.browser-mode .app[data-screen="brief"] .brief-actions { max-width: none; margin-left: 0; }
 
 /* Desktop tour cards stay contextual and never become a full-width banner. */
 .browser-mode .tour-coach { left: 244px; right: auto; bottom: 24px; width: 360px; min-height: 0; grid-template-columns: 40px 1fr; gap: 9px 12px; padding: 14px; border-radius: 18px; }
