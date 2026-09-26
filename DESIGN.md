@@ -110,7 +110,7 @@ Motion communicates selection, swipe direction, sheets, and navigation. Typical 
 
 The Discover tutorial uses one deliberate left/right profile motion to teach the gesture before users rely on the equivalent buttons. Generated briefs remain open until the user closes them. Selected creator details expand in place so teams keep their comparison context.
 
-Generated creator briefs can be reviewed in-app or exported as a campaign-ready two-page PDF. The export mirrors the active creator and includes the objective, partnership details, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, timeline, commercial terms, usage rights, and supporting YouTube evidence. Brief export and approval controls remain in the document flow instead of using a fixed footer.
+Generated creator briefs can be reviewed in-app or exported as a campaign-ready one-page PDF. The export mirrors the active creator and uses a compact two-column agency handoff: objective, partnership details, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, timeline, commercial terms, usage rights, and supporting YouTube evidence. Brief export and approval controls remain in the document flow instead of using a fixed footer.
 
 ### Content and data visualization
 

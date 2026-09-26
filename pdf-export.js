@@ -32,97 +32,79 @@
   function lineCmd(x1,y1,x2,y2,rgb=[.88,.89,.93]){ return `q ${color(rgb,true)} 0.7 w ${x1} ${y1} m ${x2} ${y2} l S Q`; }
 
   function createCreatorBriefPdf(data){
-    const pages=[];
-    let page, y;
-    const startPage=()=>{
-      page=[]; pages.push(page);
-      page.push(rectCmd(0,716,PAGE_W,76,BLUE));
-      page.push(textCmd('ORBIT  /  CREATOR CAMPAIGN BRIEF',MARGIN,758,9,true,[1,1,1]));
-      page.push(textCmd(ascii(data.campaign||'Campaign'),MARGIN,733,20,true,[1,1,1]));
-      page.push(textCmd(`Brand: ${data.brand||'Peakline'}   |   Creator: ${data.creator||'Creator'}`,MARGIN,710,9,false,MUTED));
-      y=684;
-    };
-    const ensure=height=>{ if(y-height<52) startPage(); };
-    const paragraph=(value,{size=9,color:rgb=MUTED,bold=false,indent=0,leading=13}={})=>{
-      const lines=wrap(value,size,CONTENT_W-indent);
-      ensure(lines.length*leading+4);
-      lines.forEach(line=>{page.push(textCmd(line,MARGIN+indent,y,size,bold,rgb));y-=leading;});
-      y-=4;
-    };
-    const section=(title,content=[])=>{
-      ensure(38);
-      page.push(textCmd(title.toUpperCase(),MARGIN,y,8,true,BLUE)); y-=9;
-      page.push(lineCmd(MARGIN,y,MARGIN+CONTENT_W,y)); y-=17;
-      content.forEach(item=>{
-        if(typeof item==='string') paragraph(item);
-        else if(item.label){
-          ensure(18);
-          page.push(textCmd(`${item.label}:`,MARGIN,y,9,true,INK));
-          const labelWidth=Math.min(150,item.label.length*5.2+10);
-          const lines=wrap(item.value,9,CONTENT_W-labelWidth);
-          page.push(textCmd(lines[0]||'',MARGIN+labelWidth,y,9,false,MUTED)); y-=13;
-          lines.slice(1).forEach(line=>{page.push(textCmd(line,MARGIN+labelWidth,y,9,false,MUTED));y-=13;});
-          y-=2;
-        } else if(item.bullet) paragraph(`- ${item.bullet}`,{indent:10});
+    const pages=[[]], page=pages[0], gap=18, colW=(CONTENT_W-gap)/2, right=MARGIN+colW+gap;
+    page.push(rectCmd(0,704,PAGE_W,88,BLUE));
+    page.push(textCmd('ORBIT  /  CREATOR CAMPAIGN BRIEF',MARGIN,762,8,true,[1,1,1]));
+    page.push(textCmd(ascii(data.campaign||'Campaign'),MARGIN,735,20,true,[1,1,1]));
+    page.push(textCmd(`Brand: ${data.brand||'Peakline'}   |   Creator: ${data.creator||'Creator'}`,MARGIN,714,8,false,[.90,.93,1]));
+
+    const block=(x,top,width,title,items,options={})=>{
+      const size=options.size||7.4, leading=options.leading||9.4, pad=options.pad||11;
+      let cursor=top-pad-12, commands=[];
+      commands.push(textCmd(title.toUpperCase(),x+pad,top-pad,7.3,true,BLUE));
+      items.forEach(item=>{
+        if(item.label){
+          commands.push(textCmd(`${item.label}:`,x+pad,cursor,size,true,INK));
+          cursor-=leading;
+          wrap(item.value||'',size,width-pad*2).slice(0,item.lines||3).forEach(line=>{commands.push(textCmd(line,x+pad,cursor,size,false,MUTED));cursor-=leading;});
+        } else {
+          wrap(`${item.bullet?'• ':''}${item.bullet||item.text||''}`,size,width-pad*2).slice(0,item.lines||2).forEach(line=>{commands.push(textCmd(line,x+pad,cursor,size,false,MUTED));cursor-=leading;});
+        }
+        cursor-=3;
       });
-      y-=8;
+      const height=Math.max(options.minHeight||0,top-cursor+5);
+      page.push(rectCmd(x,top-height,width,height,options.fill||PALE));
+      page.push(...commands);
+      return top-height-10;
     };
 
-    startPage();
-    ensure(86);
-    page.push(rectCmd(MARGIN,y-66,CONTENT_W,66,INK));
-    page.push(textCmd('CAMPAIGN OBJECTIVE',MARGIN+16,y-21,8,true,MINT));
-    wrap(data.objective||'',10,CONTENT_W-32).slice(0,3).forEach((line,index)=>page.push(textCmd(line,MARGIN+16,y-40-index*13,10,index===0,[1,1,1])));
-    y-=86;
+    const objectiveTop=687, objectiveH=54;
+    page.push(rectCmd(MARGIN,objectiveTop-objectiveH,CONTENT_W,objectiveH,INK));
+    page.push(textCmd('CAMPAIGN OBJECTIVE',MARGIN+14,objectiveTop-17,7.3,true,MINT));
+    wrap(data.objective||'',9.2,CONTENT_W-28).slice(0,2).forEach((line,index)=>page.push(textCmd(line,MARGIN+14,objectiveTop-35-index*11,9.2,true,[1,1,1])));
 
-    section('Partnership overview',[
-      {label:'Product',value:data.product||'Peakline Hydration'},
-      {label:'Audience',value:data.audience||'Active women ages 25-40 in the United States'},
-      {label:'Creator fit',value:data.creatorFit||''},
-      {label:'Recommended format',value:data.format||''}
+    let leftY=620, rightY=620;
+    leftY=block(MARGIN,leftY,colW,'Partnership',[
+      {label:'Product',value:data.product||'Peakline Hydration',lines:1},
+      {label:'Audience',value:data.audience||'',lines:2},
+      {label:'Format',value:data.format||'',lines:2},
+      {label:'Estimated fee',value:data.compensation||'',lines:2},
+      {label:'Why this creator',value:data.creatorFit||'',lines:3}
     ]);
-    section('Deliverables', (data.deliverables||[]).map(bullet=>({bullet})));
-    section('Creative direction',[
-      {label:'Recommended scene',value:data.scene||''},
-      {label:'Opening direction',value:data.opening||''},
-      {label:'Tone',value:data.tone||''}
+    leftY=block(MARGIN,leftY,colW,'Deliverables',(data.deliverables||[]).slice(0,4).map(bullet=>({bullet,lines:2})));
+    leftY=block(MARGIN,leftY,colW,'Creative direction',[
+      {label:'Scene',value:data.scene||'',lines:3},
+      {label:'Opening',value:data.opening||'',lines:3},
+      {label:'Tone',value:data.tone||'',lines:2}
     ]);
-    section('Key messages and call to action',[
-      ...(data.messages||[]).map(bullet=>({bullet})),
-      {label:'CTA',value:data.cta||''}
-    ]);
-    section('Brand requirements and guardrails',[
-      {label:'Must include',value:data.mustInclude||''},
-      {label:'Do not claim',value:data.avoid||''},
-      {label:'Disclosure',value:data.disclosure||''}
-    ]);
-    section('Timeline and approvals',[
-      {label:'Draft due',value:data.draftDue||'June 6, 2026'},
-      {label:'Feedback window',value:data.feedback||'One consolidated feedback round within two business days'},
-      {label:'Go-live',value:data.goLive||'June 18, 2026'},
-      {label:'Approval',value:'Brand approval is required before publication. Creator retains final control of their authentic voice.'}
-    ]);
-    section('Usage rights and commercial terms',[
-      {label:'Usage',value:data.usage||'30 days of paid digital usage; organic reposting on brand-owned channels'},
-      {label:'Exclusivity',value:data.exclusivity||'Review hydration and sports nutrition category conflicts before contracting'},
-      {label:'Compensation',value:data.compensation||'$12,000-$15,000 estimated; final fee subject to creator negotiation'}
-    ]);
-    section('Evidence used by Orbit',[
-      {label:'YouTube signals',value:data.evidence||'12 recent public uploads, visual frames, audio/transcript, content themes, cadence, and public performance'},
-      {label:'Timestamp proof',value:data.timestamp||''},
-      'AI-generated recommendations require human review. Public data only; no private creator analytics are represented.'
-    ]);
-    section('Reference and compliance notes',[
-      'YouTube Creator Partnerships campaign inquiries commonly include campaign goals, deliverables, talking points, calls to action, product information, and commercial terms.',
-      'Branded content must use YouTube paid promotion disclosure tools and comply with applicable advertising, community, and legal requirements.',
-      'Reference: support.google.com/youtube/answer/9385307 and support.google.com/youtube/answer/17596007'
+    leftY=block(MARGIN,leftY,colW,'Timeline',[
+      {label:'Draft',value:data.draftDue||'June 6, 2026',lines:1},
+      {label:'Feedback',value:data.feedback||'One consolidated round within two business days',lines:2},
+      {label:'Go-live',value:data.goLive||'June 18, 2026',lines:1}
     ]);
 
-    pages.forEach((commands,index)=>{
-      commands.push(lineCmd(MARGIN,38,MARGIN+CONTENT_W,38));
-      commands.push(textCmd(`Orbit brief v1.0  |  ${data.creator||'Creator'}  |  Human approval required`,MARGIN,23,7,false,MUTED));
-      commands.push(textCmd(`${index+1} / ${pages.length}`,PAGE_W-MARGIN-24,23,7,true,MUTED));
-    });
+    rightY=block(right,rightY,colW,'Messages and CTA',[
+      ...(data.messages||[]).slice(0,3).map(bullet=>({bullet,lines:2})),
+      {label:'CTA',value:data.cta||'',lines:3}
+    ]);
+    rightY=block(right,rightY,colW,'Brand guardrails',[
+      {label:'Must include',value:data.mustInclude||'',lines:3},
+      {label:'Avoid',value:data.avoid||'',lines:3},
+      {label:'Disclosure',value:data.disclosure||'',lines:3}
+    ],{fill:[.985,.963,.958]});
+    rightY=block(right,rightY,colW,'Rights and terms',[
+      {label:'Usage',value:data.usage||'',lines:3},
+      {label:'Exclusivity',value:data.exclusivity||'',lines:3}
+    ]);
+    rightY=block(right,rightY,colW,'Evidence',[
+      {label:'YouTube analysis',value:data.evidence||'',lines:3},
+      {label:'Timestamp',value:data.timestamp||'',lines:2},
+      {text:'AI recommendations require human review. Public data only.',lines:2}
+    ]);
+
+    page.push(lineCmd(MARGIN,38,MARGIN+CONTENT_W,38));
+    page.push(textCmd('Human approval required  |  Paid promotion disclosure required',MARGIN,23,7,false,MUTED));
+    page.push(textCmd('1 / 1',PAGE_W-MARGIN-20,23,7,true,MUTED));
 
     const objects=[];
     objects[0]='<< /Type /Catalog /Pages 2 0 R >>';

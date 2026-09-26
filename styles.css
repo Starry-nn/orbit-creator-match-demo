@@ -491,6 +491,10 @@ textarea { min-height: 85px; resize: none; }
 .compare-bar button { background: white; color: var(--ink); border: 0; border-radius: 10px; padding: 9px 12px; font-weight: 800; }
 .compare-bar button:disabled { opacity: .42; cursor: not-allowed; }
 .compare-scroll { max-width: 100%; overflow-x: auto; padding-bottom: 8px; }
+.compare-empty { max-width: 520px; margin: 80px auto 0; padding: 34px; border: 1px solid var(--line); border-radius: 24px; background: white; text-align: center; box-shadow: 0 16px 42px rgba(31,38,57,.07); }
+.compare-empty > span { width: 48px; height: 48px; display: grid; place-items: center; margin: 0 auto 16px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-size: 24px; }
+.compare-empty h1 { margin-bottom: 9px; }
+.compare-empty p { margin: 0 auto 20px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .compare-grid { display: grid; grid-template-columns: 92px repeat(var(--compare-count), minmax(132px,1fr)); min-width: calc(92px + var(--compare-count) * 132px); background: white; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; font-size: 10px; }
 .compare-grid > div { min-width: 0; padding: 10px 7px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .compare-grid .label { color: var(--muted); }
@@ -635,6 +639,7 @@ textarea { min-height: 85px; resize: none; }
 .brief-backdrop { position: absolute; z-index: 70; inset: 0; background: rgba(16,20,31,.42); opacity: 0; pointer-events: none; transition: opacity .25s ease; backdrop-filter: blur(3px); }
 .brief-backdrop.open { opacity: 1; pointer-events: auto; }
 .brief-drawer { position: absolute; z-index: 75; left: 0; right: 0; bottom: 0; max-height: 84%; overflow-y: auto; padding: 22px 20px 28px; border-radius: 28px 28px 0 0; background: var(--paper); box-shadow: 0 -22px 70px rgba(19,25,45,.25); transform: translateY(105%); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.brief-drawer:not(.open) { transition: none; }
 .brief-drawer.open { transform: translateY(0); }
 .brief-drawer header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .brief-drawer header h2 { margin: 6px 0 14px; }
@@ -752,7 +757,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="create"] .choice-stack { grid-template-columns: repeat(3,1fr); }
 .browser-mode .app[data-screen="create"] .choice-card { min-height: 112px; align-content: center; }
 .browser-mode .app[data-screen="create"] .chips.large { max-width: 760px; }
-.browser-mode .app[data-screen="create"] .form-actions { max-width: 520px; margin-left: auto; }
+.browser-mode .app[data-screen="create"] .form-actions { position: static; max-width: 520px; margin: 18px 0 0 auto; padding-bottom: 0; background: transparent; }
 .browser-mode .app[data-screen="pool"] { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 16px; align-content: start; }
 .browser-mode .app[data-screen="pool"] > :not(.creator-list-item) { grid-column: 1 / -1; }
 .browser-mode .app[data-screen="pool"] .creator-list-item { margin-bottom: 12px; }
@@ -776,13 +781,13 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="chat"] .chatbox { width: min(720px,100%); margin-left: auto; margin-right: auto; }
 .browser-mode .app[data-screen="chat"] .email-review-head,
 .browser-mode .app[data-screen="chat"] .email-composer { width: min(760px,100%); margin-left: auto; margin-right: auto; }
-.browser-mode .welcome-shell { display: grid; grid-template-columns: minmax(330px,.9fr) minmax(400px,1.1fr); grid-template-rows: auto 1fr auto; gap: 14px 60px; max-width: 1040px; margin: 0 auto; }
-.browser-mode .welcome-brand { grid-column: 1 / -1; }
-.browser-mode .welcome-copy { align-self: center; margin-top: 0; }
+.browser-mode .welcome-shell { position: relative; display: grid; grid-template-columns: minmax(340px,.95fr) minmax(380px,1.05fr); grid-template-rows: auto auto; align-content: center; gap: 22px 52px; max-width: 1000px; margin: 0 auto; padding: 58px 0 42px; }
+.browser-mode .welcome-brand { position: absolute; top: 0; left: 0; right: 0; }
+.browser-mode .welcome-copy { grid-column: 1; grid-row: 1; align-self: end; margin-top: 0; }
 .browser-mode .welcome-copy h1 { max-width: 520px; font-size: 56px; }
-.browser-mode .orbit-demo { grid-column: 2; grid-row: 2 / span 2; min-height: 500px; margin: 0; }
-.browser-mode .welcome-actions { align-self: end; }
-.browser-mode .welcome-sources { justify-content: flex-start; }
+.browser-mode .orbit-demo { grid-column: 2; grid-row: 1 / span 2; min-height: 390px; margin: 0; }
+.browser-mode .welcome-actions { grid-column: 1; grid-row: 2; align-self: start; max-width: 440px; }
+.browser-mode .welcome-sources { position: absolute; left: 0; bottom: 0; justify-content: flex-start; margin: 0; }
 .browser-mode .onboarding-shell, .browser-mode .transition-shell { max-width: 720px; margin: 0 auto; }
 .browser-mode .app.intro-mode { padding: 0; }
 .browser-mode .app.intro-mode .transition-shell { width: min(720px,calc(100% - 48px)); max-width: none; margin: 0 auto; }
@@ -908,6 +913,8 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="pool"],
 .browser-mode .app[data-screen="messages"] { gap: 0 16px; }
 .browser-mode .app[data-screen="pool"] .creator-list-item { min-height: 88px; padding: 12px 14px; }
+.browser-mode .app[data-screen="pool"] .creator-list-item.is-expanded { z-index: 3; grid-column: 1 / -1; grid-template-rows: 64px auto; min-height: 240px; overflow: hidden; box-shadow: 0 18px 42px rgba(31,38,57,.12); }
+.browser-mode .app[data-screen="pool"] .creator-list-item.is-expanded .pool-creator-detail { position: relative; z-index: 1; }
 .browser-mode .app[data-screen="pool"] .compare-bar { width: 100%; max-width: none; }
 .browser-mode .app[data-screen="pool"] .compare-bar { position: static; }
 .browser-mode .app[data-screen="messages"] .thread { width: 100%; min-height: 92px; padding: 14px; }

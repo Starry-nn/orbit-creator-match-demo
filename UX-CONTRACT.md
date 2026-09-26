@@ -67,7 +67,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Select creator | swipe/button/right arrow on desktop | both desktop Discover modules exit together | next creator | toast + selected count | Undo | next dossier | `app.js` |
 | Save for later | clock icon, symmetric with Undo | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
 | Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
-| Export creator brief | Download PDF in preview or full brief | local generation | browser download | campaign-ready two-page PDF | remain on current brief + failure toast | current brief | `pdf-export.js`, `app.js` |
+| Export creator brief | Download PDF in preview or full brief | local generation | browser download | campaign-ready one-page PDF | remain on current brief + failure toast | current brief | `pdf-export.js`, `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
 | Cancel/back | Back/navigation | none | owning screen | none | n/a | destination content | `app.js` |
 
@@ -91,7 +91,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 ## Creator brief export
 
 - The same Download PDF action is available in the Gemini brief preview and the full creator brief on mobile and desktop.
-- The exported two-page Letter PDF contains objectives, partnership overview, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, approvals, usage rights, commercial terms, and supporting YouTube evidence.
+- The exported one-page Letter PDF contains objectives, partnership overview, deliverables, creative direction, messages and CTA, disclosure and claim guardrails, approvals, usage rights, commercial terms, and supporting YouTube evidence.
 - Export content follows the active creator state; switching creators changes the brief.
 - PDF generation is local to the browser and does not upload campaign content.
 
