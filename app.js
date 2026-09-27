@@ -246,7 +246,16 @@ function renderTour() {
       ? '.mobile-brief-button'
       : step.target;
   const target=targetSelector?(app.querySelector(targetSelector) || phone.querySelector(targetSelector)):null;
-  if(target && app.contains(target)) target.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+  if(target) {
+    const drawer=target.closest('.brief-drawer');
+    if(drawer) {
+      // Mobile Safari can scroll the page instead of the drawer when an absolutely
+      // positioned dialog is targeted. Keep the required control inside the drawer.
+      drawer.scrollTop=Math.max(0,target.offsetTop-(target.id==='closeBriefDrawer'?18:72));
+    } else if(app.contains(target)) {
+      target.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+    }
+  }
   const layer=document.createElement('section');
   layer.id='tourLayer';
   layer.className=`tour-layer ${target?'':'tour-finish'}`;
@@ -390,8 +399,8 @@ function bindSwipe(card) {
     if(!tracking && !horizontal) return;
     const decision=Math.abs(dx)>82?(dx<0?'pass':'shortlist'):null;
     reset();
-    if(decision && state.tourActive && tourSteps[state.tourStep]?.action==='swipe-demo') {
-      state.tourStep=7;toast(decision==='pass'?'Swipe left passes':'Swipe right selects');render();return;
+    if(decision && state.tourActive && tourSteps[state.tourStep]?.action==='swipe-preview') {
+      state.tourStep=8;toast(decision==='pass'?'Swipe left passes':'Swipe right selects');render();return;
     }
     if(decision) act(decision);
   };
@@ -417,6 +426,7 @@ function openBriefDrawer() {
   document.querySelector('#briefGuardrail').textContent='Avoid medical outcomes, guaranteed performance, and “best” comparisons. Use approved facts only.';
   document.querySelector('#briefDrawer').classList.add('open');
   document.querySelector('#briefBackdrop').classList.add('open');
+  document.querySelector('#briefDrawer').scrollTop=0;
 }
 function closeBriefDrawer() {
   document.querySelector('#briefDrawer').classList.remove('open');
@@ -453,7 +463,6 @@ document.querySelector('#sheetBackdrop').addEventListener('click',closeDecision)
 document.querySelector('#decisionSheet').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 document.querySelector('#confirmDecision').addEventListener('click',()=>{closeDecision();act('shortlist')});
 document.querySelector('#closeBriefDrawer').addEventListener('click',closeBriefDrawer);
-document.querySelector('#closeBriefDrawer').addEventListener('pointerup',event=>{event.preventDefault();closeBriefDrawer()});
 document.querySelector('#briefBackdrop').addEventListener('click',closeBriefDrawer);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.querySelector('#briefDrawer').classList.contains('open'))closeBriefDrawer()});
 document.querySelector('#openFullBrief').addEventListener('click',()=>{closeBriefDrawer();go('brief')});
