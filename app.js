@@ -82,7 +82,7 @@ const tourSteps = [
   {screen:'create', target:'.form-actions', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria', copy:'Gemini combines the goal, audience, budget, format and brand guardrails.'},
   {screen:'match', target:'.profile-identity', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal', copy:'Start with the creator, channel category, campaign role, and strongest public signals.'},
   {screen:'match', target:'.decision-main', action:'swipe-preview', kicker:'Pass or select', title:'Swipe to make the call', copy:'Swipe the profile left to Pass or right to Select. These two buttons perform the same actions.'},
-  {screen:'match', target:'.decision-tools', action:'continue', kicker:'Review controls', title:'Change or defer a decision', copy:'Undo last restores your most recent decision. Save for later moves this creator to the end of the review queue.'},
+  {screen:'match', target:'.profile-actions', action:'continue', kicker:'Side controls', title:'Undo on the left, save on the right', copy:'The left arrow restores your most recent decision. The right clock saves this creator for later and moves them to the end of the review queue.'},
   {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
   {screen:'match', target:'[data-open-brief]', kicker:'One-click activation', title:'Generate a creator-ready AI brief', copy:'Turn the campaign requirements and this creator’s video evidence into editable scenes, messaging, deliverables, and claim guardrails.'},
   {screen:'match', target:'#exportBriefPdfDrawer', action:'export-brief', kicker:'Shareable output', title:'Download the campaign-ready PDF', copy:'Export a structured creator brief with goals, deliverables, messaging, disclosures, timeline, usage rights, and evidence references.'},
@@ -149,7 +149,7 @@ const screens = {
       <section class="profile-hero" style="background-image:url('${c.image}')"><div class="hero-shade"></div></section>
       <section class="profile-identity"><div class="profile-name"><div class="profile-title"><span class="active-dot"></span><h1>${c.name}</h1></div><p>${c.handle}<span aria-hidden="true"> · </span>${c.niche}</p></div><button class="content-pick" data-pick="Profile introduction" aria-label="Select using profile introduction">＋</button></section>
       <div class="profile-decision-zone"><span class="browser-column-cue pass-cue">← Pass</span><span class="browser-column-cue select-cue">Select →</span>
-      <div class="profile-actions"><div class="decision-main"><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Select creator"><span>＋</span>Select</button></div><div class="decision-tools"><button class="review-tool undo" data-action="undo" aria-label="Undo last decision"><span>↶</span>Undo last</button><button class="review-tool save" data-action="save" aria-label="Save creator for later"><span>◷</span>Save for later</button></div></div>
+      <div class="profile-actions"><button class="review-tool undo" data-action="undo" aria-label="Undo last decision" title="Undo last decision">↶</button><div class="decision-main"><button class="decision pass-decision" data-action="pass" aria-label="Pass"><span>×</span>Pass</button><button class="decision shortlist-decision" id="tourShortlist" data-pick="Full creator profile" aria-label="Select creator"><span>＋</span>Select</button></div><button class="review-tool save" data-action="save" aria-label="Save creator for later" title="Save for later">◷</button></div>
       </div>
       <section class="profile-snapshot" aria-label="Creator stats">
         <div class="profile-fit"><div><span class="snapshot-label">Campaign fit</span><strong>${c.score}<small>/100</small></strong></div><span class="fit-verdict">Top match</span></div>
@@ -208,6 +208,7 @@ function render() {
   app.innerHTML = screens[state.screen]();
   app.dataset.screen = state.screen;
   app.scrollTop = 0;
+  app.scrollLeft = 0;
   const introMode = ['welcome','onboarding','transition'].includes(state.screen);
   nav.classList.toggle('hidden', introMode);
   app.classList.toggle('intro-mode', introMode);
@@ -256,6 +257,7 @@ function renderTour() {
       drawer.scrollTop=Math.max(0,target.offsetTop-(target.id==='closeBriefDrawer'?18:72));
     } else if(app.contains(target)) {
       target.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+      app.scrollLeft=0;
     }
   }
   const layer=document.createElement('section');

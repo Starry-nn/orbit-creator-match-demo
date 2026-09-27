@@ -35,7 +35,7 @@ async function runTour(label, contextOptions, selectDevice) {
       await page.screenshot({ path: `tmp/qa-20260927-desktop-step-${step + 1}.png`, fullPage: true });
     }
     if (step === 7 && !(await page.locator('.decision-main').innerText()).includes('Pass')) throw new Error(`${label}: Pass/Select controls are not explicit`);
-    if (step === 8 && !(await page.locator('.decision-tools').innerText()).includes('Save for later')) throw new Error(`${label}: review controls are not explicit`);
+    if (step === 8 && await page.locator('.review-tool[aria-label="Save creator for later"]').count() !== 1) throw new Error(`${label}: review controls are not explicit`);
     if (step === 18 && !(await page.locator('[data-tour="open-brief"]').isVisible())) throw new Error(`${label}: creator brief transition is missing`);
 
     if (step === 11 || step === 12) {

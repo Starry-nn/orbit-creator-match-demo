@@ -70,7 +70,7 @@ Display typography uses the existing Avenir Next/SF Pro stack for creator names 
 
 ## Layout
 
-Desktop uses a 220px persistent rail and one shared content grid for every work surface. Discover uses two closely spaced, visually balanced columns: the left creator profile owns identity, decision controls, and a wide recent-video proof directly below the profile; the right evidence panel owns subscribers, average views, engagement, campaign fit, multimodal reasoning, and creator signals. The two columns move as one swipe surface, while plain-text Pass and Select arrow cues sit on the left profile column edges. Below the profile, Pass and Select form the primary row; Undo last and Save for later form a quieter labeled utility row. Selected, Inbox, and Campaign use the same outer edges, equal card widths within each repeated module, and full-width section bars. Buttons are primary; swipe and arrow keys are optional accelerators taught with a compact contextual coach card. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
+Desktop uses a 220px persistent rail and one shared content grid for every work surface. Discover uses two closely spaced, visually balanced columns: the left creator profile owns identity, decision controls, and a wide recent-video proof directly below the profile; the right evidence panel owns subscribers, average views, engagement, campaign fit, multimodal reasoning, and creator signals. The two columns move as one swipe surface, while plain-text Pass and Select arrow cues sit on the left profile column edges. Below the profile, Pass and Select stay centered between Undo on the left and Save for later on the right. Selected, Inbox, and Campaign use the same outer edges, equal card widths within each repeated module, and full-width section bars. Buttons are primary; swipe and arrow keys are optional accelerators taught with a compact contextual coach card. Campaign workspace pairs its milestone card with KPIs and time-compression evidence instead of stacking everything in a narrow center column. Mobile retains bottom navigation and a single scroll column at 393px and 360px. Scroll ownership belongs to `.app`; sticky chrome must not obscure focused controls.
 
 ## Elevation & Depth
 
@@ -88,7 +88,7 @@ Interactive controls require default, hover, visible focus, pressed, disabled, a
 
 ### Buttons and actions
 
-Primary actions are solid Orbit blue. Neutral actions are white/outlined. Pass uses neutral/danger semantics; Select uses primary or success semantics with an explicit label. Undo last and Save for later keep visible labels, and Save for later requeues the creator after the remaining candidates without changing selection status.
+Primary actions are solid Orbit blue. Neutral actions are white/outlined. Pass uses neutral/danger semantics; Select uses primary or success semantics with an explicit label. Undo and Save for later sit at opposite ends of the decision row, receive accessible labels, and are explained in their own tutorial step. Save for later requeues the creator after the remaining candidates without changing selection status.
 
 ### Navigation and data display
 

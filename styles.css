@@ -410,11 +410,9 @@ textarea { min-height: 85px; resize: none; }
 .safety-mark { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; background: #e4f8f1; color: #1f8867; display: grid; place-items: center; font-weight: 900; }
 .end-note { text-align: center; color: var(--ink); font-size: 12px; font-weight: 800; line-height: 1.5; margin: 27px 0 10px; }
 .end-note span { color: var(--muted); font-weight: 500; }
-.profile-actions { position: relative; z-index: 9; display: grid; justify-content: center; gap: 8px; margin: 13px 0 8px; padding: 0 12px; }
-.decision-main, .decision-tools { display: flex; justify-content: center; align-items: center; gap: 8px; }
-.decision-tools { gap: 14px; }
-.review-tool { min-width: 112px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 12px; border: 0; border-radius: 18px; background: transparent; color: var(--muted); font: 750 9px/1 var(--font-body); cursor: pointer; }
-.review-tool span { font: 700 18px/1 var(--font-display); }
+.profile-actions { position: relative; z-index: 9; display: flex; justify-content: center; align-items: center; gap: 8px; margin: 13px 0 8px; padding: 0 12px; }
+.decision-main { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.review-tool { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: white; color: var(--muted); box-shadow: 0 8px 22px rgba(35,44,76,.13); font: 700 18px/1 var(--font-display); cursor: pointer; }
 .review-tool:hover { background: #f1f3f7; color: var(--ink); }
 .review-tool:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .profile-decision-zone { position: relative; z-index: 9; }
@@ -455,7 +453,7 @@ textarea { min-height: 85px; resize: none; }
 .action.save { color: #d3a900; }
 .action.shortlist { width: 62px; height: 62px; background: var(--blue); color: white; }
 .action.undo { width: 38px; height: 38px; font-size: 15px; color: var(--muted); }
-.profile-actions .review-tool.save span { color: #8a6f00; }
+.profile-actions .review-tool.save { color: #8a6f00; }
 @keyframes exitLeft { to { transform: translate(-130%, 20px) rotate(-13deg); opacity: 0; } }
 @keyframes exitRight { to { transform: translate(130%, 20px) rotate(13deg); opacity: 0; } }
 @keyframes exitSave { to { transform: translateY(18px) scale(.98); opacity: 0; } }
@@ -841,8 +839,8 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
 .browser-mode .app[data-screen="match"] .profile-name h1 { font-size: 25px; }
 .browser-mode .app[data-screen="match"] .profile-actions { display: flex; margin: 9px 0 2px; }
 .browser-mode .app[data-screen="match"] .profile-actions .decision { height: 42px; }
-.browser-mode .app[data-screen="match"] .profile-actions { display: grid; gap: 6px; }
-.browser-mode .app[data-screen="match"] .review-tool { min-height: 30px; }
+.browser-mode .app[data-screen="match"] .profile-actions { display: flex; gap: 8px; }
+.browser-mode .app[data-screen="match"] .review-tool { width: 34px; height: 34px; flex-basis: 34px; font-size: 16px; }
 .browser-mode .app[data-screen="match"] .profile-decision-zone { position: relative; }
 .browser-mode .app[data-screen="match"] .browser-column-cue { position: absolute; z-index: 2; top: 50%; display: block; min-width: 54px; color: #8e96a6; font-size: 9px; font-weight: 900; pointer-events: none; transform: translateY(-50%); }
 .browser-mode .app[data-screen="match"] .pass-cue { left: 13px; }
@@ -983,8 +981,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
   .hero .primary, .hero-sample { padding-left: 11px; padding-right: 11px; }
   .profile-actions { gap: 5px; padding-left: 4px; padding-right: 4px; }
   .decision-main { gap: 6px; }
-  .decision-tools { gap: 4px; }
-  .review-tool { min-width: 104px; padding-left: 8px; padding-right: 8px; }
+  .review-tool { width: 36px; height: 36px; flex-basis: 36px; }
   .decision { height: 48px; padding: 0 10px; gap: 4px; }
   .decision span { font-size: 19px; }
   .snapshot-detail { padding-left: 13px; padding-right: 13px; }
