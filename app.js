@@ -82,8 +82,8 @@ const tourSteps = [
   {screen:'create', target:'.form-actions', coach:'top', kicker:'Gemini analysis', title:'Review the match criteria', copy:'Gemini combines the goal, audience, budget, format and brand guardrails.'},
   {screen:'match', target:'.profile-identity', action:'continue', kicker:'Creator snapshot', title:'Read the creator signal', copy:'Start with the creator, channel category, campaign role, and strongest public signals.'},
   {screen:'match', target:'.decision-main', action:'swipe-preview', kicker:'Pass or select', title:'Swipe to make the call', copy:'Swipe the profile left to Pass or right to Select. These two buttons perform the same actions.'},
-  {screen:'match', target:'.profile-actions', action:'continue', kicker:'Side controls', title:'Undo on the left, save on the right', copy:'The left arrow restores your most recent decision. The right clock saves this creator for later and moves them to the end of the review queue.'},
-  {screen:'match', target:'.match-memo', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Expand this section for the evidence and sources.'},
+  {screen:'match', targets:['.review-tool.undo','.review-tool.save'], action:'continue', kicker:'Side controls', title:'Undo on the left, save on the right', copy:'The left arrow restores your most recent decision. The right clock saves this creator for later and moves them to the end of the review queue.'},
+  {screen:'match', target:'#reasonButton', action:'expand-evidence', kicker:'Gemini fit analysis', title:'Why Gemini sees a strong fit', copy:'Gemini connects the campaign brief to creator signals, performance, momentum, and brand safety. Tap Review evidence and sources to expand the analysis.'},
   {screen:'match', target:'[data-open-brief]', kicker:'One-click activation', title:'Generate a creator-ready AI brief', copy:'Turn the campaign requirements and this creator’s video evidence into editable scenes, messaging, deliverables, and claim guardrails.'},
   {screen:'match', target:'#exportBriefPdfDrawer', action:'export-brief', kicker:'Shareable output', title:'Download the campaign-ready PDF', copy:'Export a structured creator brief with goals, deliverables, messaging, disclosures, timeline, usage rights, and evidence references.'},
   {screen:'match', target:'#closeBriefDrawer', action:'brief-preview', kicker:'AI brief ready', title:'Review it at your own pace', copy:'The draft stays open so you can inspect the direction and export it. Close it when you are ready to continue.'},
@@ -226,7 +226,7 @@ function clearTourUI() {
   if(tourSpotlightFrame) cancelAnimationFrame(tourSpotlightFrame);
   tourSpotlightFrame=null;
   document.querySelector('#tourLayer')?.remove();
-  document.querySelector('.tour-target')?.classList.remove('tour-target');
+  document.querySelectorAll('.tour-target').forEach(target=>target.classList.remove('tour-target'));
   document.querySelector('.tour-swipe-preview')?.classList.remove('tour-swipe-preview');
   document.querySelector('.phone')?.classList.remove('tour-running','tour-brief-preview');
 }
@@ -240,7 +240,7 @@ function renderTour() {
     if(!document.querySelector('#briefDrawer').classList.contains('open')) openBriefDrawer();
   } else closeBriefDrawer();
   const targetSelector=phone.classList.contains('browser-mode')
-    ? step.target==='.match-memo'
+    ? step.target==='#reasonButton'
       ? '.desktop-ai-panel'
       : step.target==='[data-open-brief]'
           ? '.decision-rail [data-open-brief]'
@@ -249,6 +249,7 @@ function renderTour() {
       ? '.mobile-brief-button'
       : step.target;
   const target=targetSelector?(app.querySelector(targetSelector) || phone.querySelector(targetSelector)):null;
+  const targets=step.targets?.map(selector=>app.querySelector(selector) || phone.querySelector(selector)).filter(Boolean) || [];
   if(target) {
     const drawer=target.closest('.brief-drawer');
     if(drawer) {
@@ -256,19 +257,43 @@ function renderTour() {
       // positioned dialog is targeted. Keep the required control inside the drawer.
       drawer.scrollTop=Math.max(0,target.offsetTop-(target.id==='closeBriefDrawer'?18:72));
     } else if(app.contains(target)) {
-      target.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+      const appRect=app.getBoundingClientRect(), targetRect=target.getBoundingClientRect();
+      const targetTop=targetRect.top-appRect.top+app.scrollTop;
+      app.style.scrollBehavior='auto';
+      app.scrollTop=Math.max(0,targetTop-(app.clientHeight-targetRect.height)/2);
       app.scrollLeft=0;
+      app.style.removeProperty('scroll-behavior');
     }
   }
   const layer=document.createElement('section');
   layer.id='tourLayer';
-  layer.className=`tour-layer ${target?'':'tour-finish'}`;
+  layer.className=`tour-layer ${target || targets.length?'':'tour-finish'}`;
   if(step.coach==='top') layer.classList.add('coach-top');
-  layer.innerHTML=`${target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>'}<article class="tour-coach"><div class="tour-orbit"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${target?(['continue','swipe-preview'].includes(step.action)?`<button id="tourContinue">${step.action==='swipe-preview'?'I see the swipe →':'Continue →'}</button>`:`<small>${step.action==='expand-evidence'?'Tap the analysis to expand':step.action==='brief-preview'?'Close the brief to continue':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
+  const hasTargets=Boolean(target || targets.length);
+  const spotlightMarkup=targets.length
+    ? `<div class="tour-shade" aria-hidden="true"></div>${targets.map(()=>'<div class="tour-highlight tour-highlight-multi" aria-hidden="true"></div>').join('')}`
+    : target?'<div class="tour-shades" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="tour-highlight" aria-hidden="true"></div>':'<div class="tour-shade" aria-hidden="true"></div>';
+  layer.innerHTML=`${spotlightMarkup}<article class="tour-coach"><div class="tour-orbit"><img class="brandmark" src="assets/brands/orbit.svg" alt=""><i>${state.tourStep+1}</i></div><div class="tour-copy"><span>${step.kicker} · ${state.tourStep+1}/${tourSteps.length}</span><h2>${step.title}</h2><p>${step.copy}</p></div>${hasTargets?(['continue','swipe-preview'].includes(step.action)?`<button id="tourContinue">${step.action==='swipe-preview'?'I see the swipe →':'Continue →'}</button>`:`<small>${step.action==='expand-evidence'?'Tap the highlighted Gemini analysis':step.action==='brief-preview'?'Close the brief to continue':'Tap only the highlighted action'}</small>`):'<button id="finishTour">See the live workspace →</button>'}</article>`;
   document.querySelector('.phone').appendChild(layer);
   document.querySelector('.phone').classList.add('tour-running');
   if(['export-brief','brief-preview'].includes(step.action)) document.querySelector('.phone').classList.add('tour-brief-preview');
   if(step.action==='swipe-preview') (phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard'))?.classList.add('tour-swipe-preview');
+  if(targets.length) {
+    targets.forEach(item=>item.classList.add('tour-target'));
+    const positionMultiSpotlights=()=>{
+      if(!layer.isConnected) return;
+      const phoneRect=phone.getBoundingClientRect();
+      layer.querySelectorAll('.tour-highlight-multi').forEach((highlight,index)=>{
+        const rect=targets[index].getBoundingClientRect(), gap=7;
+        const left=Math.max(0,rect.left-phoneRect.left-gap), top=Math.max(0,rect.top-phoneRect.top-gap);
+        const right=Math.min(phoneRect.width,rect.right-phoneRect.left+gap), bottom=Math.min(phoneRect.height,rect.bottom-phoneRect.top+gap);
+        const visible=right>left && bottom>top && rect.bottom>phoneRect.top && rect.top<phoneRect.bottom;
+        highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px;opacity:${visible?1:0}`;
+      });
+    };
+    const trackMultiSpotlights=()=>{positionMultiSpotlights();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackMultiSpotlights)};
+    tourSpotlightFrame=requestAnimationFrame(trackMultiSpotlights);
+  }
   if(target) {
     target.classList.add('tour-target');
     const positionSpotlight=()=>{

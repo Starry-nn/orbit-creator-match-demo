@@ -35,7 +35,17 @@ async function runTour(label, contextOptions, selectDevice) {
       await page.screenshot({ path: `tmp/qa-20260927-desktop-step-${step + 1}.png`, fullPage: true });
     }
     if (step === 7 && !(await page.locator('.decision-main').innerText()).includes('Pass')) throw new Error(`${label}: Pass/Select controls are not explicit`);
-    if (step === 8 && await page.locator('.review-tool[aria-label="Save creator for later"]').count() !== 1) throw new Error(`${label}: review controls are not explicit`);
+    if (step === 8) {
+      if (await page.locator('.tour-highlight-multi').count() !== 2) throw new Error(`${label}: side controls do not have two separate highlights`);
+      if (await page.locator('.decision-main.tour-target').count()) throw new Error(`${label}: Pass/Select should not be highlighted with side controls`);
+    }
+    if (step === 9) {
+      const target = page.locator('.tour-target');
+      if (!(await target.isVisible())) throw new Error(`${label}: evidence control is not visible or actionable`);
+      const box = await target.boundingBox();
+      const viewport = page.viewportSize();
+      if (!box || !viewport || box.y < 0 || box.y + box.height > viewport.height) throw new Error(`${label}: evidence control is outside the visible viewport`);
+    }
     if (step === 18 && !(await page.locator('[data-tour="open-brief"]').isVisible())) throw new Error(`${label}: creator brief transition is missing`);
 
     if (step === 11 || step === 12) {
