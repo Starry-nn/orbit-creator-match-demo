@@ -28,7 +28,7 @@ async function runTour(label, contextOptions, selectDevice) {
     if (!stepLabel?.includes(`${step + 1}/${totalTourSteps}`)) {
       throw new Error(`${label}: expected tour step ${step + 1}, saw ${stepLabel}`);
     }
-    if (label === 'mobile-touch' && [7, 8, 14, 18].includes(step)) {
+    if (label === 'mobile-touch' && [7, 8, 9, 14, 15, 17, 18, 19].includes(step)) {
       await page.screenshot({ path: `tmp/qa-20260927-mobile-step-${step + 1}.png`, fullPage: true });
     }
     if (label === 'desktop-browser' && [7, 8, 14, 18].includes(step)) {
@@ -47,6 +47,23 @@ async function runTour(label, contextOptions, selectDevice) {
       if (!box || !viewport || box.y < 0 || box.y + box.height > viewport.height) throw new Error(`${label}: evidence control is outside the visible viewport`);
     }
     if (step === 18 && !(await page.locator('[data-tour="open-brief"]').isVisible())) throw new Error(`${label}: creator brief transition is missing`);
+
+    if (label.startsWith('mobile-') && [8, 9, 14, 15, 17, 18, 19].includes(step)) {
+      const coachBox = await coach.boundingBox();
+      const phoneBox = await page.locator('.phone').boundingBox();
+      const highlights = page.locator('.tour-highlight');
+      if (!coachBox || !phoneBox || !(await highlights.count())) throw new Error(`${label}: step ${step + 1} is missing its visible guidance geometry`);
+      for (let index = 0; index < await highlights.count(); index += 1) {
+        const highlight = highlights.nth(index);
+        const box = await highlight.boundingBox();
+        const opacity = Number(await highlight.evaluate(element => getComputedStyle(element).opacity));
+        if (!box || opacity < .9 || box.width < 24 || box.height < 24) throw new Error(`${label}: step ${step + 1} highlight ${index + 1} is not visible`);
+        if (box.y < phoneBox.y || box.y + box.height > phoneBox.y + phoneBox.height) throw new Error(`${label}: step ${step + 1} highlight ${index + 1} is outside the phone viewport`);
+        const overlapWidth = Math.max(0, Math.min(box.x + box.width, coachBox.x + coachBox.width) - Math.max(box.x, coachBox.x));
+        const overlapHeight = Math.max(0, Math.min(box.y + box.height, coachBox.y + coachBox.height) - Math.max(box.y, coachBox.y));
+        if (overlapWidth * overlapHeight > 4) throw new Error(`${label}: step ${step + 1} coach covers highlight ${index + 1}`);
+      }
+    }
 
     if (step === 11 || step === 12) {
       await page.locator('#briefDrawer.open').waitFor({ state: 'visible' });
@@ -80,13 +97,16 @@ async function runTour(label, contextOptions, selectDevice) {
   await browser.close();
 }
 
-await runTour('mobile-touch', {
-  viewport: { width: 390, height: 844 },
+const mobileContext = (height = 844) => ({
+  viewport: { width: 390, height },
   isMobile: true,
   hasTouch: true,
   deviceScaleFactor: 3,
   userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
 });
+
+await runTour('mobile-touch', mobileContext());
+await runTour('mobile-safari-short', { ...mobileContext(667), viewport: { width: 390, height: 667 } });
 
 await runTour('desktop-browser', { viewport: { width: 1440, height: 900 } }, 'laptop');
 

@@ -964,7 +964,7 @@ body.focus-mode .browser-mode .app[data-screen="match"] .profile-stream { width:
   body { overflow: hidden; }
   .demo-controls, .focus-exit { display: none !important; }
   .demo-stage { min-height: 100dvh; padding: 0; }
-  .phone { width: min(100vw, var(--device-width)); height: 100dvh; min-height: 700px; border-radius: min(38px, calc((100vw - 332px) * .5)); box-shadow: none; }
+  .phone { width: min(100vw, var(--device-width)); height: 100dvh; min-height: 0; border-radius: min(38px, calc((100vw - 332px) * .5)); box-shadow: none; }
 }
 @media (min-width: 600px) and (max-width: 920px) {
   .demo-controls { gap: 10px; padding-left: 14px; padding-right: 14px; }

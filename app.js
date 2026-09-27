@@ -92,7 +92,7 @@ const tourSteps = [
   {screen:'compare', target:'[data-tour="outreach"]', coach:'top', kicker:'Inbox outreach', title:'Draft personalized emails', copy:'Gemini turns the campaign inputs and public YouTube signals into editable outreach drafts.'},
   {screen:'messages', target:'[data-open-email="0"]', kicker:'Inbox drafts', title:'Review before anything sends', copy:'Orbit drafts email for every selected creator. Open one to review the recipient, subject, and message.'},
   {screen:'chat', target:'#sendEmail', coach:'top', kicker:'Human approval', title:'Confirm and send', copy:'Edit the draft if needed, then approve this email. Orbit never sends outreach without your confirmation.'},
-  {screen:'messages', target:'[data-tour="open-brief"]', coach:'top', kicker:'Next activation step', title:'Open the creator brief', copy:'The approved email returns to Inbox. Open the creator brief here to review the tailored campaign direction before approval.'},
+  {screen:'messages', target:'[data-tour="open-brief"]', kicker:'Next activation step', title:'Open the creator brief', copy:'The approved email returns to Inbox. Open the creator brief here to review the tailored campaign direction before approval.'},
   {screen:'brief', target:'#approve', coach:'top', kicker:'Creator brief', title:'Approve the tailored brief', copy:'Creator signals become specific guidance, claims and deliverables.'},
   {screen:'workspace', target:null, kicker:'Tour complete', title:'The campaign is moving', copy:'You have gone from client brief to an activation-ready workspace.'}
 ];
@@ -250,21 +250,6 @@ function renderTour() {
       : step.target;
   const target=targetSelector?(app.querySelector(targetSelector) || phone.querySelector(targetSelector)):null;
   const targets=step.targets?.map(selector=>app.querySelector(selector) || phone.querySelector(selector)).filter(Boolean) || [];
-  if(target) {
-    const drawer=target.closest('.brief-drawer');
-    if(drawer) {
-      // Mobile Safari can scroll the page instead of the drawer when an absolutely
-      // positioned dialog is targeted. Keep the required control inside the drawer.
-      drawer.scrollTop=Math.max(0,target.offsetTop-(target.id==='closeBriefDrawer'?18:72));
-    } else if(app.contains(target)) {
-      const appRect=app.getBoundingClientRect(), targetRect=target.getBoundingClientRect();
-      const targetTop=targetRect.top-appRect.top+app.scrollTop;
-      app.style.scrollBehavior='auto';
-      app.scrollTop=Math.max(0,targetTop-(app.clientHeight-targetRect.height)/2);
-      app.scrollLeft=0;
-      app.style.removeProperty('scroll-behavior');
-    }
-  }
   const layer=document.createElement('section');
   layer.id='tourLayer';
   layer.className=`tour-layer ${target || targets.length?'':'tour-finish'}`;
@@ -278,6 +263,32 @@ function renderTour() {
   document.querySelector('.phone').classList.add('tour-running');
   if(['export-brief','brief-preview'].includes(step.action)) document.querySelector('.phone').classList.add('tour-brief-preview');
   if(step.action==='swipe-preview') (phone.classList.contains('browser-mode')?app.querySelector('#matchDecisionGroup'):app.querySelector('#creatorCard'))?.classList.add('tour-swipe-preview');
+  const primaryTarget=target || targets[0];
+  if(primaryTarget && !phone.classList.contains('browser-mode')) {
+    const targetRect=primaryTarget.getBoundingClientRect(), appRect=app.getBoundingClientRect();
+    const targetTop=targetRect.top-appRect.top+app.scrollTop;
+    if(step.coach==='top' || (app.contains(primaryTarget) && targetTop>app.scrollTop+app.clientHeight*.55)) layer.classList.add('coach-top');
+  }
+  if(primaryTarget) {
+    const drawer=primaryTarget.closest('.brief-drawer');
+    if(drawer) {
+      drawer.style.scrollBehavior='auto';
+      drawer.scrollTop=Math.max(0,primaryTarget.offsetTop-(primaryTarget.id==='closeBriefDrawer'?18:72));
+      drawer.style.removeProperty('scroll-behavior');
+    } else if(app.contains(primaryTarget)) {
+      const coachRect=layer.querySelector('.tour-coach').getBoundingClientRect();
+      const phoneRect=phone.getBoundingClientRect(), navRect=nav.getBoundingClientRect();
+      const currentRect=primaryTarget.getBoundingClientRect();
+      const safeTop=layer.classList.contains('coach-top')?coachRect.bottom+18:phoneRect.top+54;
+      const safeBottom=layer.classList.contains('coach-top')?navRect.top-16:coachRect.top-18;
+      const safeCenter=(safeTop+safeBottom)/2;
+      const targetCenter=currentRect.top+currentRect.height/2;
+      app.style.scrollBehavior='auto';
+      app.scrollTop=Math.max(0,app.scrollTop+targetCenter-safeCenter);
+      app.scrollLeft=0;
+      app.style.removeProperty('scroll-behavior');
+    }
+  }
   if(targets.length) {
     targets.forEach(item=>item.classList.add('tour-target'));
     const positionMultiSpotlights=()=>{
@@ -312,7 +323,7 @@ function renderTour() {
     };
     const trackSpotlight=()=>{positionSpotlight();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackSpotlight)};
     tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
-    setTimeout(()=>{positionSpotlight();if(!step.coach && target.getBoundingClientRect().top>document.querySelector('.phone').getBoundingClientRect().top+430) layer.classList.add('coach-top')},380);
+    setTimeout(positionSpotlight,380);
     if(!['swipe-preview','continue'].includes(step.action)) target.addEventListener('click',event=>{
         event.preventDefault();
         event.stopImmediatePropagation();
