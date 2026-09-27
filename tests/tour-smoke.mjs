@@ -89,7 +89,10 @@ async function runScreenSmoke(label, contextOptions, selectDevice) {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${baseURL}/?screen=${screen}`, { waitUntil: 'networkidle' });
-    if (selectDevice) await page.locator(`[data-device="${selectDevice}"]`).click();
+    if (selectDevice) {
+      await page.locator(`[data-device="${selectDevice}"]`).click();
+      await page.waitForTimeout(400);
+    }
     await page.locator('#app').waitFor({ state: 'visible' });
     if (!(await page.locator('#app').innerText()).trim()) errors.push('empty app screen');
     if (screen === 'chat' && !(await page.locator('.email-actions').innerText()).includes('Back to inbox')) errors.push('email return label is ambiguous');
