@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img" aria-labelledby="title">
-  <title id="title">Inbox</title>
-  <path fill="#72727a" d="M7 43V10.4C7 5.2 13 2.3 17 5.5L32 17.3 47 5.5c4-3.2 10-.3 10 4.9V43H47V18.2L32 30 17 18.2V43H7Z"/>
-  <path fill="#9a9aa1" d="m17 5.5 15 11.8L47 5.5v12.7L32 30 17 18.2V5.5Z"/>
-  <path fill="#b8b8bd" d="M47 5.5c4-3.2 10-.3 10 4.9v5.7l-10 7.8V5.5Z"/>
+  <title id="title">Gmail</title>
+  <path fill="#4285F4" d="M7 43V14.2l10 7.6V43H7Z"/>
+  <path fill="#34A853" d="M47 43V21.8l10-7.6V43H47Z"/>
+  <path fill="#FBBC04" d="M47 5.5c4-3.2 10-.3 10 4.9v3.8l-10 7.6V5.5Z"/>
+  <path fill="#EA4335" d="M7 14.2v-3.8c0-5.2 6-8.1 10-4.9L32 17.3 47 5.5v16.3L32 33.6 7 14.2Z"/>
+  <path fill="#C5221F" d="m17 5.5 15 11.8v16.3L17 21.8V5.5Z" opacity=".28"/>
 </svg>

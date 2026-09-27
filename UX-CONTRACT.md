@@ -65,7 +65,7 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 | Create campaign | Five-step Create/Continue | stable button | Discover | analyzed/ranked toast | remain on form | next screen | `app.js` |
 | Search creator | Enter in search | none/local | matching creator | updated dossier | no-results toast | remains in search | `app.js` |
 | Select creator | swipe/button/right arrow on desktop | both desktop Discover modules exit together | next creator | toast + selected count | Undo | next dossier | `app.js` |
-| Save for later | clock icon, symmetric with Undo | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
+| Save for later | labeled clock control beside Undo last | both desktop Discover modules exit together | next creator | deferred toast | Undo | creator returns after remaining queue | `app.js` |
 | Generate AI Brief | Generate AI Brief | stable drawer | editable brief | three creator-specific directions | close drawer | drawer heading | `app.js` |
 | Export creator brief | Download PDF in preview or full brief | local generation | browser download | campaign-ready one-page PDF | remain on current brief + failure toast | current brief | `pdf-export.js`, `app.js` |
 | Compare | Compare button | none/local | comparison | selected count | edit selection | comparison heading | `app.js` |
@@ -80,10 +80,10 @@ Permissions, billing, deletion, retention, and legal workflows are not implement
 - Responsive table strategy: Lists become one column on mobile and two columns where space allows.
 - Truncation/full-value access: Creator names remain visible; secondary snippets may ellipsize.
 - Focus restoration and sticky-obstruction policy: Embedded decision controls remain in document flow and focused controls remain within the app scroller.
-- Desktop input parity: Pass and Select form the primary decision row. Save for later is a same-size icon counterpart to Undo. Left/right arrows and swipe remain optional alternatives and are taught in the Browser tutorial.
+- Desktop input parity: Pass and Select form the primary decision row. A second labeled row explains Undo last and Save for later. Left/right arrows and swipe remain optional alternatives and are taught in the Browser tutorial.
 - Creator records come from public YouTube data; the workflow does not depend on creators joining Orbit.
 - Outreach uses email, not in-product creator messaging. Gemini can draft a personalized email for each selected creator from campaign inputs and public signals, but nothing sends until the user reviews and explicitly approves it.
-- Discover teaches the full decision model in context: swipe left or Pass, swipe right or Select, Undo the last decision, or Save for later to move a creator to the end of the queue. The next guided step requires the user to generate an AI brief from the highlighted control. Gmail identifies the Email navigation destination without adding channel branding inside the outreach workflow.
+- Discover teaches the decision model in two short stages: swipe left or Pass and swipe right or Select first, then Undo last and Save for later. After human-approved email outreach, Inbox presents an explicit Open creator brief step before brief approval. The navigation Gmail mark inherits the active state color, while the Inbox summary uses the full-color Gmail mark.
 - The swipe tutorial animates the complete creator decision surface on mobile and desktop. The generated AI brief remains open until the user explicitly closes it to continue.
 - The first-run tour requires a PDF export from the open brief preview before the reviewer closes it and continues to Selected creators.
 - Selected creator rows own their comparison checkbox independently from their photo/name disclosure. Photo or name expands creator evidence in place; comparison supports any user-selected set of two or more creators.
