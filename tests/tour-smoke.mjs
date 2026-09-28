@@ -64,7 +64,12 @@ async function runTour(label, contextOptions, selectDevice) {
         const overlapWidth = Math.max(0, Math.min(box.x + box.width, coachBox.x + coachBox.width) - Math.max(box.x, coachBox.x));
         const overlapHeight = Math.max(0, Math.min(box.y + box.height, coachBox.y + coachBox.height) - Math.max(box.y, coachBox.y));
         if (overlapWidth * overlapHeight > 4) throw new Error(`${label}: step ${step + 1} coach covers highlight ${index + 1}`);
+        await page.waitForTimeout(120);
+        const stableBox = await highlight.boundingBox();
+        if (!stableBox || Math.abs(stableBox.x - box.x) > .5 || Math.abs(stableBox.y - box.y) > .5 || Math.abs(stableBox.width - box.width) > .5 || Math.abs(stableBox.height - box.height) > .5) throw new Error(`${label}: step ${step + 1} highlight ${index + 1} is moving after placement`);
       }
+      const overflowY = await page.locator('#app').evaluate(element => getComputedStyle(element).overflowY);
+      if (overflowY !== 'hidden') throw new Error(`${label}: step ${step + 1} leaves manual scrolling enabled during guidance`);
     }
 
     if (step === 11 || step === 12) {

@@ -32,6 +32,7 @@ const phone = document.querySelector('.phone');
 const deviceButtons = document.querySelectorAll('[data-device]');
 const viewButtons = document.querySelectorAll('[data-demo-view]');
 let tourSpotlightFrame=null;
+let tourPositionTimers=[];
 
 const appHeader = () => `<header class="topline"><div class="brand"><img class="brandmark" src="assets/brands/orbit.svg" alt="">Orbit</div><div class="avatar">AC</div></header>`;
 const pageTitle = (title, back='home') => `<div class="screen-title"><button class="back" data-go="${back}" aria-label="Go back">←</button><h2>${title}</h2></div>`;
@@ -225,6 +226,9 @@ function toast(message) { const t=document.querySelector('#toast'); t.textConten
 function clearTourUI() {
   if(tourSpotlightFrame) cancelAnimationFrame(tourSpotlightFrame);
   tourSpotlightFrame=null;
+  tourPositionTimers.forEach(timer=>clearTimeout(timer));
+  tourPositionTimers=[];
+  app.style.removeProperty('overflow-y');
   document.querySelector('#tourLayer')?.remove();
   document.querySelectorAll('.tour-target').forEach(target=>target.classList.remove('tour-target'));
   document.querySelector('.tour-swipe-preview')?.classList.remove('tour-swipe-preview');
@@ -269,35 +273,7 @@ function renderTour() {
     const targetTop=targetRect.top-appRect.top+app.scrollTop;
     if(step.coach==='top' || (app.contains(primaryTarget) && targetTop>app.scrollTop+app.clientHeight*.55)) layer.classList.add('coach-top');
   }
-  if(primaryTarget) {
-    layer.classList.add('tour-positioning');
-    const alignTarget=(attempt=0)=>{
-      if(!layer.isConnected || !primaryTarget.isConnected) return;
-      const drawer=primaryTarget.closest('.brief-drawer');
-      if(drawer) {
-        drawer.style.scrollBehavior='auto';
-        drawer.scrollTop=Math.max(0,primaryTarget.offsetTop-(primaryTarget.id==='closeBriefDrawer'?18:72));
-        drawer.style.removeProperty('scroll-behavior');
-      } else if(app.contains(primaryTarget)) {
-        if(attempt===0) primaryTarget.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
-        const coachRect=layer.querySelector('.tour-coach').getBoundingClientRect();
-        const phoneRect=phone.getBoundingClientRect(), navRect=nav.getBoundingClientRect();
-        const currentRect=primaryTarget.getBoundingClientRect();
-        const safeTop=layer.classList.contains('coach-top')?coachRect.bottom+18:phoneRect.top+54;
-        const safeBottom=layer.classList.contains('coach-top')?navRect.top-16:coachRect.top-18;
-        const safeCenter=(safeTop+safeBottom)/2;
-        const targetCenter=currentRect.top+currentRect.height/2;
-        const correction=targetCenter-safeCenter;
-        app.style.scrollBehavior='auto';
-        app.scrollTop=Math.max(0,app.scrollTop+correction);
-        app.scrollLeft=0;
-        app.style.removeProperty('scroll-behavior');
-      }
-      if(attempt<3) setTimeout(()=>alignTarget(attempt+1),[70,140,260][attempt]);
-      else layer.classList.remove('tour-positioning');
-    };
-    requestAnimationFrame(()=>requestAnimationFrame(()=>alignTarget()));
-  }
+  let positionHighlights=()=>{};
   if(targets.length) {
     targets.forEach(item=>item.classList.add('tour-target'));
     const positionMultiSpotlights=()=>{
@@ -311,8 +287,7 @@ function renderTour() {
         highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px;opacity:${visible?1:0}`;
       });
     };
-    const trackMultiSpotlights=()=>{positionMultiSpotlights();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackMultiSpotlights)};
-    tourSpotlightFrame=requestAnimationFrame(trackMultiSpotlights);
+    positionHighlights=positionMultiSpotlights;
   }
   if(target) {
     target.classList.add('tour-target');
@@ -330,15 +305,45 @@ function renderTour() {
       const visible=right>left && bottom>top && rect.bottom>phoneRect.top && rect.top<phoneRect.bottom;
       highlight.style.cssText=`left:${left}px;top:${top}px;width:${Math.max(0,right-left)}px;height:${Math.max(0,bottom-top)}px;opacity:${visible?1:0}`;
     };
-    const trackSpotlight=()=>{positionSpotlight();if(layer.isConnected)tourSpotlightFrame=requestAnimationFrame(trackSpotlight)};
-    tourSpotlightFrame=requestAnimationFrame(trackSpotlight);
-    setTimeout(positionSpotlight,380);
+    positionHighlights=positionSpotlight;
     if(!['swipe-preview','continue'].includes(step.action)) target.addEventListener('click',event=>{
         event.preventDefault();
         event.stopImmediatePropagation();
         runTourAction();
       },{capture:true,once:true});
   }
+  if(primaryTarget) {
+    layer.classList.add('tour-positioning');
+    app.style.overflowY='hidden';
+    const alignTarget=()=>{
+      if(!layer.isConnected || !primaryTarget.isConnected) return;
+      const drawer=primaryTarget.closest('.brief-drawer');
+      if(drawer) {
+        drawer.scrollTop=Math.max(0,primaryTarget.offsetTop-(primaryTarget.id==='closeBriefDrawer'?18:72));
+        return;
+      }
+      if(!app.contains(primaryTarget)) return;
+      const coachRect=layer.querySelector('.tour-coach').getBoundingClientRect();
+      const phoneRect=phone.getBoundingClientRect(), navRect=nav.getBoundingClientRect();
+      const targetRect=primaryTarget.getBoundingClientRect(), appRect=app.getBoundingClientRect();
+      const safeTop=layer.classList.contains('coach-top')?coachRect.bottom+18:phoneRect.top+54;
+      const safeBottom=layer.classList.contains('coach-top')?navRect.top-16:coachRect.top-18;
+      const desiredCenter=(safeTop+safeBottom)/2;
+      const targetContentCenter=app.scrollTop+(targetRect.top-appRect.top)+(targetRect.height/2);
+      app.style.scrollBehavior='auto';
+      app.scrollTop=Math.max(0,targetContentCenter-(desiredCenter-appRect.top));
+      app.scrollLeft=0;
+      app.style.removeProperty('scroll-behavior');
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(()=>alignTarget()));
+    [90,220,380].forEach((delay,index)=>tourPositionTimers.push(setTimeout(()=>{
+      alignTarget();
+      if(index===2) requestAnimationFrame(()=>{
+        positionHighlights();
+        layer.classList.remove('tour-positioning');
+      });
+    },delay)));
+  } else positionHighlights();
   const finish=document.querySelector('#finishTour');
   if(finish) finish.onclick=()=>{state.tourActive=false;state.tourStep=0;go('transition')};
   const tourContinue=document.querySelector('#tourContinue');
