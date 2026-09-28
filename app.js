@@ -270,24 +270,33 @@ function renderTour() {
     if(step.coach==='top' || (app.contains(primaryTarget) && targetTop>app.scrollTop+app.clientHeight*.55)) layer.classList.add('coach-top');
   }
   if(primaryTarget) {
-    const drawer=primaryTarget.closest('.brief-drawer');
-    if(drawer) {
-      drawer.style.scrollBehavior='auto';
-      drawer.scrollTop=Math.max(0,primaryTarget.offsetTop-(primaryTarget.id==='closeBriefDrawer'?18:72));
-      drawer.style.removeProperty('scroll-behavior');
-    } else if(app.contains(primaryTarget)) {
-      const coachRect=layer.querySelector('.tour-coach').getBoundingClientRect();
-      const phoneRect=phone.getBoundingClientRect(), navRect=nav.getBoundingClientRect();
-      const currentRect=primaryTarget.getBoundingClientRect();
-      const safeTop=layer.classList.contains('coach-top')?coachRect.bottom+18:phoneRect.top+54;
-      const safeBottom=layer.classList.contains('coach-top')?navRect.top-16:coachRect.top-18;
-      const safeCenter=(safeTop+safeBottom)/2;
-      const targetCenter=currentRect.top+currentRect.height/2;
-      app.style.scrollBehavior='auto';
-      app.scrollTop=Math.max(0,app.scrollTop+targetCenter-safeCenter);
-      app.scrollLeft=0;
-      app.style.removeProperty('scroll-behavior');
-    }
+    layer.classList.add('tour-positioning');
+    const alignTarget=(attempt=0)=>{
+      if(!layer.isConnected || !primaryTarget.isConnected) return;
+      const drawer=primaryTarget.closest('.brief-drawer');
+      if(drawer) {
+        drawer.style.scrollBehavior='auto';
+        drawer.scrollTop=Math.max(0,primaryTarget.offsetTop-(primaryTarget.id==='closeBriefDrawer'?18:72));
+        drawer.style.removeProperty('scroll-behavior');
+      } else if(app.contains(primaryTarget)) {
+        if(attempt===0) primaryTarget.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+        const coachRect=layer.querySelector('.tour-coach').getBoundingClientRect();
+        const phoneRect=phone.getBoundingClientRect(), navRect=nav.getBoundingClientRect();
+        const currentRect=primaryTarget.getBoundingClientRect();
+        const safeTop=layer.classList.contains('coach-top')?coachRect.bottom+18:phoneRect.top+54;
+        const safeBottom=layer.classList.contains('coach-top')?navRect.top-16:coachRect.top-18;
+        const safeCenter=(safeTop+safeBottom)/2;
+        const targetCenter=currentRect.top+currentRect.height/2;
+        const correction=targetCenter-safeCenter;
+        app.style.scrollBehavior='auto';
+        app.scrollTop=Math.max(0,app.scrollTop+correction);
+        app.scrollLeft=0;
+        app.style.removeProperty('scroll-behavior');
+      }
+      if(attempt<3) setTimeout(()=>alignTarget(attempt+1),[70,140,260][attempt]);
+      else layer.classList.remove('tour-positioning');
+    };
+    requestAnimationFrame(()=>requestAnimationFrame(()=>alignTarget()));
   }
   if(targets.length) {
     targets.forEach(item=>item.classList.add('tour-target'));

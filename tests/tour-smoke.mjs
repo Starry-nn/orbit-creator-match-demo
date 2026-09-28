@@ -24,6 +24,7 @@ async function runTour(label, contextOptions, selectDevice) {
   for (let step = 0; step < totalTourSteps - 1; step += 1) {
     const coach = page.locator('.tour-coach');
     await coach.waitFor({ state: 'visible' });
+    await page.waitForFunction(() => !document.querySelector('#tourLayer')?.classList.contains('tour-positioning'));
     const stepLabel = await coach.locator('.tour-copy > span').textContent();
     if (!stepLabel?.includes(`${step + 1}/${totalTourSteps}`)) {
       throw new Error(`${label}: expected tour step ${step + 1}, saw ${stepLabel}`);
@@ -49,6 +50,7 @@ async function runTour(label, contextOptions, selectDevice) {
     if (step === 18 && !(await page.locator('[data-tour="open-brief"]').isVisible())) throw new Error(`${label}: creator brief transition is missing`);
 
     if (label.startsWith('mobile-') && [8, 9, 14, 15, 17, 18, 19].includes(step)) {
+      await page.waitForTimeout(550);
       const coachBox = await coach.boundingBox();
       const phoneBox = await page.locator('.phone').boundingBox();
       const highlights = page.locator('.tour-highlight');
