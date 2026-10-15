@@ -20,6 +20,11 @@ jobs:
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
       - run: docker build -t orbit-product .
+      - name: Verify production container starts
+        run: |
+          docker run -d --name orbit-smoke -p 4180:4180 -e APP_URL=https://orbit.example -e ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000 orbit-product
+          node --input-type=module -e 'for(let i=0;i<20;i++){try{const r=await fetch("http://127.0.0.1:4180/healthz");if(r.ok){const p=await fetch("http://127.0.0.1:4180/product/");if(!p.ok)throw new Error("product unavailable");process.exit(0)}}catch{}await new Promise(r=>setTimeout(r,500))}process.exit(1)'
+          docker stop orbit-smoke
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - uses: actions/upload-artifact@v4
