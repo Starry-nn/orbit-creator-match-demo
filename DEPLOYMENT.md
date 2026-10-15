@@ -58,7 +58,11 @@ not `sent`, and is not automatically retried to avoid duplicate outreach.
 Use platform disk snapshots plus an off-host database backup. `npm run backup`
 creates a consistent SQLite backup; configure its directory on separate backup
 storage. Perform a restore drill before accepting real customer data. Keep the
-Google keys and encryption key outside database snapshots.
+Google keys and encryption key outside database snapshots. Verified backups default
+to a directory beside the database (`/var/lib/orbit/backups` in the container), not
+the ephemeral image filesystem. This same-disk copy still needs a separate off-host
+copy. [Recovery instructions](RECOVERY.md) cover the no-overwrite restore command,
+invalidated sessions and Gmail reconciliation before any replacement outreach.
 
 ## Release gates still requiring live infrastructure
 

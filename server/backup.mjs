@@ -1,17 +1,17 @@
-import { DatabaseSync, backup } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { resolve } from "node:path";
-const source = process.env.DATABASE_PATH || "./data/orbit.sqlite";
-const destination = resolve(process.env.BACKUP_DIRECTORY || "./data/backups");
-mkdirSync(destination, { recursive: true, mode: 0o700 });
-const db = new DatabaseSync(source, { readOnly: true });
+import { createBackup } from "./recovery.mjs";
+import { dirname, join, resolve } from "node:path";
+
 try {
-  const filename = resolve(
-    destination,
-    `orbit-${new Date().toISOString().replaceAll(":", "-")}.sqlite`,
+  const source = process.env.DATABASE_PATH || "./data/orbit.sqlite";
+  const result = await createBackup(
+    source,
+    process.env.BACKUP_DIRECTORY || join(dirname(resolve(source)), "backups"),
   );
-  await backup(db, filename);
-  console.log(`Consistent database backup created: ${filename}`);
-} finally {
-  db.close();
+  console.log(`Verified database backup created: ${result.filename}`);
+  console.log(JSON.stringify(result.counts));
+} catch {
+  console.error(
+    "Backup failed. Check the source database, directory permissions and available disk space. No completed backup is confirmed.",
+  );
+  process.exitCode = 1;
 }

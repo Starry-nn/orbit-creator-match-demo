@@ -68,6 +68,10 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - Editable briefs, server PDF export without truncating the brief, approval, draft
   script review; campaign changes invalidate old analysis and draft emails.
 - Tasks, private campaign files, activity history, Docker/Render config and CI.
+- Verified SQLite snapshot backups and explicit restore into a new file, with
+  no-overwrite/sidecar guards, original Gmail key checks and expired sessions/tokens.
+  Restored drafts require reconciliation; interrupted sends are never retried.
+  A local WAL recovery drill verifies sign-in, isolation and private attachment bytes.
 - API account-isolation, restart persistence, document and PDF tests. Desktop
   Chromium and actual WebKit mobile tests cover the main browser workflow.
 - Optional first-run guidance uses real campaign inputs and actual controls, with
