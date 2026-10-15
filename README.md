@@ -1,5 +1,35 @@
 # Orbit — Creator Partnership Workspace
 
+## Real product implementation
+
+The original pitch demo is preserved below. A separate, database-backed product
+is now implemented at `/product/` when served by the Node backend:
+
+```bash
+npm ci
+npm start
+```
+
+Open `http://127.0.0.1:4180/product/`. Register a real account and create your
+campaign; there are no seeded campaign records. See [DEPLOYMENT.md](DEPLOYMENT.md)
+for the hosted Docker/persistent-disk setup and Google integrations.
+
+The implementation includes password sessions, private workspaces, team invitations,
+campaign brief import (TXT/PDF/DOCX), YouTube discovery/import, Gemini video evidence,
+durable swipe decisions and undo, comparison, notes, Gmail outreach, reply checks,
+editable creator briefs, complete PDF export, first-pass draft review, tasks and
+private campaign files. External integrations require server credentials.
+
+`npm test` verifies API behavior with injected providers. `npm run test:browser`
+runs the product workflow in Chromium desktop and WebKit mobile. These tests do
+not establish live Gemini access or Gmail delivery. Production release gates and
+remaining work are recorded in [PRODUCT-IMPLEMENTATION.md](PRODUCT-IMPLEMENTATION.md).
+
+GitHub Pages still serves the original static prototype. It does not host the
+production API, database, OAuth callback or background analysis jobs.
+
+## Original pitch demo
+
 A dependency-free, mobile-first clickable prototype for an agency-facing creator partnership workspace.
 
 The name **Orbit** reflects the product's job: keeping clients, creators, briefs, approvals, outreach, and deliverables in one campaign system. The circular mark reinforces that idea without making AI the brand itself.
