@@ -1,0 +1,29 @@
+{
+  "name": "orbit-creator-workspace",
+  "version": "1.0.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.mjs",
+    "dev": "node --env-file-if-exists=.env --watch server/index.mjs",
+    "test": "node --test tests/product-api.test.mjs tests/product-recovery.test.mjs",
+    "test:browser": "node tests/product-browser.mjs && node tests/product-guide.mjs",
+    "backup": "node --env-file-if-exists=.env server/backup.mjs",
+    "restore": "node --env-file-if-exists=.env server/restore.mjs",
+    "check": "node --check server/index.mjs && node --check server/store.mjs && node --check server/providers.mjs && node --check server/recovery.mjs && node --check server/backup.mjs && node --check server/restore.mjs && node --check product/product.js && node --check product/guide.js"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans": "5.3.0",
+    "fflate": "0.8.3",
+    "pdf-parse": "2.4.5",
+    "pdfkit": "0.20.2",
+    "saxes": "6.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "prettier": "3.9.10"
+  }
+}
