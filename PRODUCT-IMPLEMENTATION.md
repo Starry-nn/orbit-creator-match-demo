@@ -83,4 +83,3 @@ Sessions are HttpOnly cookies. Passwords use scrypt with random salts. OAuth ref
 tokens are encrypted at rest. All workspace queries enforce membership. Mutations
 reject cross-origin requests. SQLite uses WAL, foreign keys and transactions.
 Start with one instance and persistent disk; multiple instances require a shared DB.
-
