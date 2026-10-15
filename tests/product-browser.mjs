@@ -75,7 +75,10 @@ const config = {
 };
 const app = createApp(config, {
   discover: async () => ({ creators, nextPageToken: null }),
-  analyze: async () => analysis,
+  analyze: async (_brief, creator) => ({
+    ...analysis,
+    risks: creator.channelId === creators[1].channelId ? [] : analysis.risks,
+  }),
   generateBrief: async () => brief,
   draftEmail: async () => ({
     subject: "A creator partnership",
@@ -217,6 +220,12 @@ try {
         .click();
       await page
         .getByRole("heading", { name: "Review your finalists", exact: true })
+        .waitFor();
+      await page
+        .getByRole("cell", {
+          name: "No specific risks identified in this sample",
+          exact: true,
+        })
         .waitFor();
       await page
         .getByRole("button", {

@@ -366,7 +366,14 @@ function compareView() {
     ["Best format", (c) => c.analysis?.format || "Not analyzed"],
     ["Visual evidence", (c) => c.analysis?.visual || "Not analyzed"],
     ["Audio / message fit", (c) => c.analysis?.audio || "Not analyzed"],
-    ["Risks to review", (c) => c.analysis?.risks.join(" · ") || "Not analyzed"],
+    [
+      "Risks to review",
+      (c) =>
+        c.analysis
+          ? c.analysis.risks.join(" · ") ||
+            "No specific risks identified in this sample"
+          : "Not analyzed",
+    ],
     ["Internal note", (c) => c.note || "No notes"],
     ["Stage", (c) => c.stage],
   ];
