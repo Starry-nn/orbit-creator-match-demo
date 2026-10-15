@@ -799,6 +799,8 @@ function bind() {
   el.querySelectorAll("[data-task]").forEach(
     (box) =>
       (box.onchange = async () => {
+        box.disabled = true;
+        box.setAttribute("aria-busy", "true");
         try {
           await api(`/tasks/${box.dataset.task}`, "PATCH", {
             done: box.checked,
@@ -807,6 +809,11 @@ function bind() {
         } catch (e) {
           box.checked = !box.checked;
           toast(e.message);
+        } finally {
+          if (box.isConnected) {
+            box.disabled = false;
+            box.removeAttribute("aria-busy");
+          }
         }
       }),
   );
@@ -824,22 +831,37 @@ function bind() {
 function bindSwipe(surface) {
   let start = null;
   surface.onpointerdown = (e) => {
-    if (e.target.closest("button,a,input,textarea,select") || e.button > 0)
+    if (
+      start ||
+      state.busy ||
+      e.isPrimary === false ||
+      e.target.closest("button,a,input,textarea,select,summary") ||
+      e.button > 0
+    )
       return;
     start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    // Keep pointerup/cancel even when a very short drag leaves the card before
+    // the horizontal threshold. Otherwise the next hover can revive stale state.
+    surface.setPointerCapture?.(e.pointerId);
+  };
+  // Native image/text dragging cancels the pointer stream before pointerup.
+  // Only suppress it while this surface owns a pending review gesture.
+  surface.ondragstart = (e) => {
+    if (start) e.preventDefault();
   };
   surface.onpointermove = (e) => {
-    if (!start || state.busy) return;
+    if (!start || e.pointerId !== start.id || state.busy) return;
     const dx = e.clientX - start.x,
       dy = e.clientY - start.y;
     if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      e.preventDefault();
       surface.setPointerCapture?.(e.pointerId);
       surface.style.transform = `translateX(${Math.max(-60, Math.min(60, dx * 0.3))}px)`;
       surface.dataset.swipe = dx > 0 ? "SELECTED" : "PASS";
     }
   };
   surface.onpointerup = (e) => {
-    if (!start) return;
+    if (!start || e.pointerId !== start.id) return;
     const dx = e.clientX - start.x,
       dy = e.clientY - start.y;
     start = null;
@@ -848,7 +870,15 @@ function bindSwipe(surface) {
     if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5)
       decision(dx > 0 ? "selected" : "passed");
   };
-  surface.onpointercancel = () => {
+  surface.onpointercancel = surface.onlostpointercapture = (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    // Touch starts with implicit capture on the image. Its bubbling loss event
+    // during transfer to this surface is not cancellation of the gesture.
+    if (
+      e.type === "lostpointercapture" &&
+      (e.target !== surface || surface.hasPointerCapture(e.pointerId))
+    )
+      return;
     start = null;
     surface.style.transform = "";
     delete surface.dataset.swipe;

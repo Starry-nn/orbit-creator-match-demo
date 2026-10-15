@@ -487,6 +487,10 @@ input[type="checkbox"] {
 .discover[data-swipe]::after {
   opacity: 1;
 }
+.discover[data-swipe] {
+  user-select: none;
+  -webkit-user-select: none;
+}
 .discover.leave-left {
   animation: leaveLeft 0.18s ease-in forwards;
 }

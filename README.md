@@ -23,8 +23,8 @@ editable creator briefs, complete PDF export, first-pass draft review, tasks and
 private campaign files. External integrations require server credentials.
 
 `npm test` verifies API behavior with injected providers. `npm run test:browser`
-runs the product workflow in Chromium desktop and WebKit mobile. These tests do
-not establish live Gemini access or Gmail delivery. Production release gates and
+runs the product workflow in Chromium desktop, WebKit mobile and native Chromium
+touch input. These tests do not establish live Gemini access or Gmail delivery. Production release gates and
 remaining work are recorded in [PRODUCT-IMPLEMENTATION.md](PRODUCT-IMPLEMENTATION.md).
 
 GitHub Pages still serves the original static prototype. It does not host the

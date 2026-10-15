@@ -57,6 +57,12 @@ behavior only; they do not prove external credentials, quota, or live delivery.
   analysis, briefs and unsent outreach. Sent history stays intact. Late AI outputs
   are rejected when source data or creator details changed during generation.
 - DB-backed pass/select/defer/undo, comparison, private notes and creator stages.
+- Portrait dragging suppresses conflicting native image drag; one primary pointer
+  owns a gesture. Browser tests verify shared panel movement, thresholds, cancelled
+  gestures and exact decision counts, with native Chromium touch input in addition
+  to desktop/WebKit pointer paths. Physical iPhone verification is still required.
+- Task toggles are disabled and marked busy until the save and refresh complete;
+  browser persistence checks wait for that acknowledgement before reloading.
 - AI email drafts, explicit Gmail send approval, duplicate-send prevention, honest
   unknown-delivery state after interruption, Gmail thread reply checks.
 - Campaign file attachments are saved with drafts, checked against campaign access,
@@ -82,6 +88,9 @@ behavior only; they do not prove external credentials, quota, or live delivery.
   points; guide steps never send outreach automatically.
 
 ## Still to complete or verify
+
+See [the release acceptance audit](RELEASE-CHECKLIST.md) for requirement-by-requirement
+evidence and gaps. Passing automated checks is not evidence that every gate passed.
 
 - Live host provisioning, real Google keys/OAuth and transactional mail integration;
   actual end-to-end delivery and video analysis cannot pass without these accounts.
