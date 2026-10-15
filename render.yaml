@@ -2,7 +2,8 @@ services:
   - type: web
     name: orbit-creator-workspace
     runtime: docker
-    plan: starter
+    branch: codex/product-launch
+    plan: 0.5c-512mb
     numInstances: 1
     healthCheckPath: /healthz
     autoDeployTrigger: checksPass
@@ -11,8 +12,6 @@ services:
       mountPath: /var/lib/orbit
       sizeGB: 1
     envVars:
-      - key: APP_URL
-        sync: false
       - key: ENCRYPTION_KEY
         sync: false
       - key: GEMINI_API_KEY

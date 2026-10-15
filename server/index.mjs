@@ -72,7 +72,11 @@ export function readConfig(env = process.env) {
     port: Number(env.PORT || 4180),
     host: env.HOST || "127.0.0.1",
     production: env.NODE_ENV === "production",
-    appUrl: env.APP_URL || "http://127.0.0.1:4180",
+    appUrl: (
+      env.APP_URL ||
+      env.RENDER_EXTERNAL_URL ||
+      "http://127.0.0.1:4180"
+    ).replace(/\/+$/, ""),
     database: env.DATABASE_PATH || "./data/orbit.sqlite",
     encryptionKey: env.ENCRYPTION_KEY,
     youtubeKey: env.YOUTUBE_API_KEY,
@@ -420,7 +424,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
           404,
         );
         requireValue(
-          /^\/(product\/(?:index\.html|product\.(?:js|css))|assets\/[a-zA-Z0-9_./-]+|(?:index\.html|app\.js|styles\.css|pdf-export\.js))$/.test(
+          /^\/(product\/(?:index\.html|guide\.js|product\.(?:js|css))|assets\/[a-zA-Z0-9_./-]+|(?:index\.html|app\.js|styles\.css|pdf-export\.js))$/.test(
             pathname,
           ),
           "Not found",

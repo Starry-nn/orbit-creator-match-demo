@@ -60,14 +60,20 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - Tasks, private campaign files, activity history, Docker/Render config and CI.
 - API account-isolation, restart persistence, document and PDF tests. Desktop
   Chromium and actual WebKit mobile tests cover the main browser workflow.
+- Optional first-run guidance uses real campaign inputs and actual controls, with
+  native outlines instead of separately positioned highlight rectangles. It covers
+  fit/evidence review, pass/undo/defer/select, comparison, draft review, brief editing,
+  PDF export and explicit approval. Users can keep outreach as a draft throughout.
+  Reloads return to the relevant view and reopen dialogs through their normal entry
+  points; guide steps never send outreach automatically.
 
 ## Still to complete or verify
 
 - Live host provisioning, real Google keys/OAuth and transactional mail integration;
   actual end-to-end delivery and video analysis cannot pass without these accounts.
-- Review the real UI with the user against the existing demo; add production first-run
-  contextual guidance after the live workflow is stable. The pitch tour remains in
-  the original demo and is not represented as a verified production onboarding tour.
+- Review the real UI and first-run guidance with the user against the existing demo.
+  Production guidance is separate from the original pitch tour, which remains in
+  the demo. Automated provider fixtures do not verify a live first-run experience.
 - Automatic scheduled follow-up, verified delivery/read
   receipts and automatic interest classification are not implemented. Gmail thread
   replies and manual creator stages are implemented; no extra statuses are invented.

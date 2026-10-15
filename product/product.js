@@ -1,3 +1,4 @@
+import { createGuide } from "./guide.js";
 const el = document.querySelector("#product"),
   dialog = document.querySelector("#detail");
 const state = {
@@ -13,6 +14,12 @@ const state = {
   formDraft: {},
   authMode: "login",
 };
+const guide = createGuide({
+  getState: () => state,
+  navigate,
+  toast,
+  closeDialog,
+});
 const escape = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -88,7 +95,9 @@ async function perform(button, fn) {
   if (button.disabled) return;
   button.disabled = true;
   const label = button.textContent;
-  button.textContent = "Working…";
+  const compact = button.classList.contains("circle");
+  button.setAttribute("aria-busy", "true");
+  if (!compact) button.textContent = "Working…";
   try {
     await fn();
   } catch (error) {
@@ -96,13 +105,15 @@ async function perform(button, fn) {
   } finally {
     if (button.isConnected) {
       button.disabled = false;
-      button.textContent = label;
+      button.removeAttribute("aria-busy");
+      if (!compact) button.textContent = label;
     }
   }
 }
 function closeDialog() {
   dialog.close();
   dialog.innerHTML = "";
+  guide.update();
 }
 dialog.addEventListener("click", (event) => {
   if (event.target === dialog) {
@@ -122,11 +133,13 @@ function modal(title, body) {
   if (!dialog.open) dialog.showModal();
   dialog.scrollTop = 0;
   bindDialog();
+  guide.update();
 }
 function empty(title, copy, action = "") {
   return `<section class="empty">${logo}<h2>${title}</h2><p>${copy}</p><div class="actions">${action}</div></section>`;
 }
 function renderAuth(mode = state.authMode) {
+  guide.update();
   state.authMode = mode;
   const reset = new URLSearchParams(location.search).get("reset");
   if (reset) mode = "reset";
@@ -416,6 +429,7 @@ function render() {
   el.innerHTML = shell((views[state.view] || home)());
   bind();
   bindExtras();
+  guide.update();
 }
 function filesSection() {
   if (!state.data) return "";
@@ -465,6 +479,12 @@ function bindExtras() {
     };
   const invite = document.querySelector("#inviteForm");
   if (invite) {
+    const replay = document.createElement("button");
+    replay.className = "btn";
+    replay.type = "button";
+    replay.textContent = "Replay guided setup";
+    replay.onclick = () => guide.start();
+    invite.closest(".panel").after(replay);
     invite.onsubmit = (e) => {
       e.preventDefault();
       perform(e.submitter, async () => {
@@ -540,6 +560,7 @@ async function decision(value) {
     }
     state.current = null;
     await refresh();
+    guide.notify(value);
     toast(
       value === "deferred"
         ? "Saved for later — moved to the end of the queue"
@@ -692,6 +713,7 @@ function bind() {
         state.current = result.creatorId;
         await refresh();
         toast("Last decision restored");
+        guide.notify("undo");
       });
   el.querySelectorAll("[data-decision]").forEach(
     (b) => (b.onclick = () => decision(b.dataset.decision)),
@@ -705,6 +727,7 @@ function bind() {
         document.querySelector("#compareCount").textContent =
           `${state.compare.size} selected to compare`;
         document.querySelector("#compare").disabled = state.compare.size < 2;
+        guide.update();
       }),
   );
   const compare = document.querySelector("#compare");
@@ -1003,6 +1026,7 @@ function bindDialog() {
         });
         briefForm.dataset.revision = result.revision;
         await refresh();
+        guide.notify("brief-saved");
         toast("Brief saved");
       });
     };
@@ -1017,6 +1041,7 @@ function bindDialog() {
         await refresh();
         closeDialog();
         navigate("workspace");
+        guide.notify("brief-approved");
         toast("Saved brief approved");
       });
   const pdf = dialog.querySelector("#exportBrief");
@@ -1028,6 +1053,7 @@ function bindDialog() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      guide.notify("brief-exported");
     };
   const messageForm = dialog.querySelector("#messageEdit");
   if (messageForm)
@@ -1041,6 +1067,7 @@ function bindDialog() {
         );
         messageForm.dataset.revision = result.revision;
         await refresh();
+        guide.notify("email-saved");
         toast("Draft saved");
       });
     };
@@ -1059,6 +1086,7 @@ function bindDialog() {
         });
         await refresh();
         closeDialog();
+        guide.notify("email-sent");
         toast("Gmail confirmed your email was sent");
       });
   const sync = dialog.querySelector("#syncReplies");

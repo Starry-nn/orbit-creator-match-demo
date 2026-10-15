@@ -2,6 +2,8 @@
 
 ## Real product implementation
 
+First-time deployment: [account and setup checklist (中文)](SETUP-CHECKLIST.zh-CN.md).
+
 The original pitch demo is preserved below. A separate, database-backed product
 is now implemented at `/product/` when served by the Node backend:
 

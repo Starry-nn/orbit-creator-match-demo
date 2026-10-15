@@ -10,9 +10,9 @@
     "start": "node --env-file-if-exists=.env server/index.mjs",
     "dev": "node --env-file-if-exists=.env --watch server/index.mjs",
     "test": "node --test tests/product-api.test.mjs",
-    "test:browser": "node tests/product-browser.mjs",
+    "test:browser": "node tests/product-browser.mjs && node tests/product-guide.mjs",
     "backup": "node --env-file-if-exists=.env server/backup.mjs",
-    "check": "node --check server/index.mjs && node --check server/store.mjs && node --check server/providers.mjs && node --check product/product.js"
+    "check": "node --check server/index.mjs && node --check server/store.mjs && node --check server/providers.mjs && node --check product/product.js && node --check product/guide.js"
   },
   "dependencies": {
     "@fontsource/noto-sans": "5.3.0",

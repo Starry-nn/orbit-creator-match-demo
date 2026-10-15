@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createApp } from "../server/index.mjs";
+import { createApp, readConfig } from "../server/index.mjs";
 import { extractDocument } from "../server/documents.mjs";
 import { zipSync, strToU8 } from "fflate";
 import { PDFParse } from "pdf-parse";
@@ -14,6 +14,22 @@ import {
   durationSeconds,
   createMimeMessage,
 } from "../server/providers.mjs";
+
+test("deployment origin follows Render and allows an explicit custom domain", () => {
+  assert.equal(readConfig({}).appUrl, "http://127.0.0.1:4180");
+  assert.equal(
+    readConfig({ RENDER_EXTERNAL_URL: "https://orbit-test.onrender.com/" })
+      .appUrl,
+    "https://orbit-test.onrender.com",
+  );
+  assert.equal(
+    readConfig({
+      APP_URL: "https://orbit.example/",
+      RENDER_EXTERNAL_URL: "https://orbit-test.onrender.com",
+    }).appUrl,
+    "https://orbit.example",
+  );
+});
 
 const fixture = {
   channelId: "UCabcdefghijklmnopqrstuv",
