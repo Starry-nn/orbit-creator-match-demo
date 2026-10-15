@@ -46,6 +46,16 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - Real YouTube adapter (channel search, @handle imports, recent uploads and public
   metrics). Gemini adapter uses video URLs, validates returned evidence against the
   actual video IDs and durations and marks partial failures for retry.
+- Discovery saves YouTube pagination across restarts and skips known channels before
+  requesting their details. Users choose 2, 4 or 8 creators per batch (default 2);
+  each creator uses up to two videos. Search and analysis never fetch another batch
+  automatically. Pending work is counted separately from a completed batch.
+- Changing campaign criteria resets pagination. Restarting a search preserves all
+  existing decisions and successful analysis. Passed creators are excluded from
+  subsequent analysis batches; a changed brief or revoked access stops further calls.
+- Explicitly reimporting a channel refreshes its source data and invalidates its old
+  analysis, briefs and unsent outreach. Sent history stays intact. Late AI outputs
+  are rejected when source data or creator details changed during generation.
 - DB-backed pass/select/defer/undo, comparison, private notes and creator stages.
 - AI email drafts, explicit Gmail send approval, duplicate-send prevention, honest
   unknown-delivery state after interruption, Gmail thread reply checks.
@@ -77,8 +87,9 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - Automatic scheduled follow-up, verified delivery/read
   receipts and automatic interest classification are not implemented. Gmail thread
   replies and manual creator stages are implemented; no extra statuses are invented.
-- Improve discovery pagination, batch cost control and audit retention before
-  broader agency rollout. Conditional revision checks are supported; a separate
+- Monitor real API quota/cost and establish audit retention before broader agency
+  rollout. Per-batch limits are not a monetary spending cap. Conditional revision
+  checks are supported; a separate
   multi-instance database/locking design is still needed before horizontal scaling.
 - Run the backup script and restore drill against persistent hosted infrastructure;
   establish off-host backup storage and monitoring.

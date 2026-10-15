@@ -26,6 +26,8 @@ const creatorRevision = (record) =>
       record.stage,
       record.decision,
       record.deferred_at,
+      record.data,
+      record.analysis,
     ]),
   );
 const briefRevision = (record) =>
@@ -272,11 +274,22 @@ export function createApp(config = readConfig(), suppliedProviders) {
       data.channelId,
     );
     if (existing) {
-      store.run(
-        "UPDATE creators SET data=? WHERE id=?",
-        JSON.stringify(data),
-        existing.id,
-      );
+      store.transaction(() => {
+        store.run(
+          "UPDATE creators SET data=?,analysis=NULL WHERE id=?",
+          JSON.stringify(data),
+          existing.id,
+        );
+        store.run(
+          "UPDATE briefs SET status='needs review',updated_at=? WHERE creator_id=?",
+          now(),
+          existing.id,
+        );
+        store.run(
+          "UPDATE messages SET status='stale',error='Creator data changed. Analyze the updated channel and generate a new draft.' WHERE creator_id=? AND status='draft'",
+          existing.id,
+        );
+      });
       return existing.id;
     }
     const creatorId = id();
@@ -290,7 +303,14 @@ export function createApp(config = readConfig(), suppliedProviders) {
     );
     return creatorId;
   }
-  async function runDiscovery(jobId, campaignRecord, userId, analyzeOnly) {
+  async function runDiscovery(
+    jobId,
+    campaignRecord,
+    userId,
+    analyzeOnly,
+    batchSize,
+    restartSearch,
+  ) {
     activeJobs.add(jobId);
     try {
       store.run(
@@ -299,20 +319,58 @@ export function createApp(config = readConfig(), suppliedProviders) {
         jobId,
       );
       if (!analyzeOnly) {
-        const found = await provider.discover(campaignRecord.brief);
+        const search = store.one(
+          "SELECT * FROM discovery_state WHERE campaign_id=?",
+          campaignRecord.id,
+        );
+        const found = await provider.discover(campaignRecord.brief, {
+          cursor: restartSearch ? null : search?.cursor,
+          limit: batchSize,
+          exclude: store
+            .all(
+              "SELECT channel_id FROM creators WHERE campaign_id=?",
+              campaignRecord.id,
+            )
+            .map((r) => r.channel_id),
+        });
+        requireValue(
+          Array.isArray(found.creators) &&
+            found.creators.length <= batchSize &&
+            (found.nextPageToken === null ||
+              (typeof found.nextPageToken === "string" &&
+                found.nextPageToken.length <= 2000)),
+          "Discovery returned an invalid page",
+          502,
+        );
         requireValue(
           campaign(userId, campaignRecord.id).revision ===
             campaignRecord.revision,
           "Campaign requirements changed during discovery. Run discovery again.",
           409,
         );
-        store.transaction(() =>
-          found.forEach((data) => addCreator(campaignRecord.id, data)),
-        );
+        store.transaction(() => {
+          found.creators.forEach((data) => {
+            if (
+              !store.one(
+                "SELECT id FROM creators WHERE campaign_id=? AND channel_id=?",
+                campaignRecord.id,
+                data.channelId,
+              )
+            )
+              addCreator(campaignRecord.id, data);
+          });
+          store.run(
+            "INSERT INTO discovery_state (campaign_id,cursor,exhausted) VALUES (?,?,?) ON CONFLICT(campaign_id) DO UPDATE SET cursor=excluded.cursor,exhausted=excluded.exhausted",
+            campaignRecord.id,
+            found.nextPageToken,
+            found.nextPageToken ? 0 : 1,
+          );
+        });
       }
       const records = store.all(
-        "SELECT * FROM creators WHERE campaign_id=? AND analysis IS NULL",
+        "SELECT * FROM creators WHERE campaign_id=? AND analysis IS NULL AND decision!='passed' ORDER BY created_at,id LIMIT ?",
         campaignRecord.id,
+        batchSize,
       );
       store.run(
         "UPDATE jobs SET total=?,updated_at=? WHERE id=?",
@@ -321,8 +379,34 @@ export function createApp(config = readConfig(), suppliedProviders) {
         jobId,
       );
       const failures = [];
+      let analyzedCount = 0;
       for (let index = 0; index < records.length; index++) {
         const record = records[index];
+        // Stop before another paid request when the brief or access changes.
+        requireValue(
+          campaign(userId, campaignRecord.id).revision ===
+            campaignRecord.revision,
+          "Campaign requirements changed during analysis. Run analysis again.",
+          409,
+        );
+        const latest = store.one(
+          "SELECT data,decision FROM creators WHERE id=?",
+          record.id,
+        );
+        if (latest?.decision === "passed") {
+          store.run(
+            "UPDATE jobs SET completed=?,updated_at=? WHERE id=?",
+            index + 1,
+            now(),
+            jobId,
+          );
+          continue;
+        }
+        requireValue(
+          latest?.data === record.data,
+          "Creator data changed during analysis. Run analysis again.",
+          409,
+        );
         try {
           const analysis = await provider.analyze(
             campaignRecord.brief,
@@ -334,11 +418,18 @@ export function createApp(config = readConfig(), suppliedProviders) {
             "Campaign requirements changed during analysis. Run analysis again.",
             409,
           );
+          requireValue(
+            store.one("SELECT data FROM creators WHERE id=?", record.id)
+              ?.data === record.data,
+            "Creator data changed during analysis. Run analysis again.",
+            409,
+          );
           store.run(
             "UPDATE creators SET analysis=? WHERE id=?",
             JSON.stringify(analysis),
             record.id,
           );
+          analyzedCount++;
         } catch (error) {
           failures.push({
             creatorId: record.id,
@@ -363,7 +454,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
       store.activity(
         campaignRecord.id,
         userId,
-        `Discovery finished: ${records.length - failures.length} analyzed, ${failures.length} need retry`,
+        `Discovery finished: ${analyzedCount} analyzed, ${failures.length} need retry`,
       );
     } catch (error) {
       store.run(
@@ -869,8 +960,17 @@ export function createApp(config = readConfig(), suppliedProviders) {
                 c.id,
               )
               .map((v) => ({ ...v, result: parse(v.result) })),
+            search:
+              store.one(
+                "SELECT cursor,exhausted FROM discovery_state WHERE campaign_id=?",
+                c.id,
+              ) || null,
+            analysisPending: store.one(
+              "SELECT count(*) AS count FROM creators WHERE campaign_id=? AND analysis IS NULL AND decision!='passed'",
+              c.id,
+            ).count,
             job: store.one(
-              "SELECT * FROM jobs WHERE campaign_id=? ORDER BY created_at DESC LIMIT 1",
+              "SELECT * FROM jobs WHERE campaign_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
               c.id,
             ),
           });
@@ -878,6 +978,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
           const brief = campaignInput(input);
           checkRevision(input.revision, c.revision);
           store.transaction(() => {
+            store.run("DELETE FROM discovery_state WHERE campaign_id=?", c.id);
             store.run(
               "UPDATE campaigns SET name=?,brief=?,updated_at=? WHERE id=?",
               brief.name,
@@ -917,11 +1018,26 @@ export function createApp(config = readConfig(), suppliedProviders) {
           return json(res, 201, { creatorId });
         }
         if (action === "discover" && req.method === "POST") {
+          const analyzeOnly = input.analyzeOnly === true;
+          const batchSize = input.batchSize ?? 2;
           requireValue(
-            config.youtubeKey && config.geminiKey,
+            [2, 4, 8].includes(batchSize),
+            "Choose a batch of 2, 4 or 8 creators",
+          );
+          requireValue(
+            config.geminiKey && (analyzeOnly || config.youtubeKey),
             "Connect YouTube and Gemini before running discovery",
             503,
           );
+          if (!analyzeOnly && input.restartSearch !== true)
+            requireValue(
+              !store.one(
+                "SELECT exhausted FROM discovery_state WHERE campaign_id=?",
+                c.id,
+              )?.exhausted,
+              "You have reached the end of these search results. Restart search or update the campaign criteria.",
+              409,
+            );
           rateLimit(`discover:${user.id}`, 10, 3600000);
           requireValue(
             !store.one(
@@ -941,7 +1057,14 @@ export function createApp(config = readConfig(), suppliedProviders) {
             now(),
           );
           setImmediate(() =>
-            runDiscovery(jobId, c, user.id, Boolean(input.analyzeOnly)),
+            runDiscovery(
+              jobId,
+              c,
+              user.id,
+              analyzeOnly,
+              batchSize,
+              input.restartSearch === true,
+            ),
           );
           return json(res, 202, { jobId });
         }
@@ -1165,6 +1288,11 @@ export function createApp(config = readConfig(), suppliedProviders) {
             "Campaign requirements changed while Gemini was drafting. Please regenerate.",
             409,
           );
+          requireValue(
+            creator(user.id, r.id).revision === r.revision,
+            "Creator details changed while Gemini was drafting. Review the creator and regenerate.",
+            409,
+          );
           const latestBrief = store.one(
             "SELECT * FROM briefs WHERE creator_id=?",
             r.id,
@@ -1205,6 +1333,11 @@ export function createApp(config = readConfig(), suppliedProviders) {
           requireValue(
             campaign(user.id, c.id).revision === c.revision,
             "Campaign requirements changed while Gemini was drafting. Please generate a new draft.",
+            409,
+          );
+          requireValue(
+            creator(user.id, r.id).revision === r.revision,
+            "Creator details changed while Gemini was drafting. Review the creator and generate a new draft.",
             409,
           );
           store.run(
@@ -1253,6 +1386,17 @@ export function createApp(config = readConfig(), suppliedProviders) {
             502,
           );
           const reviewId = id();
+          const latestBrief = store.one(
+            "SELECT * FROM briefs WHERE id=?",
+            brief.id,
+          );
+          requireValue(
+            campaign(user.id, c.id).revision === c.revision &&
+              latestBrief &&
+              briefRevision(latestBrief) === briefRevision(brief),
+            "The campaign or brief changed during review. Run the check again.",
+            409,
+          );
           store.run(
             "INSERT INTO reviews VALUES (?,?,?,?,?)",
             reviewId,

@@ -1150,6 +1150,20 @@ dialog::backdrop {
     padding: 0;
   }
 }
+.discovery-options summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.discovery-options summary span {
+  color: var(--muted);
+  font-weight: 500;
+}
+.discovery-options > .actions {
+  padding-bottom: 14px;
+}
 .guide-welcome {
   display: flex;
   gap: 20px;

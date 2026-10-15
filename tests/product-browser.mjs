@@ -74,7 +74,7 @@ const config = {
   geminiKey: "fixture",
 };
 const app = createApp(config, {
-  discover: async () => creators,
+  discover: async () => ({ creators, nextPageToken: null }),
   analyze: async () => analysis,
   generateBrief: async () => brief,
   draftEmail: async () => ({
@@ -165,6 +165,12 @@ try {
         .getByRole("link", { name: "approved-brief.txt", exact: true })
         .waitFor();
       await page.locator('.nav a[href="#discover"]').click();
+      await page.locator(".discovery-options > summary").click();
+      assert.equal(
+        await page.getByLabel("Creators per batch").inputValue(),
+        "2",
+      );
+      await page.getByLabel("Creators per batch").selectOption("8");
       await page
         .getByRole("button", { name: "Find creators ✦", exact: true })
         .click();

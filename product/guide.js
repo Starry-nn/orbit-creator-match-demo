@@ -100,6 +100,15 @@ export function createGuide({ getState, navigate, toast, closeDialog }) {
       done: (s) => s.view === "discover" && Boolean(s.data),
     },
     {
+      id: "batch-size",
+      view: "discover",
+      target: "#discoveryBatch",
+      label: true,
+      title: "Choose a small first batch",
+      copy: "Start with up to 2 creators. Each uses up to 2 public videos; more batches require another click and may incur API charges.",
+      next: true,
+    },
+    {
       id: "discover",
       view: "discover",
       target: "#discover",
@@ -523,6 +532,8 @@ export function createGuide({ getState, navigate, toast, closeDialog }) {
     }
     if (!item) return exit();
     document.body.classList.add("guide-active");
+    const discoveryOptions = document.querySelector(".discovery-options");
+    if (discoveryOptions) discoveryOptions.open = item.id === "batch-size";
     const all = activeSteps();
     targets = item.target
       ? [...document.querySelectorAll(item.target)].filter(

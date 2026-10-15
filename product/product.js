@@ -13,6 +13,7 @@ const state = {
   poll: null,
   formDraft: {},
   authMode: "login",
+  batchSize: 2,
 };
 const guide = createGuide({
   getState: () => state,
@@ -316,9 +317,11 @@ function campaignForm() {
 }
 function jobPanel() {
   const job = state.data?.job;
-  if (!job) return "";
+  const active = ["queued", "running"].includes(job?.status);
+  const controls = `<details class="discovery-options"><summary>Discovery options <span>· up to ${state.batchSize} per batch</span></summary><div class="actions"><label class="label">Creators per batch<select id="discoveryBatch" ${active ? "disabled" : ""}>${[2, 4, 8].map((n) => `<option value="${n}" ${state.batchSize === n ? "selected" : ""}>Up to ${n} creators</option>`).join("")}</select></label><small>Each creator uses up to 2 public videos. More batches require another click; API usage may be billed.</small></div></details>${state.data.search?.exhausted ? '<p class="notes">End of results. Restart search or edit the campaign criteria; existing decisions stay saved.</p>' : ""}`;
+  if (!job) return controls;
   const failures = JSON.parse(job.failures || "[]");
-  return `<section class="progress" aria-live="polite"><strong>${{ queued: "Starting discovery", running: "Reviewing creator videos", completed: "Analysis complete", partial: "Some creators need another look", failed: "Discovery could not finish", interrupted: "Discovery was interrupted" }[job.status] || escape(job.status)}</strong><small>${job.completed} of ${job.total} creators processed</small>${["running", "queued"].includes(job.status) ? `<progress max="${job.total || 1}" value="${job.completed}"></progress>` : ""}${failures.map((f) => `<small>${escape(f.name || "")} ${escape(f.message)}</small>`).join("")}${["partial", "failed", "interrupted"].includes(job.status) ? '<button class="btn" id="retryAnalysis">Retry incomplete analysis</button>' : ""}</section>`;
+  return `${controls}<section class="progress" aria-live="polite"><strong>${{ queued: "Starting discovery", running: "Reviewing creator videos", completed: "Analysis batch complete", partial: "Some creators need another look", failed: "Discovery could not finish", interrupted: "Discovery was interrupted" }[job.status] || escape(job.status)}</strong><small>${job.completed} of ${job.total} creators processed in this batch · ${state.data.analysisPending} awaiting analysis</small>${active ? `<progress max="${job.total || 1}" value="${job.completed}"></progress>` : ""}${failures.map((f) => `<small>${escape(f.name || "")} ${escape(f.message)}</small>`).join("")}${!active && state.data.analysisPending > 0 ? '<button class="btn" id="retryAnalysis">Analyze next pending batch</button>' : ""}</section>`;
 }
 function metrics(c) {
   return `<div class="metrics"><div><strong>${fmt(c.data.subscribers)}</strong><small>Subscribers</small></div><div><strong>${fmt(c.data.averageViews)}</strong><small>Recent avg views</small></div><div><strong>${c.data.engagement == null ? "Unknown" : `${c.data.engagement.toFixed(1)}%`}</strong><small>(Likes + comments) / views</small></div></div>`;
@@ -536,8 +539,12 @@ function schedulePoll() {
       }
     }, 2500);
 }
-async function discoverAction(analyzeOnly = false) {
-  await api(`/campaigns/${state.campaignId}/discover`, "POST", { analyzeOnly });
+async function discoverAction(analyzeOnly = false, restartSearch = false) {
+  await api(`/campaigns/${state.campaignId}/discover`, "POST", {
+    analyzeOnly,
+    restartSearch,
+    batchSize: state.batchSize,
+  });
   await refresh();
   toast("Discovery started. You can continue reviewing while analysis runs.");
 }
@@ -697,7 +704,25 @@ function bind() {
       });
     };
   const find = document.querySelector("#discover");
-  if (find) find.onclick = () => perform(find, () => discoverAction());
+  if (find) {
+    find.textContent = state.data.search?.exhausted
+      ? "Restart search ✦"
+      : state.data.search?.cursor
+        ? "Find more creators ✦"
+        : "Find creators ✦";
+    find.disabled = ["queued", "running"].includes(state.data.job?.status);
+    find.onclick = () =>
+      perform(find, () =>
+        discoverAction(false, Boolean(state.data.search?.exhausted)),
+      );
+  }
+  const discoveryBatch = document.querySelector("#discoveryBatch");
+  if (discoveryBatch)
+    discoveryBatch.onchange = () => {
+      state.batchSize = Number(discoveryBatch.value);
+      document.querySelector(".discovery-options summary span").textContent =
+        `· up to ${state.batchSize} per batch`;
+    };
   document
     .querySelectorAll("#retryAnalysis")
     .forEach((b) => (b.onclick = () => perform(b, () => discoverAction(true))));
@@ -886,7 +911,7 @@ async function openBrief(creatorId) {
       .querySelector(".dialog-body")
       .insertAdjacentHTML(
         "afterbegin",
-        '<div class="info-strip">Campaign requirements changed. Review and save this brief, or regenerate it after rerunning creator analysis.<button type="button" class="btn" id="regenerateBrief">Regenerate for updated campaign</button></div>',
+        '<div class="info-strip">Campaign requirements or creator source data changed. Review and save this brief, or regenerate it after rerunning creator analysis.<button type="button" class="btn" id="regenerateBrief">Regenerate for updated inputs</button></div>',
       );
     const regenerate = dialog.querySelector("#regenerateBrief");
     regenerate.onclick = () =>

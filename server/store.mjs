@@ -62,6 +62,10 @@ export function openStore(filename) {
       status TEXT NOT NULL, total INTEGER NOT NULL DEFAULT 0, completed INTEGER NOT NULL DEFAULT 0,
       failures TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS discovery_state (
+      campaign_id TEXT PRIMARY KEY REFERENCES campaigns(id) ON DELETE CASCADE,
+      cursor TEXT, exhausted INTEGER NOT NULL DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS integrations (
       user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
       gmail_tokens TEXT NOT NULL, email TEXT NOT NULL, updated_at TEXT NOT NULL

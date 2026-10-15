@@ -69,12 +69,14 @@ const config = {
 };
 let sends = 0;
 const app = createApp(config, {
-  discover: async (b) =>
-    b.name.startsWith("Single")
+  discover: async (b, options) => ({
+    creators: b.name.startsWith("Single")
       ? creators.slice(0, 1)
       : b.name.startsWith("Seven")
-        ? creators
-        : creators.slice(0, 3),
+        ? creators.slice(0, options.limit)
+        : creators.slice(0, Math.min(3, options.limit)),
+    nextPageToken: null,
+  }),
   analyze: async () => analysis,
   generateBrief: async () => brief,
   draftEmail: async () => ({
@@ -215,9 +217,14 @@ try {
           );
         }
         if (
-          ["profile", "defer", "pick", "brief-export", "email-save"].includes(
-            step,
-          )
+          [
+            "batch-size",
+            "profile",
+            "defer",
+            "pick",
+            "brief-export",
+            "email-save",
+          ].includes(step)
         )
           await page.screenshot({ path: `tmp/product-qa/${name}-${step}.png` });
         const fillAndContinue = async (value) => {
@@ -246,7 +253,12 @@ try {
           await fillAndContinue("Professionals working from home");
         else if (step === "budget") await fillAndContinue("5000");
         else if (step === "category") await fillAndContinue("Technology");
-        else if (
+        else if (step === "batch-size") {
+          await target.locator("select").selectOption(count > 1 ? "8" : "2");
+          await coach
+            .getByRole("button", { name: "Continue →", exact: true })
+            .click();
+        } else if (
           [
             "goal",
             "format",

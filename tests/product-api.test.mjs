@@ -106,15 +106,18 @@ test("production workflow persists state and isolates accounts", async () => {
   let sends = 0,
     sentAttachments = [];
   const providers = {
-    discover: async () => [
-      fixture,
-      {
-        ...fixture,
-        channelId: "UCabcdefghijklmnopqrstu2",
-        name: "Second creator",
-      },
-    ],
-    importChannel: async () => fixture,
+    discover: async () => ({
+      creators: [
+        fixture,
+        {
+          ...fixture,
+          channelId: "UCabcdefghijklmnopqrstu2",
+          name: "Second creator",
+        },
+      ],
+      nextPageToken: null,
+    }),
+    importChannel: async () => ({ ...fixture, name: "Refreshed creator" }),
     analyze: async () => analysis,
     generateBrief: async () => brief,
     draftEmail: async () => ({
@@ -258,7 +261,9 @@ test("production workflow persists state and isolates accounts", async () => {
     }
     assert.equal(snapshot.job.status, "completed");
     assert.equal(snapshot.creators.length, 2);
-    const creatorId = snapshot.creators[0].id;
+    const creatorId = snapshot.creators.find(
+      (c) => c.channel_id === fixture.channelId,
+    ).id;
     assert.equal(
       (
         await call(
@@ -459,6 +464,54 @@ test("production workflow persists state and isolates accounts", async () => {
     );
     assert.equal(snapshot.briefs[0].status, "approved");
     assert.equal(snapshot.tasks[0].done, 1);
+    const extraDraft = await call(
+      `/api/creators/${creatorId}/draft`,
+      "POST",
+      {},
+    );
+    assert.equal(extraDraft.status, 201);
+    const oldCreator = snapshot.creators.find((c) => c.id === creatorId);
+    assert.equal(
+      (
+        await call(`/api/campaigns/${campaignId}/import`, "POST", {
+          channel: fixture.channelId,
+        })
+      ).status,
+      201,
+    );
+    const refreshed = (await call(`/api/campaigns/${campaignId}`)).json;
+    assert.equal(
+      refreshed.creators.find((c) => c.id === creatorId).analysis,
+      null,
+    );
+    assert.equal(
+      refreshed.creators.find((c) => c.id === creatorId).decision,
+      "selected",
+    );
+    assert.equal(refreshed.briefs[0].status, "needs review");
+    assert.equal(
+      refreshed.messages.find((m) => m.id === extraDraft.json.messageId).status,
+      "stale",
+    );
+    assert.equal(
+      refreshed.messages.find((m) => m.id === messageId).status,
+      "responded",
+      "A refresh must preserve actual sent history",
+    );
+    assert.equal(
+      (
+        await call(`/api/creators/${creatorId}`, "PATCH", {
+          revision: oldCreator.revision,
+          note: "Stale source edit",
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (await call(`/api/briefs/${briefId}/approve`, "POST", { approve: true }))
+        .status,
+      409,
+    );
     await call("/api/auth/logout", "POST", {});
     assert.equal((await call("/api/me")).status, 401);
   } finally {
@@ -753,7 +806,9 @@ test("encrypted tokens round-trip and reject tampering", () => {
 });
 
 test("late AI results cannot overwrite an edited campaign and stale edits are rejected", async () => {
-  let finishAnalysis, markStarted;
+  let finishAnalysis,
+    markStarted,
+    analysisCalls = 0;
   const started = new Promise((resolve) => (markStarted = resolve));
   const app = createApp(
     {
@@ -763,8 +818,19 @@ test("late AI results cannot overwrite an edited campaign and stale edits are re
       geminiKey: "fixture",
     },
     {
-      discover: async () => [fixture],
+      discover: async () => ({
+        creators: [
+          fixture,
+          {
+            ...fixture,
+            channelId: "UC-stop-after-edit",
+            name: "Do not analyze after edit",
+          },
+        ],
+        nextPageToken: null,
+      }),
       analyze: async () => {
+        analysisCalls++;
         markStarted();
         return new Promise((resolve) => (finishAnalysis = resolve));
       },
@@ -829,8 +895,13 @@ test("late AI results cannot overwrite an edited campaign and stale edits are re
     const after = (await call(`/api/campaigns/${campaignId}`)).body;
     assert.equal(after.campaign.brief.brand, "Updated brand");
     assert.equal(after.creators[0].analysis, null);
-    assert.equal(after.job.status, "partial");
+    assert.equal(after.job.status, "failed");
     assert.match(after.job.failures, /requirements changed/);
+    assert.equal(
+      analysisCalls,
+      1,
+      "A changed brief must stop the next paid request",
+    );
     const c = after.creators[0];
     assert.equal(
       (
@@ -859,5 +930,434 @@ test("late AI results cannot overwrite an edited campaign and stale edits are re
     for (let i = 0; app.activeJobs.size && i < 100; i++)
       await new Promise((resolve) => setTimeout(resolve, 5));
     await app.close();
+  }
+});
+
+test("YouTube discovery passes the cursor and skips known channels before fetching details", async () => {
+  const calls = [];
+  const provider = makeProviders(
+    { youtubeKey: "fixture-only" },
+    async (url) => {
+      const request = new URL(url);
+      calls.push(request);
+      if (request.pathname.endsWith("/search"))
+        return Response.json({
+          items: [
+            { snippet: { channelId: "known" } },
+            { snippet: { channelId: "fresh" } },
+          ],
+          nextPageToken: "page-3",
+        });
+      assert.ok(request.pathname.endsWith("/channels"));
+      assert.equal(request.searchParams.get("id"), "fresh");
+      return Response.json({
+        items: [
+          {
+            id: "fresh",
+            snippet: {
+              title: "Fresh",
+              description: "Public channel",
+              thumbnails: {
+                default: { url: "https://example.com/avatar.png" },
+              },
+            },
+            statistics: { subscriberCount: "100" },
+            contentDetails: {},
+          },
+        ],
+      });
+    },
+  );
+  const page = await provider.discover(
+    { category: "Tech", goal: "Awareness", language: "en", country: "US" },
+    { cursor: "page-2", limit: 2, exclude: ["known"] },
+  );
+  assert.equal(page.nextPageToken, "page-3");
+  assert.deepEqual(
+    page.creators.map((c) => c.channelId),
+    ["fresh"],
+  );
+  assert.equal(calls[0].searchParams.get("pageToken"), "page-2");
+  assert.equal(calls[0].searchParams.get("maxResults"), "2");
+  assert.equal(
+    calls.length,
+    2,
+    "Known channels must not trigger upload/metric requests",
+  );
+  await assert.rejects(provider.discover({}, { limit: 100 }), /batch/);
+});
+
+test("late generation rejects changed creator inputs and changed review briefs", async () => {
+  let hold = null,
+    started,
+    complete;
+  const waitForMutation = async (kind, value) => {
+    if (hold !== kind) return value;
+    started();
+    return new Promise((resolve) => {
+      complete = () => resolve(value);
+    });
+  };
+  const app = createApp(
+    {
+      database: ":memory:",
+      appUrl: "http://localhost",
+      youtubeKey: "fixture",
+      geminiKey: "fixture",
+    },
+    {
+      discover: async () => ({ creators: [fixture], nextPageToken: null }),
+      analyze: async () => analysis,
+      importChannel: async () => ({ ...fixture, name: "Refreshed source" }),
+      generateBrief: async () => waitForMutation("brief", brief),
+      draftEmail: async () =>
+        waitForMutation("draft", {
+          subject: "Proposed partnership",
+          body: "A personalized draft",
+        }),
+      gemini: async () =>
+        waitForMutation("review", { summary: "Fixture review", issues: [] }),
+    },
+  );
+  await new Promise((resolve) => app.server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${app.server.address().port}`;
+  let cookie = "";
+  const call = async (path, method = "GET", data) => {
+    const response = await fetch(base + path, {
+      method,
+      headers: {
+        cookie,
+        ...(data ? { "Content-Type": "application/json" } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return {
+      status: response.status,
+      body: await response.json(),
+      cookie: response.headers.get("set-cookie")?.split(";")[0],
+    };
+  };
+  try {
+    cookie = (
+      await call("/api/auth/register", "POST", {
+        name: "Concurrent tester",
+        email: "late-generation@example.com",
+        password: "Long secure generation test password",
+      })
+    ).cookie;
+    const me = (await call("/api/me")).body;
+    const campaignId = (
+      await call("/api/campaigns", "POST", {
+        workspaceId: me.workspaces[0].id,
+        name: "Concurrent generation",
+        brand: "Test",
+        goal: "Awareness",
+        audience: "Developers",
+      })
+    ).body.campaignId;
+    const snapshot = async () =>
+      (await call(`/api/campaigns/${campaignId}`)).body;
+    await call(`/api/campaigns/${campaignId}/discover`, "POST", {});
+    let state;
+    for (let i = 0; i < 100; i++) {
+      state = await snapshot();
+      if (state.job?.status === "completed") break;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    assert.equal(state.job.status, "completed");
+    const creatorId = state.creators[0].id;
+    await call(`/api/creators/${creatorId}/decision`, "POST", {
+      decision: "selected",
+    });
+    assert.equal(
+      (await call(`/api/creators/${creatorId}/brief`, "POST", {})).status,
+      201,
+    );
+    for (const kind of ["draft", "brief", "review"]) {
+      hold = kind;
+      const signal = new Promise((resolve) => {
+        started = resolve;
+      });
+      const pending = call(
+        `/api/creators/${creatorId}/${kind}`,
+        "POST",
+        kind === "brief"
+          ? { replace: true }
+          : kind === "review"
+            ? { script: "A long enough creator script for concurrent review." }
+            : {},
+      );
+      await signal;
+      if (kind === "draft")
+        assert.equal(
+          (
+            await call(`/api/creators/${creatorId}`, "PATCH", {
+              note: "New decision context",
+            })
+          ).status,
+          200,
+        );
+      else if (kind === "brief")
+        assert.equal(
+          (
+            await call(`/api/campaigns/${campaignId}/import`, "POST", {
+              channel: fixture.channelId,
+            })
+          ).status,
+          201,
+        );
+      else {
+        state = await snapshot();
+        const saved = state.briefs[0];
+        assert.equal(
+          (
+            await call(`/api/briefs/${saved.id}`, "PATCH", {
+              content: {
+                ...saved.content,
+                objective: "New objective during review",
+              },
+              revision: saved.revision,
+            })
+          ).status,
+          200,
+        );
+      }
+      complete();
+      complete = null;
+      const result = await pending;
+      assert.equal(
+        result.status,
+        409,
+        `${kind}: ${JSON.stringify(result.body)}`,
+      );
+      assert.match(result.body.error, /changed/);
+    }
+    state = await snapshot();
+    assert.equal(state.messages.length, 0);
+    assert.equal(state.reviews.length, 0);
+    assert.equal(
+      state.briefs[0].content.objective,
+      "New objective during review",
+    );
+  } finally {
+    complete?.();
+    await app.close();
+  }
+});
+
+test("discovery persists paging, preserves decisions and bounds paid analysis batches", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "orbit-paging-"));
+  const config = {
+    database: join(directory, "db.sqlite"),
+    appUrl: "http://localhost",
+    youtubeKey: "fixture",
+    geminiKey: "fixture",
+  };
+  const samples = Array.from({ length: 8 }, (_, i) => ({
+    ...fixture,
+    channelId: `UC-paged-${i}`,
+    name: `Paged creator ${i}`,
+  }));
+  const pages = [],
+    analyzed = [];
+  let failSecond = true;
+  const providers = {
+    discover: async (_brief, options) => {
+      pages.push(options);
+      return options.cursor === "page-2"
+        ? {
+            creators: [
+              { ...samples[0], name: "Must not overwrite existing data" },
+              samples[2],
+            ],
+            nextPageToken: null,
+          }
+        : { creators: samples.slice(0, 2), nextPageToken: "page-2" };
+    },
+    importChannel: async (input) => samples[Number(input)],
+    analyze: async (_brief, creator) => {
+      analyzed.push(creator.channelId);
+      if (creator.channelId === samples[1].channelId && failSecond) {
+        failSecond = false;
+        throw new Error("Temporary fixture failure");
+      }
+      return analysis;
+    },
+  };
+  let app = createApp(config, providers),
+    base,
+    cookie = "";
+  const listen = async () => {
+    await new Promise((resolve) => app.server.listen(0, "127.0.0.1", resolve));
+    base = `http://127.0.0.1:${app.server.address().port}`;
+  };
+  const call = async (path, method = "GET", data) => {
+    const response = await fetch(base + path, {
+      method,
+      headers: {
+        cookie,
+        ...(data ? { "Content-Type": "application/json" } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return {
+      status: response.status,
+      body: await response.json(),
+      cookie: response.headers.get("set-cookie")?.split(";")[0],
+    };
+  };
+  let campaignId;
+  const snapshot = async () =>
+    (await call(`/api/campaigns/${campaignId}`)).body;
+  const run = async (input = {}) => {
+    const result = await call(`/api/campaigns/${campaignId}/discover`, "POST", {
+      batchSize: 2,
+      ...input,
+    });
+    assert.equal(result.status, 202, JSON.stringify(result.body));
+    for (let i = 0; i < 100; i++) {
+      const state = await snapshot();
+      if (
+        state.job?.id === result.body.jobId &&
+        !["queued", "running"].includes(state.job.status)
+      )
+        return state;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    assert.fail("Discovery did not finish");
+  };
+  try {
+    await listen();
+    const account = await call("/api/auth/register", "POST", {
+      name: "Paging tester",
+      email: "paging@example.com",
+      password: "Long secure pagination test password",
+    });
+    cookie = account.cookie;
+    const me = (await call("/api/me")).body;
+    campaignId = (
+      await call("/api/campaigns", "POST", {
+        workspaceId: me.workspaces[0].id,
+        name: "Paging",
+        brand: "Test",
+        goal: "Awareness",
+        audience: "Product reviewers",
+      })
+    ).body.campaignId;
+    assert.equal(
+      (
+        await call(`/api/campaigns/${campaignId}/discover`, "POST", {
+          batchSize: 100,
+        })
+      ).status,
+      400,
+    );
+    let state = await run();
+    assert.equal(state.job.status, "partial");
+    assert.equal(state.analysisPending, 1);
+    assert.equal(state.search.cursor, "page-2");
+    assert.equal(analyzed.length, 2);
+    for (const [channel, decision] of [
+      [samples[0].channelId, "passed"],
+      [samples[1].channelId, "selected"],
+    ]) {
+      const creator = state.creators.find((c) => c.channel_id === channel);
+      assert.equal(
+        (
+          await call(`/api/creators/${creator.id}/decision`, "POST", {
+            decision,
+          })
+        ).status,
+        200,
+      );
+    }
+    await app.close();
+    app = createApp(config, providers);
+    await listen();
+    assert.equal(
+      (await snapshot()).search.cursor,
+      "page-2",
+      "Cursor must survive restart",
+    );
+    state = await run();
+    assert.equal(pages[1].cursor, "page-2");
+    assert.equal(pages[1].limit, 2);
+    assert.ok(pages[1].exclude.includes(samples[0].channelId));
+    assert.equal(state.creators.length, 3);
+    assert.equal(
+      state.creators.find((c) => c.channel_id === samples[0].channelId).data
+        .name,
+      samples[0].name,
+    );
+    assert.equal(
+      state.creators.find((c) => c.channel_id === samples[0].channelId)
+        .decision,
+      "passed",
+    );
+    assert.equal(
+      state.creators.find((c) => c.channel_id === samples[1].channelId)
+        .decision,
+      "selected",
+    );
+    assert.equal(state.analysisPending, 0);
+    assert.equal(state.search.exhausted, 1);
+    assert.equal(
+      (
+        await call(`/api/campaigns/${campaignId}/discover`, "POST", {
+          batchSize: 2,
+        })
+      ).status,
+      409,
+    );
+    const before = analyzed.length;
+    state = await run({ restartSearch: true });
+    assert.equal(pages.at(-1).cursor, null);
+    assert.equal(
+      analyzed.length,
+      before,
+      "Restarting search must not reanalyze existing successful records",
+    );
+    for (let i = 3; i < 8; i++)
+      assert.equal(
+        (
+          await call(`/api/campaigns/${campaignId}/import`, "POST", {
+            channel: String(i),
+          })
+        ).status,
+        201,
+      );
+    state = await run({ analyzeOnly: true });
+    assert.equal(state.job.total, 2);
+    assert.equal(analyzed.length - before, 2);
+    assert.equal(state.analysisPending, 3);
+    assert.equal(
+      pages.length,
+      3,
+      "Analysis-only must not run another YouTube search",
+    );
+    const updated = await call(`/api/campaigns/${campaignId}`, "PATCH", {
+      ...state.campaign.brief,
+      brand: "Updated",
+      revision: state.campaign.revision,
+    });
+    assert.equal(updated.status, 200);
+    assert.equal(
+      (await snapshot()).search,
+      null,
+      "New criteria reset old search pagination",
+    );
+    state = await run({ analyzeOnly: true });
+    assert.equal(
+      state.analysisPending,
+      5,
+      "Passed creators should not consume another analysis request",
+    );
+    assert.equal(
+      analyzed.filter((id) => id === samples[0].channelId).length,
+      1,
+    );
+  } finally {
+    await app.close();
+    rmSync(directory, { recursive: true, force: true });
   }
 });

@@ -142,22 +142,26 @@ export function makeProviders(config, fetcher = fetch) {
     }
     return result;
   }
-  async function discover(brief) {
+  async function discover(brief, { cursor, limit = 2, exclude = [] } = {}) {
+    if (![2, 4, 8].includes(limit))
+      throw new HttpError(400, "Choose a batch of 2, 4 or 8 creators");
     const params = {
       part: "snippet",
       type: "video",
       q: [brief.keywords || brief.category, brief.goal].join(" ").slice(0, 200),
-      maxResults: "20",
+      maxResults: String(limit),
       order: "relevance",
       safeSearch: "strict",
     };
+    if (cursor) params.pageToken = cursor;
     if (brief.country && /^[A-Z]{2}$/.test(brief.country))
       params.regionCode = brief.country;
     if (brief.language) params.relevanceLanguage = brief.language;
     const found = await youtube("search", params);
-    const ids = [
-      ...new Set(found.items.map((item) => item.snippet.channelId)),
-    ].slice(0, 8);
+    const known = new Set(exclude);
+    const ids = [...new Set(found.items.map((item) => item.snippet.channelId))]
+      .filter((channelId) => !known.has(channelId))
+      .slice(0, limit);
     const channels = ids.length
       ? (
           await youtube("channels", {
@@ -166,7 +170,7 @@ export function makeProviders(config, fetcher = fetch) {
           })
         ).items
       : [];
-    return (await channelDetails(channels)).filter(
+    const creators = (await channelDetails(channels)).filter(
       (channel) =>
         (channel.subscribers === null ||
           channel.subscribers >= Number(brief.minSubscribers || 0)) &&
@@ -176,6 +180,7 @@ export function makeProviders(config, fetcher = fetch) {
         (!brief.minViews ||
           (channel.averageViews || 0) >= Number(brief.minViews)),
     );
+    return { creators, nextPageToken: found.nextPageToken || null };
   }
   async function importChannel(input) {
     let handle = input.trim();

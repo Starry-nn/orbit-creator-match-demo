@@ -12,6 +12,12 @@ is served by the Node backend at `/product/`. GitHub Pages cannot run the API or
    The optional guided setup uses your own campaign inputs; replay it from Settings.
    It requires configured YouTube/Gemini access to proceed through discovery. You
    can exit at any time and keep generated outreach as drafts without sending.
+   Discovery defaults to two creators per click; you can choose batches of four or
+   eight. A search page can return fewer new creators because of duplicates or
+   criteria. Continue with Find more creators, or analyze the next pending batch.
+   At the end of search results, Restart search explicitly starts from page one
+   without resurfacing passed/selected creators or replacing successful analysis.
+   These are request limits, not a guaranteed dollar budget.
 
 ## Hosted instance
 
