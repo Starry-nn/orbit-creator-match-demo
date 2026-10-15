@@ -382,18 +382,8 @@ export function makeProviders(config, fetcher = fetch) {
     );
     return { data, tokens: fresh };
   }
-  async function sendMail(tokens, recipient, subject, body) {
-    const safeSubject = Buffer.from(subject.replace(/[\r\n]/g, " ")).toString(
-      "base64",
-    );
-    const raw = Buffer.from(
-      `To: ${recipient}\r\nSubject: =?UTF-8?B?${safeSubject}?=\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${
-        Buffer.from(body)
-          .toString("base64")
-          .match(/.{1,76}/g)
-          ?.join("\r\n") || ""
-      }`,
-    ).toString("base64url");
+  async function sendMail(tokens, recipient, subject, body, attachments = []) {
+    const raw = createMimeMessage(recipient, subject, body, attachments);
     return gmail(tokens, "messages/send", {
       method: "POST",
       body: JSON.stringify({ raw }),
@@ -423,6 +413,56 @@ export function makeProviders(config, fetcher = fetch) {
     sendMail,
     sendTransactional,
   };
+}
+
+export function createMimeMessage(recipient, subject, body, attachments = []) {
+  if (!/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/.test(recipient))
+    throw new HttpError(400, "Invalid email recipient");
+  const base64 = (value) =>
+    Buffer.from(value)
+      .toString("base64")
+      .match(/.{1,76}/g)
+      ?.join("\r\n") || "";
+  const safeSubject = Buffer.from(subject.replace(/[\r\n]/g, " ")).toString(
+    "base64",
+  );
+  const headers = `To: ${recipient}\r\nSubject: =?UTF-8?B?${safeSubject}?=\r\nMIME-Version: 1.0\r\n`;
+  if (!attachments.length)
+    return Buffer.from(
+      headers +
+        `Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${base64(body)}`,
+    ).toString("base64url");
+  if (
+    attachments.length > 4 ||
+    attachments.reduce((sum, file) => sum + file.data.length, 0) > 5_000_000
+  )
+    throw new HttpError(413, "Use at most 4 attachments totaling 5 MB");
+  const boundary = `orbit_${randomBytes(24).toString("hex")}`;
+  const mimeTypes = {
+    pdf: "application/pdf",
+    txt: "text/plain",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+  };
+  const parts = [
+    `--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${base64(body)}`,
+  ];
+  for (const file of attachments) {
+    const safeName = file.name.replace(/[^A-Za-z0-9_.-]/g, "_").slice(0, 150);
+    const encodedName = encodeURIComponent(file.name).replaceAll("'", "%27");
+    const type =
+      mimeTypes[file.name.split(".").at(-1).toLowerCase()] ||
+      "application/octet-stream";
+    parts.push(
+      `--${boundary}\r\nContent-Type: ${type}\r\nContent-Disposition: attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}\r\nContent-Transfer-Encoding: base64\r\n\r\n${base64(file.data)}`,
+    );
+  }
+  return Buffer.from(
+    headers +
+      `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n${parts.join("\r\n")}\r\n--${boundary}--\r\n`,
+  ).toString("base64url");
 }
 
 export function durationSeconds(value) {

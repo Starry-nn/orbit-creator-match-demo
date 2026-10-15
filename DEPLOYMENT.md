@@ -52,7 +52,8 @@ Google keys and encryption key outside database snapshots.
 - Provision hosting, HTTPS and persistent volume; confirm `/healthz` after restart.
 - Real YouTube import/search, actual Gemini video request and timestamp verification.
 - Google consent flow, token refresh, approved email to a controlled test inbox and
-  a reply synchronized back to Orbit. Do not test with unsolicited creator outreach.
+  a reply synchronized back to Orbit. Verify the names and contents of one attached
+  test brief. Do not test with unsolicited creator outreach.
 - Transactional password reset and invitation delivery.
 - Backup, restore and account-isolation checks on the hosted instance.
 - Real iPhone Safari manual verification, in addition to automated WebKit checks.

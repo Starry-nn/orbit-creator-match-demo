@@ -49,6 +49,12 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - DB-backed pass/select/defer/undo, comparison, private notes and creator stages.
 - AI email drafts, explicit Gmail send approval, duplicate-send prevention, honest
   unknown-delivery state after interruption, Gmail thread reply checks.
+- Campaign file attachments are saved with drafts, checked against campaign access,
+  and encoded as Gmail MIME attachments (up to four files and 5 MB in total).
+- Owners can remove editor access while retaining campaign records. Browser edit
+  forms send revision tokens and retain unsaved text when a conflicting save fails.
+- Late discovery, analysis and AI draft results are rejected if their campaign
+  requirements changed while an external request was running.
 - Editable briefs, server PDF export without truncating the brief, approval, draft
   script review; campaign changes invalidate old analysis and draft emails.
 - Tasks, private campaign files, activity history, Docker/Render config and CI.
@@ -62,11 +68,12 @@ behavior only; they do not prove external credentials, quota, or live delivery.
 - Review the real UI with the user against the existing demo; add production first-run
   contextual guidance after the live workflow is stable. The pitch tour remains in
   the original demo and is not represented as a verified production onboarding tour.
-- Email file attachments, automatic scheduled follow-up, verified delivery/read
+- Automatic scheduled follow-up, verified delivery/read
   receipts and automatic interest classification are not implemented. Gmail thread
   replies and manual creator stages are implemented; no extra statuses are invented.
-- Improve discovery pagination, batch cost control, audit retention, workspace member
-  removal and concurrent-editor conflict handling before broader agency rollout.
+- Improve discovery pagination, batch cost control and audit retention before
+  broader agency rollout. Conditional revision checks are supported; a separate
+  multi-instance database/locking design is still needed before horizontal scaling.
 - Run the backup script and restore drill against persistent hosted infrastructure;
   establish off-host backup storage and monitoring.
 - Actual iPhone Safari device verification (WebKit is stronger evidence than a Chrome

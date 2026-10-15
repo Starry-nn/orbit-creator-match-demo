@@ -441,7 +441,10 @@ function bindExtras() {
   if (edit)
     edit.onclick = () => {
       state.editing = true;
-      state.formDraft = { ...state.data.campaign.brief };
+      state.formDraft = {
+        ...state.data.campaign.brief,
+        revision: state.data.campaign.revision,
+      };
       navigate("create");
     };
   const upload = document.querySelector("#fileForm");
@@ -480,9 +483,24 @@ function bindExtras() {
           area.innerHTML = result.members
             .map(
               (m) =>
-                `<div class="task"><div><strong>${escape(m.name)}</strong><small>${escape(m.email)}</small></div>${status(m.role)}</div>`,
+                `<div class="task"><div><strong>${escape(m.name)}</strong><small>${escape(m.email)}</small></div>${status(m.role)}${m.role !== "owner" && state.me.workspaces.find((w) => w.id === invite.dataset.workspace)?.role === "owner" ? `<button type="button" class="text-btn" data-remove-member="${m.id}">Remove access</button>` : ""}</div>`,
             )
             .join("");
+        area?.querySelectorAll("[data-remove-member]").forEach(
+          (button) =>
+            (button.onclick = () =>
+              perform(button, async () => {
+                await api(
+                  `/workspaces/${invite.dataset.workspace}/members`,
+                  "DELETE",
+                  { userId: button.dataset.removeMember },
+                );
+                button.closest(".task").remove();
+                toast(
+                  "Workspace access removed. Existing campaign records are retained.",
+                );
+              })),
+        );
       })
       .catch((e) => toast(e.message));
   }
@@ -580,6 +598,11 @@ function bind() {
       });
   const form = document.querySelector("#campaignForm");
   if (form) {
+    if (state.editing)
+      form.insertAdjacentHTML(
+        "afterbegin",
+        `<input type="hidden" name="revision" value="${escape(state.formDraft.revision)}">`,
+      );
     form.insertAdjacentHTML(
       "afterbegin",
       choice(
@@ -808,6 +831,7 @@ function showCreator(creatorId) {
       c.stage,
     )}<div class="actions"><button class="btn primary" type="submit">Save details</button><button class="btn" type="button" data-draft="${c.id}">Draft outreach</button><button class="btn danger" type="button" data-remove="${c.id}">Remove from selected</button></div></form>`,
   );
+  dialog.querySelector("#creatorEdit").dataset.revision = c.revision;
 }
 async function openBrief(creatorId) {
   let brief = state.data.briefs.find((b) => b.creator_id === creatorId);
@@ -833,6 +857,7 @@ async function openBrief(creatorId) {
         "",
       )}<small>List fields use one item per line. Saving changes returns an approved brief to draft.</small><div class="actions"><button class="btn" type="submit">Save changes</button><button type="button" class="btn" id="exportBrief" data-id="${brief.id}">Download PDF</button><button type="button" class="btn primary" id="approveBrief" data-id="${brief.id}">Approve saved brief</button></div></form>`,
   );
+  dialog.querySelector("#briefEdit").dataset.revision = brief.revision;
   if (brief.status === "needs review") {
     dialog
       .querySelector(".dialog-body")
@@ -877,6 +902,14 @@ function showMessage(messageId) {
     "Review outreach",
     `<div class="badges">${status(m.status)}</div>${m.error ? `<div class="error">${escape(m.error)}</div>` : ""}<form id="messageEdit" data-id="${m.id}" class="stack">${field("To", "recipient", m.recipient, "email", m.status === "draft" ? "" : "readonly")}${field("Subject", "subject", m.subject, "text", m.status === "draft" ? "" : "readonly")}${area("Message", "body", m.body)}${m.status === "draft" ? `<p class="notes">Review the contact, subject and message before sending. Sending uses your connected Gmail account.</p><div class="actions"><button class="btn" type="submit">Save draft</button><button type="button" class="btn primary" id="sendMessage" data-id="${m.id}">Approve & send email</button></div>` : `<div class="actions"><button class="btn" type="button" id="syncReplies" data-id="${m.id}">Check for replies</button></div><div id="replies"></div>`}</form>`,
   );
+  dialog.querySelector("#messageEdit").dataset.revision = m.revision;
+  const attachmentSection =
+    m.status === "draft"
+      ? `<fieldset><legend>Campaign attachments</legend>${(state.data.files || []).map((file) => `<label class="task"><input type="checkbox" name="fileIds" value="${file.id}" ${(m.attachments || []).some((a) => a.id === file.id) ? "checked" : ""}><span>${escape(file.name)}</span></label>`).join("") || "<small>Upload a file in Campaign to attach it here.</small>"}<small>Up to 4 files · 5 MB total. Attachments are saved with this draft.</small></fieldset>`
+      : `<section><h3>Attachments</h3>${(m.attachments || []).map((file) => `<a href="/api/files/${file.id}">${escape(file.name)}</a>`).join("<br>") || "<small>No attachments</small>"}</section>`;
+  dialog
+    .querySelector("#messageEdit .actions")
+    .insertAdjacentHTML("beforebegin", attachmentSection);
   if (m.status !== "draft") dialog.querySelector("textarea").readOnly = true;
   if (m.status !== "draft" && !m.thread_id) {
     dialog.querySelector("#syncReplies")?.remove();
@@ -895,6 +928,14 @@ function showMessage(messageId) {
     }
   }
 }
+function emailPayload(form) {
+  const fields = new FormData(form);
+  return {
+    ...Object.fromEntries(fields),
+    fileIds: fields.getAll("fileIds"),
+    revision: form.dataset.revision,
+  };
+}
 function bindDialog() {
   dialog
     .querySelectorAll("[data-brief]")
@@ -906,11 +947,15 @@ function bindDialog() {
     creatorForm.onsubmit = (e) => {
       e.preventDefault();
       perform(e.submitter, async () => {
-        await api(
+        const result = await api(
           `/creators/${creatorForm.dataset.id}`,
           "PATCH",
-          Object.fromEntries(new FormData(creatorForm)),
+          {
+            ...Object.fromEntries(new FormData(creatorForm)),
+            revision: creatorForm.dataset.revision,
+          },
         );
+        creatorForm.dataset.revision = result.revision;
         await refresh();
         toast("Creator details saved");
       });
@@ -952,7 +997,11 @@ function bindDialog() {
               .split("\n")
               .map((v) => v.trim())
               .filter(Boolean);
-        await api(`/briefs/${existing.id}`, "PATCH", { content });
+        const result = await api(`/briefs/${existing.id}`, "PATCH", {
+          content,
+          revision: briefForm.dataset.revision,
+        });
+        briefForm.dataset.revision = result.revision;
         await refresh();
         toast("Brief saved");
       });
@@ -963,6 +1012,7 @@ function bindDialog() {
       perform(approve, async () => {
         await api(`/briefs/${approve.dataset.id}/approve`, "POST", {
           approve: true,
+          revision: briefForm.dataset.revision,
         });
         await refresh();
         closeDialog();
@@ -984,11 +1034,12 @@ function bindDialog() {
     messageForm.onsubmit = (e) => {
       e.preventDefault();
       perform(e.submitter, async () => {
-        await api(
+        const result = await api(
           `/messages/${messageForm.dataset.id}`,
           "PATCH",
-          Object.fromEntries(new FormData(messageForm)),
+          emailPayload(messageForm),
         );
+        messageForm.dataset.revision = result.revision;
         await refresh();
         toast("Draft saved");
       });
@@ -997,11 +1048,12 @@ function bindDialog() {
   if (send)
     send.onclick = () =>
       perform(send, async () => {
-        await api(
+        const result = await api(
           `/messages/${send.dataset.id}`,
           "PATCH",
-          Object.fromEntries(new FormData(messageForm)),
+          emailPayload(messageForm),
         );
+        messageForm.dataset.revision = result.revision;
         await api(`/messages/${send.dataset.id}/send`, "POST", {
           approve: true,
         });

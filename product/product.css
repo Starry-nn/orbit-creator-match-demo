@@ -167,6 +167,17 @@ select:focus-visible {
   display: grid;
   gap: 16px;
 }
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-width: 0;
+}
+legend {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 6px;
+}
 .panel {
   background: white;
   border: 1px solid var(--line);
@@ -311,8 +322,15 @@ input[type="checkbox"] {
   width: 22px;
   text-align: center;
 }
-.nav i img{width:22px;height:17px;filter:grayscale(1);}
-.mobile-brand{text-decoration:none;color:var(--ink);}
+.nav i img {
+  width: 22px;
+  height: 17px;
+  filter: grayscale(1);
+}
+.mobile-brand {
+  text-decoration: none;
+  color: var(--ink);
+}
 .account {
   margin-top: auto;
   border-top: 1px solid #30384a;

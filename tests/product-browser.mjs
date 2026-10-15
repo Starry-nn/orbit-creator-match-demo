@@ -150,6 +150,21 @@ try {
       await page
         .getByRole("button", { name: "Save campaign →", exact: true })
         .click();
+      await page.locator('.nav a[href="#workspace"]').click();
+      await page
+        .getByLabel("Upload brief or deliverable", { exact: true })
+        .setInputFiles({
+          name: "approved-brief.txt",
+          mimeType: "text/plain",
+          buffer: Buffer.from("Approved collaboration details"),
+        });
+      await page
+        .getByRole("button", { name: "Upload file", exact: true })
+        .click();
+      await page
+        .getByRole("link", { name: "approved-brief.txt", exact: true })
+        .waitFor();
+      await page.locator('.nav a[href="#discover"]').click();
       await page
         .getByRole("button", { name: "Find creators ✦", exact: true })
         .click();
@@ -210,8 +225,17 @@ try {
         .getByLabel("To", { exact: true })
         .fill("controlled-inbox@example.com");
       await page
+        .getByRole("checkbox", { name: "approved-brief.txt", exact: true })
+        .check();
+      const savedDraft = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/messages/") &&
+          response.request().method() === "PATCH",
+      );
+      await page
         .getByRole("button", { name: "Save draft", exact: true })
         .click();
+      assert.equal((await savedDraft).status(), 200);
       await page.getByRole("button", { name: "Close", exact: true }).click();
       await page.locator('a[href="#selected"]').click();
       await page

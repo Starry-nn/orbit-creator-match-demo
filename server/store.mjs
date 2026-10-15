@@ -94,6 +94,10 @@ export function openStore(filename) {
       id TEXT PRIMARY KEY, creator_id TEXT NOT NULL REFERENCES creators(id),
       script TEXT NOT NULL, result TEXT NOT NULL, created_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS message_files (
+      message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      file_id TEXT NOT NULL REFERENCES files(id), PRIMARY KEY(message_id,file_id)
+    );
   `);
   // A process cannot continue an external request after restart. Keep partial results and allow retry.
   db.prepare(

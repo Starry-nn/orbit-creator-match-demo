@@ -16,6 +16,37 @@ import { briefPdf } from "./pdf.mjs";
 
 const scrypt = promisify(scryptCallback);
 const hash = (text) => createHash("sha256").update(text).digest("hex");
+const campaignRevision = (record) =>
+  hash(JSON.stringify([record.name, record.brief, record.updated_at]));
+const creatorRevision = (record) =>
+  hash(
+    JSON.stringify([
+      record.note,
+      record.contact_email,
+      record.stage,
+      record.decision,
+      record.deferred_at,
+    ]),
+  );
+const briefRevision = (record) =>
+  hash(JSON.stringify([record.content, record.status, record.updated_at]));
+const messageRevision = (record) =>
+  hash(
+    JSON.stringify([
+      record.recipient,
+      record.subject,
+      record.body,
+      record.status,
+      record.attachments?.map((a) => a.id).sort(),
+    ]),
+  );
+function checkRevision(provided, expected) {
+  if (provided !== undefined && provided !== expected)
+    throw new HttpError(
+      409,
+      "This record changed since you opened it. Reload the latest version before saving; your unsaved text has been kept.",
+    );
+}
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const emailPattern = /^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/;
 const validId = (value) => /^[a-f\d-]{36}$/i.test(value || "");
@@ -169,7 +200,11 @@ export function createApp(config = readConfig(), suppliedProviders) {
       userId,
     );
     requireValue(record, "Campaign not found", 404);
-    return { ...record, brief: parse(record.brief) };
+    return {
+      ...record,
+      revision: campaignRevision(record),
+      brief: parse(record.brief),
+    };
   }
   function creator(userId, creatorId) {
     const record = store.one(
@@ -180,6 +215,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
     requireValue(record, "Creator not found", 404);
     return {
       ...record,
+      revision: creatorRevision(record),
       data: parse(record.data),
       analysis: parse(record.analysis),
     };
@@ -192,7 +228,11 @@ export function createApp(config = readConfig(), suppliedProviders) {
     );
     requireValue(record, "Message not found", 404);
     creator(userId, record.creator_id);
-    return record;
+    record.attachments = store.all(
+      "SELECT f.id,f.name,length(f.data) size FROM message_files mf JOIN files f ON f.id=mf.file_id WHERE mf.message_id=?",
+      record.id,
+    );
+    return { ...record, revision: messageRevision(record) };
   }
   function googleEnabled() {
     return Boolean(
@@ -256,6 +296,12 @@ export function createApp(config = readConfig(), suppliedProviders) {
       );
       if (!analyzeOnly) {
         const found = await provider.discover(campaignRecord.brief);
+        requireValue(
+          campaign(userId, campaignRecord.id).revision ===
+            campaignRecord.revision,
+          "Campaign requirements changed during discovery. Run discovery again.",
+          409,
+        );
         store.transaction(() =>
           found.forEach((data) => addCreator(campaignRecord.id, data)),
         );
@@ -277,6 +323,12 @@ export function createApp(config = readConfig(), suppliedProviders) {
           const analysis = await provider.analyze(
             campaignRecord.brief,
             parse(record.data),
+          );
+          requireValue(
+            campaign(userId, campaignRecord.id).revision ===
+              campaignRecord.revision,
+            "Campaign requirements changed during analysis. Run analysis again.",
+            409,
           );
           store.run(
             "UPDATE creators SET analysis=? WHERE id=?",
@@ -611,15 +663,42 @@ export function createApp(config = readConfig(), suppliedProviders) {
         if (teamMatch[2] === "members" && req.method === "GET")
           return json(res, 200, {
             members: store.all(
-              "SELECT u.name,u.email,m.role FROM members m JOIN users u ON u.id=m.user_id WHERE m.workspace_id=?",
+              "SELECT u.id,u.name,u.email,m.role FROM members m JOIN users u ON u.id=m.user_id WHERE m.workspace_id=?",
               teamMatch[1],
             ),
           });
         requireValue(
           membership.role === "owner",
-          "Only the workspace owner can invite teammates",
+          "Only the workspace owner can manage teammates",
           403,
         );
+        if (teamMatch[2] === "members" && req.method === "DELETE") {
+          requireValue(validId(input.userId), "Choose a workspace member");
+          const member = store.one(
+            "SELECT m.role,u.email FROM members m JOIN users u ON u.id=m.user_id WHERE workspace_id=? AND user_id=?",
+            teamMatch[1],
+            input.userId,
+          );
+          requireValue(member, "Member not found", 404);
+          requireValue(
+            member.role !== "owner",
+            "The workspace owner cannot be removed",
+            409,
+          );
+          store.transaction(() => {
+            store.run(
+              "DELETE FROM members WHERE workspace_id=? AND user_id=?",
+              teamMatch[1],
+              input.userId,
+            );
+            store.run(
+              "DELETE FROM invitations WHERE workspace_id=? AND email=?",
+              teamMatch[1],
+              member.email,
+            );
+          });
+          return json(res, 200, { ok: true });
+        }
         requireValue(
           req.method === "POST" && teamMatch[2] === "invitations",
           "Endpoint not found",
@@ -747,6 +826,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
               )
               .map((row) => ({
                 ...row,
+                revision: creatorRevision(row),
                 data: parse(row.data),
                 analysis: parse(row.analysis),
               })),
@@ -755,12 +835,18 @@ export function createApp(config = readConfig(), suppliedProviders) {
                 "SELECT b.* FROM briefs b JOIN creators r ON r.id=b.creator_id WHERE r.campaign_id=?",
                 c.id,
               )
-              .map((row) => ({ ...row, content: parse(row.content) })),
-            messages: store.all(
-              "SELECT m.* FROM messages m JOIN creators r ON r.id=m.creator_id WHERE r.campaign_id=? AND m.user_id=? ORDER BY m.created_at DESC",
-              c.id,
-              user.id,
-            ),
+              .map((row) => ({
+                ...row,
+                revision: briefRevision(row),
+                content: parse(row.content),
+              })),
+            messages: store
+              .all(
+                "SELECT m.* FROM messages m JOIN creators r ON r.id=m.creator_id WHERE r.campaign_id=? AND m.user_id=? ORDER BY m.created_at DESC",
+                c.id,
+                user.id,
+              )
+              .map((row) => message(user.id, row.id)),
             tasks: store.all(
               "SELECT * FROM tasks WHERE campaign_id=? ORDER BY done,due_date",
               c.id,
@@ -786,6 +872,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
           });
         if (!action && req.method === "PATCH") {
           const brief = campaignInput(input);
+          checkRevision(input.revision, c.revision);
           store.transaction(() => {
             store.run(
               "UPDATE campaigns SET name=?,brief=?,updated_at=? WHERE id=?",
@@ -813,7 +900,10 @@ export function createApp(config = readConfig(), suppliedProviders) {
               "Updated campaign requirements; existing analysis and drafts require review",
             );
           });
-          return json(res, 200, { ok: true });
+          return json(res, 200, {
+            ok: true,
+            revision: campaign(user.id, c.id).revision,
+          });
         }
         if (action === "import" && req.method === "POST") {
           rateLimit(`import:${user.id}`, 20, 3600000);
@@ -982,6 +1072,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
         const r = creator(user.id, recordId),
           c = campaign(user.id, r.campaign_id);
         if (!action && req.method === "PATCH") {
+          checkRevision(input.revision, r.revision);
           const note =
             typeof input.note === "string" ? text(input.note, 10000) : r.note;
           const contact =
@@ -1009,7 +1100,10 @@ export function createApp(config = readConfig(), suppliedProviders) {
             stage,
             r.id,
           );
-          return json(res, 200, { ok: true });
+          return json(res, 200, {
+            ok: true,
+            revision: creator(user.id, r.id).revision,
+          });
         }
         if (action === "decision" && req.method === "POST") {
           requireValue(
@@ -1048,7 +1142,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
           );
           rateLimit(`ai:${user.id}`, 30, 3600000);
           const existing = store.one(
-            "SELECT id,status FROM briefs WHERE creator_id=?",
+            "SELECT * FROM briefs WHERE creator_id=?",
             r.id,
           );
           requireValue(
@@ -1061,7 +1155,24 @@ export function createApp(config = readConfig(), suppliedProviders) {
               r.data,
               r.analysis,
             ),
-            briefId = id();
+            briefId = existing?.id || id();
+          requireValue(
+            campaign(user.id, c.id).revision === c.revision,
+            "Campaign requirements changed while Gemini was drafting. Please regenerate.",
+            409,
+          );
+          const latestBrief = store.one(
+            "SELECT * FROM briefs WHERE creator_id=?",
+            r.id,
+          );
+          requireValue(
+            existing
+              ? latestBrief &&
+                  briefRevision(latestBrief) === briefRevision(existing)
+              : !latestBrief,
+            "This brief changed while Gemini was drafting. Open the saved version before replacing it.",
+            409,
+          );
           store.run(
             "INSERT INTO briefs VALUES (?,?,?,?,?) ON CONFLICT(creator_id) DO UPDATE SET content=excluded.content,status='draft',updated_at=excluded.updated_at",
             briefId,
@@ -1087,6 +1198,11 @@ export function createApp(config = readConfig(), suppliedProviders) {
           rateLimit(`ai:${user.id}`, 30, 3600000);
           const draft = await provider.draftEmail(c.brief, r.data, r.analysis),
             messageId = id();
+          requireValue(
+            campaign(user.id, c.id).revision === c.revision,
+            "Campaign requirements changed while Gemini was drafting. Please generate a new draft.",
+            409,
+          );
           store.run(
             "INSERT INTO messages (id,creator_id,user_id,recipient,subject,body,created_at) VALUES (?,?,?,?,?,?,?)",
             messageId,
@@ -1149,6 +1265,34 @@ export function createApp(config = readConfig(), suppliedProviders) {
           r = creator(user.id, m.creator_id);
         if (!action && req.method === "PATCH") {
           requireValue(m.status === "draft", "Only drafts can be edited", 409);
+          checkRevision(input.revision, m.revision);
+          let attachments = null;
+          if (input.fileIds !== undefined) {
+            requireValue(
+              Array.isArray(input.fileIds) &&
+                input.fileIds.length <= 4 &&
+                input.fileIds.every(validId),
+              "Select up to 4 campaign attachments",
+            );
+            const ids = [...new Set(input.fileIds)];
+            attachments = ids.map((fileId) =>
+              store.one(
+                "SELECT id,length(data) size FROM files WHERE id=? AND campaign_id=?",
+                fileId,
+                r.campaign_id,
+              ),
+            );
+            requireValue(
+              attachments.every(Boolean),
+              "An attachment is not part of this campaign",
+              404,
+            );
+            requireValue(
+              attachments.reduce((sum, f) => sum + f.size, 0) <= 5_000_000,
+              "Attachments must total 5 MB or less",
+              413,
+            );
+          }
           const recipient = text(input.recipient, 254);
           requireValue(
             !recipient || emailPattern.test(recipient),
@@ -1158,14 +1302,25 @@ export function createApp(config = readConfig(), suppliedProviders) {
             text(input.subject, 300) && text(input.body),
             "Subject and message are required",
           );
-          store.run(
-            "UPDATE messages SET recipient=?,subject=?,body=? WHERE id=?",
-            recipient,
-            text(input.subject, 300),
-            text(input.body),
-            m.id,
-          );
-          return json(res, 200, { ok: true });
+          store.transaction(() => {
+            store.run(
+              "UPDATE messages SET recipient=?,subject=?,body=? WHERE id=?",
+              recipient,
+              text(input.subject, 300),
+              text(input.body),
+              m.id,
+            );
+            if (attachments !== null) {
+              store.run("DELETE FROM message_files WHERE message_id=?", m.id);
+              attachments.forEach((f) =>
+                store.run("INSERT INTO message_files VALUES (?,?)", m.id, f.id),
+              );
+            }
+          });
+          return json(res, 200, {
+            ok: true,
+            revision: message(user.id, m.id).revision,
+          });
         }
         if (action === "send" && req.method === "POST") {
           requireValue(input.approve === true, "Explicit approval is required");
@@ -1188,11 +1343,17 @@ export function createApp(config = readConfig(), suppliedProviders) {
             409,
           );
           try {
+            const attachments = store.all(
+              "SELECT f.name,f.data FROM message_files mf JOIN files f ON f.id=mf.file_id WHERE mf.message_id=? AND f.campaign_id=?",
+              m.id,
+              r.campaign_id,
+            );
             const result = await provider.sendMail(
               connected.tokens,
               m.recipient,
               m.subject,
               m.body,
+              attachments,
             );
             requireValue(
               result.data.id,
@@ -1276,6 +1437,7 @@ export function createApp(config = readConfig(), suppliedProviders) {
         }
         if (!action && req.method === "PATCH") {
           const previous = parse(b.content);
+          checkRevision(input.revision, briefRevision(b));
           requireValue(
             typeof input.content === "object" &&
               input.content &&
@@ -1294,10 +1456,21 @@ export function createApp(config = readConfig(), suppliedProviders) {
             now(),
             b.id,
           );
-          return json(res, 200, { ok: true });
+          return json(res, 200, {
+            ok: true,
+            revision: briefRevision(
+              store.one("SELECT * FROM briefs WHERE id=?", b.id),
+            ),
+          });
         }
         if (action === "approve" && req.method === "POST") {
           requireValue(input.approve === true, "Approval is required");
+          checkRevision(input.revision, briefRevision(b));
+          requireValue(
+            b.status !== "needs review",
+            "Campaign requirements changed. Save the reviewed brief or regenerate it before approval.",
+            409,
+          );
           store.run(
             "UPDATE briefs SET status='approved',updated_at=? WHERE id=?",
             now(),

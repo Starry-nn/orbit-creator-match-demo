@@ -12,6 +12,7 @@ import {
   decrypt,
   makeProviders,
   durationSeconds,
+  createMimeMessage,
 } from "../server/providers.mjs";
 
 const fixture = {
@@ -86,7 +87,8 @@ test("production workflow persists state and isolates accounts", async () => {
     googleClientId: "client",
     googleClientSecret: "secret",
   };
-  let sends = 0;
+  let sends = 0,
+    sentAttachments = [];
   const providers = {
     discover: async () => [
       fixture,
@@ -103,8 +105,9 @@ test("production workflow persists state and isolates accounts", async () => {
       subject: "Partnership proposal",
       body: "A personalized message",
     }),
-    sendMail: async (tokens) => {
+    sendMail: async (tokens, recipient, subject, body, attachments) => {
       sends++;
+      sentAttachments = attachments;
       return { data: { id: "gmail-id", threadId: "gmail-thread" }, tokens };
     },
     gmail: async (tokens) => ({
@@ -307,6 +310,56 @@ test("production workflow persists state and isolates accounts", async () => {
     const draft = await call(`/api/creators/${creatorId}/draft`, "POST", {});
     assert.equal(draft.status, 201);
     const messageId = draft.json.messageId;
+    const attachedFile = await call(
+      `/api/campaigns/${campaignId}/files`,
+      "POST",
+      {
+        name: "approved-brief.txt",
+        base64: Buffer.from("Approved collaboration details").toString(
+          "base64",
+        ),
+      },
+    );
+    assert.equal(attachedFile.status, 201);
+    const draftEdit = {
+      recipient: "creator@example.com",
+      subject: "Approved subject",
+      body: "Approved body",
+      fileIds: [attachedFile.json.fileId],
+    };
+    assert.equal(
+      (await call(`/api/messages/${messageId}`, "PATCH", draftEdit)).status,
+      200,
+    );
+    const otherCampaign = await call("/api/campaigns", "POST", {
+      workspaceId: me.workspaces[0].id,
+      name: "Other campaign",
+      brand: "Other brand",
+      goal: "Awareness",
+      audience: "Other audience",
+    });
+    const unrelatedFile = await call(
+      `/api/campaigns/${otherCampaign.json.campaignId}/files`,
+      "POST",
+      {
+        name: "private.txt",
+        base64: Buffer.from("Unrelated").toString("base64"),
+      },
+    );
+    assert.equal(
+      (
+        await call(`/api/messages/${messageId}`, "PATCH", {
+          ...draftEdit,
+          fileIds: [unrelatedFile.json.fileId],
+        })
+      ).status,
+      404,
+    );
+    assert.equal(
+      (await call(`/api/campaigns/${campaignId}`)).json.messages[0]
+        .attachments[0].id,
+      attachedFile.json.fileId,
+    );
     assert.equal(
       (await call(`/api/messages/${messageId}/send`, "POST", {})).status,
       400,
@@ -334,6 +387,12 @@ test("production workflow persists state and isolates accounts", async () => {
     ]);
     assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
     assert.equal(sends, 1);
+    assert.equal(sentAttachments.length, 1);
+    assert.equal(sentAttachments[0].name, "approved-brief.txt");
+    assert.equal(
+      Buffer.from(sentAttachments[0].data).toString(),
+      "Approved collaboration details",
+    );
     assert.equal(
       (await call(`/api/messages/${messageId}/sync`, "POST", {})).json.replies
         .length,
@@ -378,6 +437,10 @@ test("production workflow persists state and isolates accounts", async () => {
       "A real internal note",
     );
     assert.equal(snapshot.messages[0].status, "responded");
+    assert.equal(
+      snapshot.messages[0].attachments[0].name,
+      "approved-brief.txt",
+    );
     assert.equal(snapshot.briefs[0].status, "approved");
     assert.equal(snapshot.tasks[0].done, 1);
     await call("/api/auth/logout", "POST", {});
@@ -386,6 +449,32 @@ test("production workflow persists state and isolates accounts", async () => {
     await app.close();
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("Gmail MIME preserves UTF-8 body and attachment bytes without header injection", () => {
+  const raw = createMimeMessage(
+    "controlled@example.com",
+    "Partnership\r\nInjected: value",
+    "Hello — 你好",
+    [{ name: 'brief"\r\n.pdf', data: Buffer.from([0, 1, 2, 254, 255]) }],
+  );
+  const decoded = Buffer.from(raw, "base64url").toString();
+  assert.ok(decoded.includes("Content-Type: multipart/mixed;"));
+  assert.ok(decoded.includes(Buffer.from("Hello — 你好").toString("base64")));
+  assert.ok(
+    decoded.includes(Buffer.from([0, 1, 2, 254, 255]).toString("base64")),
+  );
+  assert.ok(!decoded.includes("\r\nInjected:"));
+  assert.ok(!decoded.includes('filename="brief"\r\n'));
+  assert.throws(
+    () =>
+      createMimeMessage(
+        "bad@example.com\r\nBcc: victim@example.com",
+        "Subject",
+        "Body",
+      ),
+    /Invalid email/,
+  );
 });
 
 test("document import extracts text and rejects invalid or oversized files", async () => {
@@ -536,6 +625,86 @@ test("team invitations require a matching email and owners control membership", 
       ).status,
       403,
     );
+    const shared = await request(
+      "/api/campaigns",
+      "POST",
+      {
+        workspaceId,
+        name: "Shared launch",
+        brand: "Shared brand",
+        goal: "Awareness",
+        audience: "Developers",
+      },
+      owner.cookie,
+    );
+    assert.equal(shared.status, 201);
+    assert.equal(
+      (
+        await request(
+          `/api/campaigns/${shared.data.campaignId}`,
+          "GET",
+          undefined,
+          teammate.cookie,
+        )
+      ).status,
+      200,
+    );
+    const removalPath = `/api/workspaces/${workspaceId}/members`;
+    assert.equal(
+      (
+        await request(
+          removalPath,
+          "DELETE",
+          { userId: ownerMe.data.user.id },
+          owner.cookie,
+        )
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await request(
+          removalPath,
+          "DELETE",
+          { userId: teammate.data.user.id },
+          teammate.cookie,
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await request(
+          removalPath,
+          "DELETE",
+          { userId: teammate.data.user.id },
+          owner.cookie,
+        )
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await request(
+          `/api/campaigns/${shared.data.campaignId}`,
+          "GET",
+          undefined,
+          teammate.cookie,
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (
+        await request(
+          `/api/campaigns/${shared.data.campaignId}`,
+          "GET",
+          undefined,
+          owner.cookie,
+        )
+      ).status,
+      200,
+    );
   } finally {
     await app.close();
   }
@@ -565,4 +734,114 @@ test("encrypted tokens round-trip and reject tampering", () => {
   assert.deepEqual(decrypt(value, key), { refresh_token: "secret" });
   assert.throws(() => decrypt(value, "cd".repeat(32)));
   assert.equal(durationSeconds("PT1H2M3S"), 3723);
+});
+
+test("late AI results cannot overwrite an edited campaign and stale edits are rejected", async () => {
+  let finishAnalysis, markStarted;
+  const started = new Promise((resolve) => (markStarted = resolve));
+  const app = createApp(
+    {
+      database: ":memory:",
+      appUrl: "http://localhost",
+      youtubeKey: "fixture",
+      geminiKey: "fixture",
+    },
+    {
+      discover: async () => [fixture],
+      analyze: async () => {
+        markStarted();
+        return new Promise((resolve) => (finishAnalysis = resolve));
+      },
+    },
+  );
+  await new Promise((resolve) => app.server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${app.server.address().port}`;
+  let cookie = "";
+  const call = async (path, method = "GET", data) => {
+    const response = await fetch(base + path, {
+      method,
+      headers: {
+        cookie,
+        ...(data ? { "Content-Type": "application/json" } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    const body = await response.json();
+    return {
+      status: response.status,
+      body,
+      cookie: response.headers.get("set-cookie")?.split(";")[0],
+    };
+  };
+  try {
+    const registration = await call("/api/auth/register", "POST", {
+      name: "Editor",
+      email: "editor@example.com",
+      password: "A long concurrent editing password",
+    });
+    cookie = registration.cookie;
+    const me = (await call("/api/me")).body;
+    const created = await call("/api/campaigns", "POST", {
+      workspaceId: me.workspaces[0].id,
+      name: "Original campaign",
+      brand: "Original brand",
+      goal: "Awareness",
+      audience: "Developers",
+    });
+    const campaignId = created.body.campaignId;
+    await call(`/api/campaigns/${campaignId}/discover`, "POST", {});
+    await started;
+    const before = (await call(`/api/campaigns/${campaignId}`)).body;
+    const edited = await call(`/api/campaigns/${campaignId}`, "PATCH", {
+      ...before.campaign.brief,
+      brand: "Updated brand",
+      revision: before.campaign.revision,
+    });
+    assert.equal(edited.status, 200);
+    assert.equal(
+      (
+        await call(`/api/campaigns/${campaignId}`, "PATCH", {
+          ...before.campaign.brief,
+          revision: before.campaign.revision,
+        })
+      ).status,
+      409,
+    );
+    finishAnalysis(analysis);
+    for (let i = 0; app.activeJobs.size && i < 100; i++)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    const after = (await call(`/api/campaigns/${campaignId}`)).body;
+    assert.equal(after.campaign.brief.brand, "Updated brand");
+    assert.equal(after.creators[0].analysis, null);
+    assert.equal(after.job.status, "partial");
+    assert.match(after.job.failures, /requirements changed/);
+    const c = after.creators[0];
+    assert.equal(
+      (
+        await call(`/api/creators/${c.id}`, "PATCH", {
+          note: "A teammate’s latest note",
+          revision: c.revision,
+        })
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await call(`/api/creators/${c.id}`, "PATCH", {
+          note: "A stale note",
+          revision: c.revision,
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (await call(`/api/campaigns/${campaignId}`)).body.creators[0].note,
+      "A teammate’s latest note",
+    );
+  } finally {
+    finishAnalysis?.(analysis);
+    for (let i = 0; app.activeJobs.size && i < 100; i++)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    await app.close();
+  }
 });
